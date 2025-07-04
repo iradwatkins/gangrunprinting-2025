@@ -1,9 +1,9 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { AuthModal } from '@/components/auth/AuthModal';
-import { UserMenu } from '@/components/auth/UserMenu';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { 
@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { UserButton } from '@/components/auth/UserButton';
 
 const HeroCarousel = () => {
@@ -194,7 +194,6 @@ export default function Homepage() {
                   <User className="h-4 w-4 mr-2" />
                   Sign In
                 </Button>
-              )
               )}
             </div>
           </div>
