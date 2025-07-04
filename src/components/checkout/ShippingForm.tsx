@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,7 +22,7 @@ const shippingSchema = z.object({
   street_address_2: z.string().optional(),
   city: z.string().min(2, 'City is required'),
   state: z.string().length(2, 'State must be 2 characters (e.g., CA)'),
-  postal_code: z.string().regex(/^\\d{5}(-\\d{4})?$/, 'Invalid postal code format'),
+  postal_code: z.string().regex(/^\d{5}(-\d{4})?$/, 'Invalid postal code format'),
   country: z.string().default('US'),
   phone: z.string().optional(),
   save_address: z.boolean().default(false)
@@ -139,31 +140,236 @@ export function ShippingForm({ onNext }: ShippingFormProps) {
   };
 
   return (
-    <div className=\"space-y-6\">
+    <div className="space-y-6">
       {/* Saved Addresses */}
       {isAuthenticated && addresses.length > 0 && (
         <div>
-          <h3 className=\"text-lg font-semibold mb-3 flex items-center\">
-            <MapPin className=\"w-5 h-5 mr-2\" />
+          <h3 className="text-lg font-semibold mb-3 flex items-center">
+            <MapPin className="w-5 h-5 mr-2" />
             Saved Addresses
           </h3>
-          <div className=\"grid gap-3\">
+          <div className="grid gap-3">
             {addresses.map((address) => (
               <Card 
                 key={address.id} 
-                className={`cursor-pointer transition-colors ${\n                  selectedAddressId === address.id \n                    ? 'ring-2 ring-primary bg-primary/5' \n                    : 'hover:bg-muted/50'\n                }`}
+                className={`cursor-pointer transition-colors ${
+                  selectedAddressId === address.id 
+                    ? 'ring-2 ring-primary bg-primary/5' 
+                    : 'hover:bg-muted/50'
+                }`}
                 onClick={() => handleAddressSelect(address)}
               >
-                <CardContent className=\"p-4\">
-                  <div className=\"flex items-start justify-between\">
-                    <div className=\"flex-1\">
-                      <div className=\"font-medium\">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="font-medium">
                         {address.first_name} {address.last_name}
                       </div>
                       {address.company && (
-                        <div className=\"text-sm text-muted-foreground\">{address.company}</div>
+                        <div className="text-sm text-muted-foreground">{address.company}</div>
                       )}
-                      <div className=\"text-sm text-muted-foreground mt-1\">
+                      <div className="text-sm text-muted-foreground mt-1">
                         {address.street_address}
                         {address.street_address_2 && `, ${address.street_address_2}`}
-                      </div>\n                      <div className=\"text-sm text-muted-foreground\">\n                        {address.city}, {address.state} {address.postal_code}\n                      </div>\n                      {address.phone && (\n                        <div className=\"text-sm text-muted-foreground\">{address.phone}</div>\n                      )}\n                    </div>\n                    {selectedAddressId === address.id && (\n                      <Check className=\"w-5 h-5 text-primary\" />\n                    )}\n                  </div>\n                </CardContent>\n              </Card>\n            ))}\n          </div>\n          \n          <div className=\"mt-4 p-4 border-2 border-dashed border-muted-foreground/25 rounded-lg\">\n            <button \n              type=\"button\"\n              onClick={() => {\n                setSelectedAddressId(null);\n                reset();\n              }}\n              className=\"flex items-center text-muted-foreground hover:text-foreground transition-colors\"\n            >\n              <Plus className=\"w-4 h-4 mr-2\" />\n              Use a different address\n            </button>\n          </div>\n        </div>\n      )}\n\n      {/* Address Form */}\n      <div className={isAuthenticated && addresses.length > 0 && selectedAddressId ? 'opacity-50 pointer-events-none' : ''}>\n        <h3 className=\"text-lg font-semibold mb-4\">\n          {isAuthenticated && addresses.length > 0 ? 'New Address' : 'Shipping Address'}\n        </h3>\n        \n        <form onSubmit={handleSubmit(onSubmit)} className=\"space-y-4\">\n          <div className=\"grid grid-cols-1 md:grid-cols-2 gap-4\">\n            <div>\n              <Label htmlFor=\"first_name\">First Name *</Label>\n              <Input\n                id=\"first_name\"\n                {...register('first_name')}\n                error={errors.first_name?.message}\n              />\n            </div>\n            <div>\n              <Label htmlFor=\"last_name\">Last Name *</Label>\n              <Input\n                id=\"last_name\"\n                {...register('last_name')}\n                error={errors.last_name?.message}\n              />\n            </div>\n          </div>\n\n          <div>\n            <Label htmlFor=\"company\">Company (Optional)</Label>\n            <Input\n              id=\"company\"\n              {...register('company')}\n              error={errors.company?.message}\n            />\n          </div>\n\n          <div>\n            <Label htmlFor=\"street_address\">Street Address *</Label>\n            <Input\n              id=\"street_address\"\n              {...register('street_address')}\n              error={errors.street_address?.message}\n            />\n          </div>\n\n          <div>\n            <Label htmlFor=\"street_address_2\">Apartment, suite, etc. (Optional)</Label>\n            <Input\n              id=\"street_address_2\"\n              {...register('street_address_2')}\n              error={errors.street_address_2?.message}\n            />\n          </div>\n\n          <div className=\"grid grid-cols-1 md:grid-cols-3 gap-4\">\n            <div>\n              <Label htmlFor=\"city\">City *</Label>\n              <Input\n                id=\"city\"\n                {...register('city')}\n                error={errors.city?.message}\n              />\n            </div>\n            <div>\n              <Label htmlFor=\"state\">State *</Label>\n              <Input\n                id=\"state\"\n                {...register('state')}\n                placeholder=\"CA\"\n                maxLength={2}\n                style={{ textTransform: 'uppercase' }}\n                error={errors.state?.message}\n              />\n            </div>\n            <div>\n              <Label htmlFor=\"postal_code\">ZIP Code *</Label>\n              <Input\n                id=\"postal_code\"\n                {...register('postal_code')}\n                placeholder=\"12345\"\n                error={errors.postal_code?.message}\n              />\n            </div>\n          </div>\n\n          <div>\n            <Label htmlFor=\"phone\">Phone Number (Optional)</Label>\n            <Input\n              id=\"phone\"\n              type=\"tel\"\n              {...register('phone')}\n              error={errors.phone?.message}\n            />\n          </div>\n\n          {/* Address Validation */}\n          {watchedFields.street_address && watchedFields.city && watchedFields.state && watchedFields.postal_code && (\n            <div className=\"space-y-2\">\n              <Button\n                type=\"button\"\n                variant=\"outline\"\n                onClick={handleValidateAddress}\n                disabled={isValidating}\n                className=\"w-full\"\n              >\n                {isValidating ? 'Validating...' : 'Validate Address'}\n              </Button>\n              \n              {validationResult && (\n                <div className={`p-3 rounded-lg ${\n                  validationResult.is_valid \n                    ? 'bg-green-50 border border-green-200 text-green-800'\n                    : 'bg-yellow-50 border border-yellow-200 text-yellow-800'\n                }`}>\n                  {validationResult.is_valid ? (\n                    <div className=\"flex items-center\">\n                      <Check className=\"w-4 h-4 mr-2\" />\n                      Address validated successfully\n                    </div>\n                  ) : (\n                    <div>\n                      <p className=\"font-medium mb-1\">Address needs attention:</p>\n                      <ul className=\"text-sm list-disc list-inside\">\n                        {validationResult.errors?.map((error: string, index: number) => (\n                          <li key={index}>{error}</li>\n                        ))}\n                      </ul>\n                      {validationResult.corrected_address && (\n                        <div className=\"mt-2\">\n                          <p className=\"font-medium\">Suggested correction:</p>\n                          <p className=\"text-sm\">\n                            {validationResult.corrected_address.street_address}<br />\n                            {validationResult.corrected_address.city}, {validationResult.corrected_address.state} {validationResult.corrected_address.postal_code}\n                          </p>\n                        </div>\n                      )}\n                    </div>\n                  )}\n                </div>\n              )}\n            </div>\n          )}\n\n          {/* Save Address Option */}\n          {isAuthenticated && (\n            <div className=\"flex items-center space-x-2\">\n              <Checkbox \n                id=\"save_address\" \n                {...register('save_address')}\n              />\n              <Label htmlFor=\"save_address\" className=\"text-sm\">\n                Save this address for future orders\n              </Label>\n            </div>\n          )}\n\n          <div className=\"flex justify-end pt-4\">\n            <Button \n              type=\"submit\" \n              disabled={isSubmitting}\n              className=\"min-w-[150px]\"\n            >\n              {isSubmitting ? 'Saving...' : 'Continue to Billing'}\n            </Button>\n          </div>\n        </form>\n      </div>\n    </div>\n  );\n}"
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {address.city}, {address.state} {address.postal_code}
+                      </div>
+                      {address.phone && (
+                        <div className="text-sm text-muted-foreground">{address.phone}</div>
+                      )}
+                    </div>
+                    {selectedAddressId === address.id && (
+                      <Check className="w-5 h-5 text-primary" />
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          
+          <div className="mt-4 p-4 border-2 border-dashed border-muted-foreground/25 rounded-lg">
+            <button 
+              type="button"
+              onClick={() => {
+                setSelectedAddressId(null);
+                reset();
+              }}
+              className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Use a different address
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Address Form */}
+      <div className={isAuthenticated && addresses.length > 0 && selectedAddressId ? 'opacity-50 pointer-events-none' : ''}>
+        <h3 className="text-lg font-semibold mb-4">
+          {isAuthenticated && addresses.length > 0 ? 'New Address' : 'Shipping Address'}
+        </h3>
+        
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="first_name">First Name *</Label>
+              <Input
+                id="first_name"
+                {...register('first_name')}
+                error={errors.first_name?.message}
+              />
+            </div>
+            <div>
+              <Label htmlFor="last_name">Last Name *</Label>
+              <Input
+                id="last_name"
+                {...register('last_name')}
+                error={errors.last_name?.message}
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="company">Company (Optional)</Label>
+            <Input
+              id="company"
+              {...register('company')}
+              error={errors.company?.message}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="street_address">Street Address *</Label>
+            <Input
+              id="street_address"
+              {...register('street_address')}
+              error={errors.street_address?.message}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="street_address_2">Apartment, suite, etc. (Optional)</Label>
+            <Input
+              id="street_address_2"
+              {...register('street_address_2')}
+              error={errors.street_address_2?.message}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="city">City *</Label>
+              <Input
+                id="city"
+                {...register('city')}
+                error={errors.city?.message}
+              />
+            </div>
+            <div>
+              <Label htmlFor="state">State *</Label>
+              <Input
+                id="state"
+                {...register('state')}
+                placeholder="CA"
+                maxLength={2}
+                style={{ textTransform: 'uppercase' }}
+                error={errors.state?.message}
+              />
+            </div>
+            <div>
+              <Label htmlFor="postal_code">ZIP Code *</Label>
+              <Input
+                id="postal_code"
+                {...register('postal_code')}
+                placeholder="12345"
+                error={errors.postal_code?.message}
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="phone">Phone Number (Optional)</Label>
+            <Input
+              id="phone"
+              type="tel"
+              {...register('phone')}
+              error={errors.phone?.message}
+            />
+          </div>
+
+          {/* Address Validation */}
+          {watchedFields.street_address && watchedFields.city && watchedFields.state && watchedFields.postal_code && (
+            <div className="space-y-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleValidateAddress}
+                disabled={isValidating}
+                className="w-full"
+              >
+                {isValidating ? 'Validating...' : 'Validate Address'}
+              </Button>
+              
+              {validationResult && (
+                <div className={`p-3 rounded-lg ${
+                  validationResult.is_valid 
+                    ? 'bg-green-50 border border-green-200 text-green-800'
+                    : 'bg-yellow-50 border border-yellow-200 text-yellow-800'
+                }`}>
+                  {validationResult.is_valid ? (
+                    <div className="flex items-center">
+                      <Check className="w-4 h-4 mr-2" />
+                      Address validated successfully
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="font-medium mb-1">Address needs attention:</p>
+                      <ul className="text-sm list-disc list-inside">
+                        {validationResult.errors?.map((error: string, index: number) => (
+                          <li key={index}>{error}</li>
+                        ))}
+                      </ul>
+                      {validationResult.corrected_address && (
+                        <div className="mt-2">
+                          <p className="font-medium">Suggested correction:</p>
+                          <p className="text-sm">
+                            {validationResult.corrected_address.street_address}<br />
+                            {validationResult.corrected_address.city}, {validationResult.corrected_address.state} {validationResult.corrected_address.postal_code}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Save Address Option */}
+          {isAuthenticated && (
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="save_address" 
+                {...register('save_address')}
+              />
+              <Label htmlFor="save_address" className="text-sm">
+                Save this address for future orders
+              </Label>
+            </div>
+          )}
+
+          <div className="flex justify-end pt-4">
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="min-w-[150px]"
+            >
+              {isSubmitting ? 'Saving...' : 'Continue to Billing'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
