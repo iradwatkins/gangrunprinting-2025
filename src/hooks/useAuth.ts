@@ -1,273 +1,167 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { authApi } from '@/api/auth';
-import { profileApi } from '@/api/profile';
-import { useToast } from '@/hooks/use-toast';
-import { cartApi } from '@/api/cart';
-import type { 
-  AuthUser, 
-  UserProfile, 
-  RegisterRequest, 
-  LoginRequest, 
-  UpdatePasswordRequest,
-  UpdateProfileRequest,
-  BrokerApplicationRequest,
-  AuthContextType,
-  AuthState
-} from '@/types/auth';
+import { toast } from 'sonner';
+
+// Define types and interfaces
+interface AuthContextType {
+  user: User | null;
+  session: Session | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: string | null }>;
+  signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: string | null }>;
+}
+
+interface ProfileData {
+  id: string;
+  email: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  phone: string | null;
+  company: string | null;
+  role: 'customer' | 'admin' | 'broker';
+  broker_status: 'pending' | 'approved' | 'rejected' | null;
+  addresses: Address[];
+  created_at: string;
+  updated_at: string;
+}
+
+interface Address {
+  id: string;
+  label: string;
+  first_name: string;
+  last_name: string;
+  company?: string;
+  street_address: string;
+  street_address_2?: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+  phone?: string;
+  is_default: boolean;
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AUTH_QUERY_KEY = ['auth'];
-export const PROFILE_QUERY_KEY = ['profile'];
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [authState, setAuthState] = useState<AuthState>({
-    user: null,
-    profile: null,
-    isLoading: true,
-    isAuthenticated: false,
-    isBroker: false,
-    hasProfile: false
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  // Get current user and profile
-  const { data: user, isLoading: userLoading } = useQuery({
-    queryKey: AUTH_QUERY_KEY,
-    queryFn: () => authApi.getCurrentUser().then(response => {
-      if (!response.success) {
-        throw new Error(response.error);
-      }
-      return response.data;
-    }),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-  });
-
-  // Update auth state when user changes
   useEffect(() => {
-    setAuthState(prev => ({
-      ...prev,
-      user: user || null,
-      profile: user?.profile || null,
-      isLoading: userLoading,
-      isAuthenticated: !!user,
-      isBroker: user?.profile?.is_broker || false,
-      hasProfile: !!user?.profile
-    }));
-  }, [user, userLoading]);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+    });
 
-  // Listen to auth state changes
-  useEffect(() => {
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsLoading(false);
+
+        if (event === 'SIGNED_IN') {
+          toast.success('Successfully signed in!');
         } else if (event === 'SIGNED_OUT') {
-          queryClient.clear();
-          setAuthState({
-            user: null,
-            profile: null,
-            isLoading: false,
-            isAuthenticated: false,
-            isBroker: false,
-            hasProfile: false
-          });
+          toast.success('Successfully signed out!');
         }
       }
     );
 
     return () => subscription.unsubscribe();
-  }, [queryClient]);
+  }, []);
 
-  // Sign up mutation
-  const signUpMutation = useMutation({
-    mutationFn: (data: RegisterRequest) => authApi.register(data),
-    onSuccess: (response) => {
-      if (response.success) {
-        queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
-        toast({
-          title: 'Registration Successful',
-          description: 'Please check your email to verify your account.'
-        });
-      } else {
-        toast({
-          title: 'Registration Failed',
-          description: response.error,
-          variant: 'destructive'
-        });
-      }
-    },
-    onError: (error) => {
-      toast({
-        title: 'Registration Failed',
-        description: 'An unexpected error occurred',
-        variant: 'destructive'
+  const signIn = async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
-    }
-  });
 
-  // Sign in mutation
-  const signInMutation = useMutation({
-    mutationFn: (credentials: LoginRequest) => authApi.signIn(credentials),
-    onSuccess: async (response) => {
-      if (response.success) {
-        queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
-        
-        // Sync guest cart with user cart
-        if (response.data?.id) {
-          const guestSessionId = localStorage.getItem('cart_session_id') || '';
-          await cartApi.syncCart({
-            guest_session_id: guestSessionId,
-            user_id: response.data.id
-          });
-          // Invalidate cart queries to refetch with user data
-          queryClient.invalidateQueries({ queryKey: ['cart'] });
-        }
-        
-        toast({
-          title: 'Welcome back!',
-          description: 'You have been signed in successfully.'
-        });
-      } else {
-        toast({
-          title: 'Login Failed',
-          description: response.error,
-          variant: 'destructive'
-        });
+      if (error) {
+        return { error: error.message };
       }
-    },
-    onError: (error) => {
-      toast({
-        title: 'Login Failed',
-        description: 'An unexpected error occurred',
-        variant: 'destructive'
+
+      return { error: null };
+    } catch (error) {
+      return { error: 'An unexpected error occurred' };
+    }
+  };
+
+  const signUp = async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+        },
       });
-    }
-  });
 
-  // Sign out mutation
-  const signOutMutation = useMutation({
-    mutationFn: () => authApi.signOut(),
-    onSuccess: (response) => {
-      if (response.success) {
-        queryClient.clear();
-        toast({
-          title: 'Signed Out',
-          description: 'You have been signed out successfully.'
-        });
-      } else {
-        toast({
-          title: 'Sign Out Failed',
-          description: response.error,
-          variant: 'destructive'
-        });
+      if (error) {
+        return { error: error.message };
       }
-    }
-  });
 
-  // Update profile mutation
-  const updateProfileMutation = useMutation({
-    mutationFn: (data: UpdateProfileRequest) => profileApi.updateProfile(data),
-    onSuccess: (response) => {
-      if (response.success) {
-        queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
-        toast({
-          title: 'Profile Updated',
-          description: 'Your profile has been updated successfully.'
-        });
-      } else {
-        toast({
-          title: 'Update Failed',
-          description: response.error,
-          variant: 'destructive'
-        });
+      toast.success('Check your email to confirm your account!');
+      return { error: null };
+    } catch (error) {
+      return { error: 'An unexpected error occurred' };
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast.error('Error signing out');
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        return { error: error.message };
       }
-    }
-  });
 
-  // Update password mutation
-  const updatePasswordMutation = useMutation({
-    mutationFn: (data: UpdatePasswordRequest) => authApi.updatePassword(data),
-    onSuccess: (response) => {
-      if (response.success) {
-        toast({
-          title: 'Password Updated',
-          description: 'Your password has been updated successfully.'
-        });
-      } else {
-        toast({
-          title: 'Password Update Failed',
-          description: response.error,
-          variant: 'destructive'
-        });
-      }
+      toast.success('Password reset email sent!');
+      return { error: null };
+    } catch (error) {
+      return { error: 'An unexpected error occurred' };
     }
-  });
+  };
 
-  // Reset password mutation
-  const resetPasswordMutation = useMutation({
-    mutationFn: (email: string) => authApi.resetPassword({ email }),
-    onSuccess: (response) => {
-      if (response.success) {
-        toast({
-          title: 'Reset Email Sent',
-          description: 'Please check your email for password reset instructions.'
-        });
-      } else {
-        toast({
-          title: 'Reset Failed',
-          description: response.error,
-          variant: 'destructive'
-        });
-      }
-    }
-  });
-
-  // Apply for broker mutation
-  const applyForBrokerMutation = useMutation({
-    mutationFn: (data: BrokerApplicationRequest) => profileApi.applyForBroker(data),
-    onSuccess: (response) => {
-      if (response.success) {
-        queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
-        toast({
-          title: 'Broker Application Submitted',
-          description: 'Your broker application has been submitted for review.'
-        });
-      } else {
-        toast({
-          title: 'Application Failed',
-          description: response.error,
-          variant: 'destructive'
-        });
-      }
-    }
-  });
-
-  const contextValue: AuthContextType = {
-    ...authState,
-    signIn: signInMutation.mutate,
-    signUp: signUpMutation.mutate,
-    signOut: signOutMutation.mutate,
-    updateProfile: updateProfileMutation.mutate,
-    updatePassword: updatePasswordMutation.mutate,
-    resetPassword: resetPasswordMutation.mutate,
-    refreshProfile: () => queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY }),
-    applyForBroker: applyForBrokerMutation.mutate
+  const value: AuthContextType = {
+    user,
+    session,
+    isAuthenticated: !!user,
+    isLoading,
+    signIn,
+    signUp,
+    signOut,
+    resetPassword,
   };
 
   return (
-    <AuthContext.Provider value={contextValue}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth(): AuthContextType {
+export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
@@ -275,38 +169,150 @@ export function useAuth(): AuthContextType {
   return context;
 }
 
-// Profile-specific hooks
+// Profile hook
 export function useProfile() {
-  const { profile, refreshProfile } = useAuth();
-  
-  const { data: addresses, refetch: refetchAddresses } = useQuery({
-    queryKey: [...PROFILE_QUERY_KEY, 'addresses'],
-    queryFn: () => profileApi.getAddresses().then(response => {
-      if (!response.success) {
-        throw new Error(response.error);
-      }
-      return response.data;
-    }),
-    enabled: !!profile
-  });
+  const { user, isAuthenticated } = useAuth();
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { data: brokerApplication, refetch: refetchBrokerApplication } = useQuery({
-    queryKey: [...PROFILE_QUERY_KEY, 'broker-application'],
-    queryFn: () => profileApi.getBrokerApplication().then(response => {
-      if (!response.success) {
-        throw new Error(response.error);
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      fetchProfile();
+      fetchAddresses();
+    } else {
+      setProfile(null);
+      setAddresses([]);
+      setIsLoading(false);
+    }
+  }, [user, isAuthenticated]);
+
+  const fetchProfile = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', user?.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
       }
-      return response.data;
-    }),
-    enabled: !!profile
-  });
+
+      setProfile(data);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      toast.error('Error loading profile');
+    }
+  };
+
+  const fetchAddresses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_addresses')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('is_default', { ascending: false });
+
+      if (error) throw error;
+
+      setAddresses(data || []);
+    } catch (error) {
+      console.error('Error fetching addresses:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateProfile = async (updates: Partial<ProfileData>) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .upsert({ id: user?.id, ...updates })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setProfile(data);
+      toast.success('Profile updated successfully!');
+      return { error: null };
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast.error('Error updating profile');
+      return { error: 'Failed to update profile' };
+    }
+  };
+
+  const addAddress = async (address: Omit<Address, 'id'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_addresses')
+        .insert({ ...address, user_id: user?.id })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setAddresses(prev => [...prev, data]);
+      toast.success('Address added successfully!');
+      return { error: null };
+    } catch (error) {
+      console.error('Error adding address:', error);
+      toast.error('Error adding address');
+      return { error: 'Failed to add address' };
+    }
+  };
+
+  const updateAddress = async (id: string, updates: Partial<Address>) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_addresses')
+        .update(updates)
+        .eq('id', id)
+        .eq('user_id', user?.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setAddresses(prev => prev.map(addr => addr.id === id ? data : addr));
+      toast.success('Address updated successfully!');
+      return { error: null };
+    } catch (error) {
+      console.error('Error updating address:', error);
+      toast.error('Error updating address');
+      return { error: 'Failed to update address' };
+    }
+  };
+
+  const deleteAddress = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('user_addresses')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      setAddresses(prev => prev.filter(addr => addr.id !== id));
+      toast.success('Address deleted successfully!');
+      return { error: null };
+    } catch (error) {
+      console.error('Error deleting address:', error);
+      toast.error('Error deleting address');
+      return { error: 'Failed to delete address' };
+    }
+  };
 
   return {
     profile,
-    addresses: addresses || [],
-    brokerApplication,
-    refreshProfile,
-    refetchAddresses,
-    refetchBrokerApplication
+    addresses,
+    isLoading,
+    updateProfile,
+    addAddress,
+    updateAddress,
+    deleteAddress,
   };
 }
