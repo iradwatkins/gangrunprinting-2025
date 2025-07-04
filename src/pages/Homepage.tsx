@@ -115,7 +115,7 @@ const HeroCarousel = () => {
 };
 
 export default function Homepage() {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
   const productCategories = [
