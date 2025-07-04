@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { PasswordReset } from '@/components/auth/PasswordReset';
 import { z } from 'zod';
 
@@ -105,7 +105,11 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateLogin()) {
-      signIn(loginData);
+      signIn({
+        email: loginData.email,
+        password: loginData.password,
+        rememberMe: loginData.rememberMe
+      });
       onOpenChange(false);
     }
   };
@@ -113,7 +117,17 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateRegister()) {
-      signUp(registerData);
+      signUp({
+        email: registerData.email,
+        password: registerData.password,
+        confirmPassword: registerData.confirmPassword,
+        firstName: registerData.firstName,
+        lastName: registerData.lastName,
+        companyName: registerData.companyName,
+        phone: registerData.phone,
+        acceptTerms: registerData.acceptTerms,
+        marketingOptIn: registerData.marketingOptIn
+      });
       onOpenChange(false);
     }
   };

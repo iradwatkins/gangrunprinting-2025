@@ -10,7 +10,10 @@ import { ProductImageGallery } from '@/components/products/ProductImageGallery';
 import { ProductConfiguration } from '@/components/products/ProductConfiguration';
 import { PriceCalculator } from '@/components/products/PriceCalculator';
 import { ProductSpecs } from '@/components/products/ProductSpecs';
-import { ShoppingCart, Heart, Share2 } from 'lucide-react';
+import { AuthModal } from '@/components/auth/AuthModal';
+import { useAuth } from '@/hooks/useAuth';
+import { ShoppingCart, Heart, Share2, User } from 'lucide-react';
+import { toast } from 'sonner';
 
 // Mock product data - in a real app, this would come from an API
 const mockProduct = {
@@ -31,11 +34,13 @@ const mockProduct = {
 
 export default function ProductDetail() {
   const { id } = useParams();
+  const { user, isLoading } = useAuth();
   const [product] = useState(mockProduct);
   const [configuration, setConfiguration] = useState({
     quantity: 500,
     add_on_ids: []
   });
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   const breadcrumbItems = [
     { label: "Home", href: "/" },
@@ -45,8 +50,42 @@ export default function ProductDetail() {
   ];
 
   const handleAddToCart = () => {
-    console.log('Adding to cart:', { product, configuration });
-    // Add to cart logic here
+    if (!user) {
+      setAuthModalOpen(true);
+      toast.info('Please sign in to add items to your cart');
+      return;
+    }
+
+    console.log('Adding to cart:', { product, configuration, user: user.id });
+    toast.success('Added to cart successfully!');
+    // Add to cart logic here - will be integrated with cart system
+  };
+
+  const handleSaveProduct = () => {
+    if (!user) {
+      setAuthModalOpen(true);
+      toast.info('Please sign in to save products');
+      return;
+    }
+    
+    toast.success('Product saved to your favorites!');
+    // Save to favorites logic here
+  };
+
+  const getBrokerDiscount = () => {
+    if (user?.profile?.is_broker && user.profile.broker_category_discounts) {
+      const categoryKey = product.category.toLowerCase().replace(/\s+/g, '_');
+      return user.profile.broker_category_discounts[categoryKey] || 0;
+    }
+    return 0;
+  };
+
+  const getDiscountedPrice = () => {
+    const discount = getBrokerDiscount();
+    if (discount > 0) {
+      return product.basePrice * (1 - discount / 100);
+    }
+    return product.basePrice;
   };
 
   const productSpecs = {
@@ -75,6 +114,40 @@ export default function ProductDetail() {
               <div className="mt-2 flex items-center space-x-2">
                 <Badge variant="outline">{product.category}</Badge>
                 <span className="text-sm text-gray-500">★ {product.rating} ({product.reviewCount} reviews)</span>
+                {user?.profile?.is_broker && (
+                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    Broker Pricing
+                  </Badge>
+                )}
+              </div>
+              
+              {/* Pricing Information */}
+              <div className="mt-4">
+                <div className="flex items-center space-x-3">
+                  {getBrokerDiscount() > 0 ? (
+                    <>
+                      <span className="text-2xl font-bold text-green-600">
+                        ${getDiscountedPrice().toFixed(2)}
+                      </span>
+                      <span className="text-lg text-gray-500 line-through">
+                        ${product.basePrice.toFixed(2)}
+                      </span>
+                      <Badge variant="destructive">
+                        {getBrokerDiscount()}% off
+                      </Badge>
+                    </>
+                  ) : (
+                    <span className="text-2xl font-bold text-gray-900">
+                      Starting at ${product.basePrice.toFixed(2)}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-600 mt-1">
+                  {user?.profile?.is_broker 
+                    ? 'Broker discounted pricing applied' 
+                    : 'Pricing varies by quantity and options'
+                  }
+                </p>
               </div>
             </div>
 
@@ -107,15 +180,38 @@ export default function ProductDetail() {
               </Button>
               
               <div className="flex space-x-4">
-                <Button variant="outline" className="flex-1">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={handleSaveProduct}
+                >
                   <Heart className="w-4 h-4 mr-2" />
-                  Save
+                  {user ? 'Save' : 'Sign in to Save'}
                 </Button>
                 <Button variant="outline" className="flex-1">
                   <Share2 className="w-4 h-4 mr-2" />
                   Share
                 </Button>
               </div>
+              
+              {!user && (
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <User className="w-5 h-5 text-blue-600" />
+                    <span className="font-medium text-blue-900">Sign in for better pricing</span>
+                  </div>
+                  <p className="text-sm text-blue-700 mb-3">
+                    Create an account to access bulk discounts, save favorites, and track orders.
+                  </p>
+                  <Button 
+                    onClick={() => setAuthModalOpen(true)}
+                    className="w-full"
+                    variant="outline"
+                  >
+                    Sign In or Register
+                  </Button>
+                </div>
+              )}
             </div>
 
             <Separator />
@@ -128,6 +224,9 @@ export default function ProductDetail() {
           </div>
         </div>
       </div>
+      
+      {/* Authentication Modal */}
+      <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
     </div>
   );
 }
