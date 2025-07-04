@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
@@ -38,7 +39,10 @@ export const auth = {
 
       return {
         ...user,
-        profile: profile || { is_broker: false, broker_category_discounts: {} }
+        profile: profile ? {
+          is_broker: profile.is_broker,
+          broker_category_discounts: (profile.broker_category_discounts as Record<string, any>) || {}
+        } : { is_broker: false, broker_category_discounts: {} }
       };
     } catch (error) {
       console.error('Failed to get current user:', error);
@@ -97,5 +101,54 @@ export const auth = {
       console.error('Failed to check broker status:', error);
       return false;
     }
+  },
+
+  // Magic Link Sign In
+  async signInWithMagicLink(email: string) {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`
+      }
+    });
+    return { error };
+  },
+
+  // Google Sign In
+  async signInWithGoogle() {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/`
+      }
+    });
+    return { error };
+  },
+
+  // Email/Password Sign Up
+  async signUp(email: string, password: string) {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`
+      }
+    });
+    return { error };
+  },
+
+  // Email/Password Sign In
+  async signIn(email: string, password: string) {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+    return { error };
+  },
+
+  // Sign Out
+  async signOut() {
+    const { error } = await supabase.auth.signOut();
+    return { error };
   }
 };
