@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import { ProductCatalog } from "./pages/ProductCatalog";
 import { ProductDetail } from "./pages/ProductDetail";
 import { Cart } from "./pages/Cart";
+import Checkout from "./pages/checkout/Checkout";
 import { AccountDashboard } from "./pages/account/AccountDashboard";
 import { ProfileSettings } from "./pages/account/ProfileSettings";
 import { BrokerApplication } from "./pages/account/BrokerApplication";
@@ -33,6 +34,7 @@ const App = () => (
               <Route path="/products" element={<ProductCatalog />} />
               <Route path="/products/:slug" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
+              <Route path="/checkout" element={<Checkout />} />
               <Route path="/account" element={<AccountDashboard />} />
               <Route path="/account/profile" element={<ProfileSettings />} />
               <Route path="/account/broker-application" element={<BrokerApplication />} />
