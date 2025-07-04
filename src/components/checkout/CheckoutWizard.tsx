@@ -117,10 +117,10 @@ export function CheckoutWizard({ onComplete }: CheckoutWizardProps) {
 
   if (isLoading) {
     return (
-      <div className=\"flex items-center justify-center py-12\">
-        <div className=\"text-center\">
-          <div className=\"animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4\"></div>
-          <p className=\"text-muted-foreground\">Loading checkout...</p>
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading checkout...</p>
         </div>
       </div>
     );
@@ -128,8 +128,8 @@ export function CheckoutWizard({ onComplete }: CheckoutWizardProps) {
 
   if (!session && cart.items.length === 0) {
     return (
-      <div className=\"text-center py-12\">
-        <p className=\"text-lg text-muted-foreground mb-4\">Your cart is empty</p>
+      <div className="text-center py-12">
+        <p className="text-lg text-muted-foreground mb-4">Your cart is empty</p>
         <Button onClick={() => window.location.href = '/products'}>
           Continue Shopping
         </Button>
@@ -138,23 +138,23 @@ export function CheckoutWizard({ onComplete }: CheckoutWizardProps) {
   }
 
   return (
-    <div className=\"max-w-6xl mx-auto p-6\">
+    <div className="max-w-6xl mx-auto p-6">
       {/* Progress Header */}
-      <div className=\"mb-8\">
-        <div className=\"flex items-center justify-between mb-4\">
-          <h1 className=\"text-3xl font-bold\">Checkout</h1>
-          <Badge variant=\"outline\" className=\"text-sm\">
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-3xl font-bold">Checkout</h1>
+          <Badge variant="outline" className="text-sm">
             Step {currentStep + 1} of {steps.length}
           </Badge>
         </div>
         
         {/* Progress Bar */}
-        <div className=\"mb-6\">
-          <Progress value={progress} className=\"h-2\" />
+        <div className="mb-6">
+          <Progress value={progress} className="h-2" />
         </div>
 
         {/* Step Navigation */}
-        <div className=\"flex items-center justify-between\">
+        <div className="flex items-center justify-between">
           {steps.map((step, index) => {
             const StepIcon = getStepIcon(step.id);
             const isCompleted = isStepCompleted(index);
@@ -162,22 +162,30 @@ export function CheckoutWizard({ onComplete }: CheckoutWizardProps) {
             const canAccess = canProceedToStep(index);
             
             return (
-              <div key={step.id} className=\"flex items-center\">
+              <div key={step.id} className="flex items-center">
                 <button
                   onClick={() => canAccess ? goToStep(index) : null}
                   disabled={!canAccess}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${\n                    isCurrent \n                      ? 'bg-primary text-primary-foreground' \n                      : isCompleted \n                        ? 'bg-green-100 text-green-700 hover:bg-green-200' \n                        : canAccess \n                          ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' \n                          : 'bg-gray-50 text-gray-400 cursor-not-allowed'\n                  }`}
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
+                    isCurrent 
+                      ? 'bg-primary text-primary-foreground' 
+                      : isCompleted 
+                        ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                        : canAccess 
+                          ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' 
+                          : 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                  }`}
                 >
                   {isCompleted ? (
-                    <CheckCircle className=\"w-5 h-5\" />
+                    <CheckCircle className="w-5 h-5" />
                   ) : (
-                    <StepIcon className=\"w-5 h-5\" />
+                    <StepIcon className="w-5 h-5" />
                   )}
-                  <span className=\"hidden sm:block font-medium\">{step.title}</span>
+                  <span className="hidden sm:block font-medium">{step.title}</span>
                 </button>
                 
                 {index < steps.length - 1 && (
-                  <ChevronRight className=\"w-4 h-4 mx-2 text-gray-400\" />
+                  <ChevronRight className="w-4 h-4 mx-2 text-gray-400" />
                 )}
               </div>
             );
@@ -185,12 +193,12 @@ export function CheckoutWizard({ onComplete }: CheckoutWizardProps) {
         </div>
       </div>
 
-      <div className=\"grid grid-cols-1 lg:grid-cols-3 gap-8\">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
-        <div className=\"lg:col-span-2\">
+        <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle className=\"flex items-center space-x-2\">
+              <CardTitle className="flex items-center space-x-2">
                 {React.createElement(getStepIcon(currentStepData?.id || ''), { className: 'w-6 h-6' })}
                 <span>{currentStepData?.title}</span>
               </CardTitle>
@@ -202,31 +210,31 @@ export function CheckoutWizard({ onComplete }: CheckoutWizardProps) {
         </div>
 
         {/* Order Summary Sidebar */}
-        <div className=\"lg:col-span-1\">
-          <Card className=\"sticky top-6\">
+        <div className="lg:col-span-1">
+          <Card className="sticky top-6">
             <CardHeader>
               <CardTitle>Order Summary</CardTitle>
             </CardHeader>
-            <CardContent className=\"space-y-4\">
+            <CardContent className="space-y-4">
               {/* Items */}
-              <div className=\"space-y-3\">
+              <div className="space-y-3">
                 {cart.items.map((item) => (
-                  <div key={item.id} className=\"flex justify-between items-start\">
-                    <div className=\"flex-1\">
-                      <h4 className=\"font-medium text-sm\">{item.product_name}</h4>
-                      <p className=\"text-xs text-muted-foreground\">
+                  <div key={item.id} className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm">{item.product_name}</h4>
+                      <p className="text-xs text-muted-foreground">
                         Qty: {item.quantity.toLocaleString()}
                       </p>
                       {item.configuration_display.paper_stock_name && (
-                        <p className=\"text-xs text-muted-foreground\">
+                        <p className="text-xs text-muted-foreground">
                           {item.configuration_display.paper_stock_name}
                         </p>
                       )}
                     </div>
-                    <div className=\"text-right\">
-                      <p className=\"font-medium\">${item.total_price.toFixed(2)}</p>
+                    <div className="text-right">
+                      <p className="font-medium">${item.total_price.toFixed(2)}</p>
                       {item.price_breakdown.savings > 0 && (
-                        <p className=\"text-xs text-green-600\">
+                        <p className="text-xs text-green-600">
                           Save ${item.price_breakdown.savings.toFixed(2)}
                         </p>
                       )}
@@ -238,28 +246,28 @@ export function CheckoutWizard({ onComplete }: CheckoutWizardProps) {
               <Separator />
 
               {/* Totals */}
-              <div className=\"space-y-2\">
-                <div className=\"flex justify-between text-sm\">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
                   <span>Subtotal</span>
                   <span>${(session?.subtotal || cart.subtotal).toFixed(2)}</span>
                 </div>
                 
                 {session?.shipping_cost ? (
-                  <div className=\"flex justify-between text-sm\">
+                  <div className="flex justify-between text-sm">
                     <span>Shipping</span>
                     <span>${session.shipping_cost.toFixed(2)}</span>
                   </div>
                 ) : null}
                 
                 {session?.tax_amount ? (
-                  <div className=\"flex justify-between text-sm\">
+                  <div className="flex justify-between text-sm">
                     <span>Tax</span>
                     <span>${session.tax_amount.toFixed(2)}</span>
                   </div>
                 ) : null}
                 
                 {session?.discount_amount && session.discount_amount > 0 ? (
-                  <div className=\"flex justify-between text-sm text-green-600\">
+                  <div className="flex justify-between text-sm text-green-600">
                     <span>Savings</span>
                     <span>-${session.discount_amount.toFixed(2)}</span>
                   </div>
@@ -267,17 +275,17 @@ export function CheckoutWizard({ onComplete }: CheckoutWizardProps) {
                 
                 <Separator />
                 
-                <div className=\"flex justify-between font-bold\">
+                <div className="flex justify-between font-bold">
                   <span>Total</span>
                   <span>${(session?.total_amount || cart.total_amount).toFixed(2)}</span>
                 </div>
               </div>
 
               {/* Security Badge */}
-              <div className=\"pt-4 border-t\">
-                <div className=\"flex items-center space-x-2 text-sm text-muted-foreground\">
-                  <div className=\"w-4 h-4 bg-green-500 rounded-full flex items-center justify-center\">
-                    <CheckCircle className=\"w-3 h-3 text-white\" />
+              <div className="pt-4 border-t">
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                  <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-3 h-3 text-white" />
                   </div>
                   <span>Secure SSL encrypted checkout</span>
                 </div>
