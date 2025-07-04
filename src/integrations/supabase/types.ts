@@ -9,7 +9,421 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      user_profiles: {
+        Row: {
+          id: string
+          user_id: string
+          is_broker: boolean
+          broker_category_discounts: Json
+          company_name: string | null
+          phone: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          is_broker?: boolean
+          broker_category_discounts?: Json
+          company_name?: string | null
+          phone?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          is_broker?: boolean
+          broker_category_discounts?: Json
+          company_name?: string | null
+          phone?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      product_categories: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          description: string | null
+          parent_category_id: string | null
+          default_broker_discount: number
+          sort_order: number
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          description?: string | null
+          parent_category_id?: string | null
+          default_broker_discount?: number
+          sort_order?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          description?: string | null
+          parent_category_id?: string | null
+          default_broker_discount?: number
+          sort_order?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      vendors: {
+        Row: {
+          id: string
+          name: string
+          email: string | null
+          phone: string | null
+          address: Json | null
+          incoming_email_addresses: Json
+          supported_shipping_carriers: Json
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          email?: string | null
+          phone?: string | null
+          address?: Json | null
+          incoming_email_addresses?: Json
+          supported_shipping_carriers?: Json
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          email?: string | null
+          phone?: string | null
+          address?: Json | null
+          incoming_email_addresses?: Json
+          supported_shipping_carriers?: Json
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      products: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          description: string | null
+          category_id: string
+          vendor_id: string
+          base_price: number
+          is_active: boolean
+          minimum_quantity: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          description?: string | null
+          category_id: string
+          vendor_id: string
+          base_price?: number
+          is_active?: boolean
+          minimum_quantity?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          description?: string | null
+          category_id?: string
+          vendor_id?: string
+          base_price?: number
+          is_active?: boolean
+          minimum_quantity?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      paper_stocks: {
+        Row: {
+          id: string
+          name: string
+          weight: number
+          price_per_sq_inch: number
+          description: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          weight: number
+          price_per_sq_inch?: number
+          description?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          weight?: number
+          price_per_sq_inch?: number
+          description?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      coatings: {
+        Row: {
+          id: string
+          name: string
+          price_modifier: number
+          description: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          price_modifier?: number
+          description?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          price_modifier?: number
+          description?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      print_sizes: {
+        Row: {
+          id: string
+          name: string
+          width: number
+          height: number
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          width: number
+          height: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          width?: number
+          height?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      turnaround_times: {
+        Row: {
+          id: string
+          name: string
+          business_days: number
+          price_markup_percent: number
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          business_days: number
+          price_markup_percent?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          business_days?: number
+          price_markup_percent?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      add_ons: {
+        Row: {
+          id: string
+          name: string
+          pricing_model: Database['public']['Enums']['pricing_model']
+          configuration: Json
+          description: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          pricing_model?: Database['public']['Enums']['pricing_model']
+          configuration?: Json
+          description?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          pricing_model?: Database['public']['Enums']['pricing_model']
+          configuration?: Json
+          description?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      orders: {
+        Row: {
+          id: string
+          user_id: string
+          reference_number: string
+          status: Database['public']['Enums']['order_status']
+          subtotal: number
+          tax_amount: number
+          shipping_cost: number
+          total_amount: number
+          shipping_address: Json
+          billing_address: Json
+          payment_method: string | null
+          payment_id: string | null
+          payment_status: string | null
+          notes: string | null
+          special_instructions: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          reference_number?: string
+          status?: Database['public']['Enums']['order_status']
+          subtotal?: number
+          tax_amount?: number
+          shipping_cost?: number
+          total_amount?: number
+          shipping_address: Json
+          billing_address: Json
+          payment_method?: string | null
+          payment_id?: string | null
+          payment_status?: string | null
+          notes?: string | null
+          special_instructions?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          reference_number?: string
+          status?: Database['public']['Enums']['order_status']
+          subtotal?: number
+          tax_amount?: number
+          shipping_cost?: number
+          total_amount?: number
+          shipping_address?: Json
+          billing_address?: Json
+          payment_method?: string | null
+          payment_id?: string | null
+          payment_status?: string | null
+          notes?: string | null
+          special_instructions?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      order_jobs: {
+        Row: {
+          id: string
+          order_id: string
+          product_id: string
+          vendor_id: string | null
+          quantity: number
+          unit_price: number
+          total_price: number
+          configuration: Json
+          price_summary: Json
+          status: Database['public']['Enums']['job_status']
+          tracking_number: string | null
+          estimated_delivery: string | null
+          actual_delivery: string | null
+          artwork_files: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          product_id: string
+          vendor_id?: string | null
+          quantity?: number
+          unit_price?: number
+          total_price?: number
+          configuration?: Json
+          price_summary?: Json
+          status?: Database['public']['Enums']['job_status']
+          tracking_number?: string | null
+          estimated_delivery?: string | null
+          actual_delivery?: string | null
+          artwork_files?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          product_id?: string
+          vendor_id?: string | null
+          quantity?: number
+          unit_price?: number
+          total_price?: number
+          configuration?: Json
+          price_summary?: Json
+          status?: Database['public']['Enums']['job_status']
+          tracking_number?: string | null
+          estimated_delivery?: string | null
+          actual_delivery?: string | null
+          artwork_files?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +432,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      pricing_model: 'flat' | 'percentage' | 'per_unit' | 'per_sq_inch' | 'custom'
+      order_status: 'draft' | 'pending_payment' | 'payment_confirmed' | 'in_production' | 'shipped' | 'delivered' | 'cancelled' | 'refunded'
+      job_status: 'pending' | 'assigned' | 'in_production' | 'printing' | 'finishing' | 'quality_check' | 'shipped' | 'delivered' | 'cancelled'
     }
     CompositeTypes: {
       [_ in never]: never
