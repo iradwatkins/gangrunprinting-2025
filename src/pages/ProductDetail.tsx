@@ -1,49 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+
+import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { BreadcrumbNav } from '@/components/products/BreadcrumbNav';
 import { ProductImageGallery } from '@/components/products/ProductImageGallery';
 import { ProductConfiguration } from '@/components/products/ProductConfiguration';
-import { ProductSpecs } from '@/components/products/ProductSpecs';
 import { PriceCalculator } from '@/components/products/PriceCalculator';
-
-type Product = {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  basePrice: number;
-  images: string[];
-  specifications: {
-    [key: string]: string;
-  };
-};
+import { ProductSpecs } from '@/components/products/ProductSpecs';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Heart, Share2, ShoppingCart } from 'lucide-react';
 
 export default function ProductDetail() {
-  const [selectedConfiguration, setSelectedConfiguration] = useState({});
-  const [quantity, setQuantity] = useState(100);
+  const { slug } = useParams();
+  const [configuration, setConfiguration] = useState({
+    add_on_ids: [],
+    quantity: 1
+  });
 
-  // Mock product data
+  // Mock product data - would come from API/database
   const product = {
     id: '1',
     name: 'Premium Business Cards',
-    description: 'High-quality business cards printed on premium cardstock',
+    description: 'High-quality business cards with premium finishes',
+    base_price: 39.99,
+    images: ['/placeholder.svg', '/placeholder.svg', '/placeholder.svg'],
     category: 'Business Cards',
-    basePrice: 49.99,
-    images: [
-      '/placeholder.svg',
-      '/placeholder.svg',
-      '/placeholder.svg'
-    ],
-    specifications: {
-      'Paper Stock': '16pt Cardstock',
-      'Finish': 'Matte or Gloss',
-      'Size': '3.5" x 2"',
-      'Colors': 'Full Color (CMYK)',
-      'Turnaround': '3-5 Business Days'
-    }
+    minimum_quantity: 50,
+    is_active: true
   };
 
   const breadcrumbItems = [
@@ -52,6 +36,22 @@ export default function ProductDetail() {
     { label: product.category, href: `/products/${product.category.toLowerCase().replace(' ', '-')}` },
     { label: product.name, href: '#' }
   ];
+
+  const handleAddToCart = () => {
+    console.log('Adding to cart:', { product, configuration });
+  };
+
+  const handleConfigurationChange = (newConfig: any) => {
+    setConfiguration(newConfig);
+  };
+
+  const specifications = {
+    'Paper Stock': '16pt C2S',
+    'Finish': 'Matte',
+    'Size': '3.5" x 2"',
+    'Colors': '4/4 Full Color',
+    'Turnaround': '3-5 Business Days'
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -67,48 +67,54 @@ export default function ProductDetail() {
           {/* Product Info */}
           <div className="space-y-6">
             <div>
-              <Badge variant="secondary" className="mb-2">
-                {product.category}
-              </Badge>
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">
-                {product.name}
-              </h1>
-              <p className="text-lg text-gray-600">
-                {product.description}
-              </p>
+              <div className="flex items-center justify-between mb-2">
+                <Badge variant="secondary">{product.category}</Badge>
+                <div className="flex space-x-2">
+                  <Button variant="ghost" size="sm">
+                    <Heart className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm">
+                    <Share2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">{product.name}</h1>
+              <p className="text-gray-600 mb-6">{product.description}</p>
             </div>
 
-            <Separator />
-
             {/* Configuration */}
-            <ProductConfiguration 
-              onConfigurationChange={setSelectedConfiguration}
-            />
-
-            <Separator />
+            <Card>
+              <CardHeader>
+                <CardTitle>Configuration</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ProductConfiguration 
+                  onConfigurationChange={handleConfigurationChange}
+                />
+              </CardContent>
+            </Card>
 
             {/* Price Calculator */}
             <PriceCalculator 
-              basePrice={product.basePrice}
-              configuration={selectedConfiguration}
-              quantity={quantity}
-              onQuantityChange={setQuantity}
+              basePrice={product.base_price}
+              configuration={configuration}
             />
 
+            {/* Add to Cart */}
             <div className="flex space-x-4">
-              <Button size="lg" className="flex-1">
+              <Button onClick={handleAddToCart} className="flex-1">
+                <ShoppingCart className="h-4 w-4 mr-2" />
                 Add to Cart
               </Button>
-              <Button size="lg" variant="outline">
+              <Button variant="outline">
                 Get Quote
               </Button>
             </div>
-          </div>
-        </div>
 
-        {/* Product Specifications */}
-        <div className="mt-12">
-          <ProductSpecs specifications={product.specifications} />
+            {/* Product Specifications */}
+            <ProductSpecs specs={specifications} />
+          </div>
         </div>
       </div>
     </div>
