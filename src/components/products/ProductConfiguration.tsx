@@ -13,6 +13,7 @@ import { ConfigurationStep } from '@/components/products/ConfigurationStep';
 import { PriceCalculator } from '@/components/products/PriceCalculator';
 import { ConfigurationSummary } from '@/components/products/ConfigurationSummary';
 import { useToast } from '@/hooks/use-toast';
+import { useCart } from '@/hooks/useCart';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Product = Tables<'products'> & {
@@ -62,6 +63,7 @@ export function ProductConfiguration({ product }: ProductConfigurationProps) {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
+  const { addToCart, isAddingToCart } = useCart();
 
   // Set default values from product options
   useEffect(() => {
@@ -140,10 +142,16 @@ export function ProductConfiguration({ product }: ProductConfigurationProps) {
 
   const handleAddToCart = () => {
     if (validateConfiguration()) {
-      // TODO: Implement add to cart functionality
-      toast({
-        title: 'Added to Cart',
-        description: 'Product configuration has been added to your cart'
+      addToCart({
+        product_id: product.id,
+        quantity: configuration.quantity,
+        configuration: {
+          paper_stock_id: configuration.paper_stock_id,
+          print_size_id: configuration.print_size_id,
+          turnaround_time_id: configuration.turnaround_time_id,
+          add_on_ids: configuration.add_on_ids,
+          notes: configuration.notes
+        }
       });
     }
   };
@@ -364,10 +372,10 @@ export function ProductConfiguration({ product }: ProductConfigurationProps) {
             <Button 
               onClick={handleAddToCart}
               className="flex-1"
-              disabled={Object.keys(errors).length > 0}
+              disabled={Object.keys(errors).length > 0 || isAddingToCart}
             >
               <ShoppingCart className="h-4 w-4 mr-2" />
-              Add to Cart
+              {isAddingToCart ? 'Adding...' : 'Add to Cart'}
             </Button>
             <Button 
               variant="outline" 

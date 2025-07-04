@@ -13,9 +13,10 @@ type Product = Tables<'products'> & {
 interface ProductCardProps {
   product: Product;
   viewMode?: 'grid' | 'list';
+  compact?: boolean;
 }
 
-export function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
+export function ProductCard({ product, viewMode = 'grid', compact = false }: ProductCardProps) {
   const isListView = viewMode === 'list';
 
   const ProductImage = () => (
@@ -28,7 +29,7 @@ export function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
   );
 
   const ProductInfo = () => (
-    <div className={`space-y-3 ${isListView ? 'flex-1' : ''}`}>
+    <div className={`${compact ? 'space-y-2' : 'space-y-3'} ${isListView ? 'flex-1' : ''}`}>
       {/* Category Badge */}
       {product.product_categories && (
         <Badge variant="secondary" className="text-xs">
@@ -38,7 +39,7 @@ export function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
 
       {/* Product Name */}
       <div>
-        <h3 className="font-semibold text-lg leading-tight line-clamp-2">
+        <h3 className={`font-semibold leading-tight line-clamp-2 ${compact ? 'text-base' : 'text-lg'}`}>
           {product.name}
         </h3>
         {product.vendors && (
@@ -48,20 +49,20 @@ export function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
         )}
       </div>
 
-      {/* Description */}
-      {product.description && (
+      {/* Description - hidden in compact mode */}
+      {!compact && product.description && (
         <p className="text-sm text-muted-foreground line-clamp-2">
           {product.description}
         </p>
       )}
 
-      {/* Rating (placeholder) */}
+      {/* Rating (placeholder) - simplified in compact mode */}
       <div className="flex items-center space-x-1">
         <div className="flex items-center">
-          {[...Array(5)].map((_, i) => (
+          {[...Array(compact ? 3 : 5)].map((_, i) => (
             <Star
               key={i}
-              className={`h-4 w-4 ${
+              className={`${compact ? 'h-3 w-3' : 'h-4 w-4'} ${
                 i < 4 ? 'text-yellow-400 fill-current' : 'text-gray-300'
               }`}
             />
@@ -73,40 +74,46 @@ export function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
       {/* Pricing */}
       <div className="space-y-1">
         <div className="flex items-baseline space-x-2">
-          <span className="text-2xl font-bold">
+          <span className={`font-bold ${compact ? 'text-lg' : 'text-2xl'}`}>
             ${product.base_price.toFixed(2)}
           </span>
           <span className="text-sm text-muted-foreground">starting at</span>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Min qty: {product.minimum_quantity} • Multiple options available
-        </p>
+        {!compact && (
+          <p className="text-xs text-muted-foreground">
+            Min qty: {product.minimum_quantity} • Multiple options available
+          </p>
+        )}
       </div>
 
-      {/* Features */}
-      <div className="space-y-1">
-        <p className="text-xs font-medium">Features:</p>
-        <ul className="text-xs text-muted-foreground space-y-0.5">
-          <li>• Multiple paper options</li>
-          <li>• Custom sizes available</li>
-          <li>• Fast turnaround</li>
-        </ul>
-      </div>
+      {/* Features - hidden in compact mode */}
+      {!compact && (
+        <div className="space-y-1">
+          <p className="text-xs font-medium">Features:</p>
+          <ul className="text-xs text-muted-foreground space-y-0.5">
+            <li>• Multiple paper options</li>
+            <li>• Custom sizes available</li>
+            <li>• Fast turnaround</li>
+          </ul>
+        </div>
+      )}
     </div>
   );
 
   const ProductActions = () => (
-    <div className={`space-y-2 ${isListView ? 'w-40' : ''}`}>
-      <Button asChild className="w-full">
+    <div className={`${compact ? 'space-y-1' : 'space-y-2'} ${isListView ? 'w-40' : ''}`}>
+      <Button asChild className={`w-full ${compact ? 'text-sm h-8' : ''}`}>
         <Link to={`/products/${product.slug}`}>
-          <ShoppingCart className="h-4 w-4 mr-2" />
-          Configure
+          <ShoppingCart className={`${compact ? 'h-3 w-3' : 'h-4 w-4'} mr-2`} />
+          {compact ? 'View' : 'Configure'}
         </Link>
       </Button>
-      <Button variant="outline" className="w-full">
-        <Eye className="h-4 w-4 mr-2" />
-        Quick View
-      </Button>
+      {!compact && (
+        <Button variant="outline" className="w-full">
+          <Eye className="h-4 w-4 mr-2" />
+          Quick View
+        </Button>
+      )}
     </div>
   );
 
@@ -125,16 +132,16 @@ export function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
   }
 
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow group">
+    <Card className={`overflow-hidden hover:shadow-md transition-shadow group ${compact ? 'h-fit' : ''}`}>
       <Link to={`/products/${product.slug}`} className="block">
         <ProductImage />
       </Link>
       
-      <CardContent className="p-4">
+      <CardContent className={compact ? 'p-3' : 'p-4'}>
         <ProductInfo />
       </CardContent>
       
-      <CardFooter className="p-4 pt-0">
+      <CardFooter className={compact ? 'p-3 pt-0' : 'p-4 pt-0'}>
         <ProductActions />
       </CardFooter>
     </Card>

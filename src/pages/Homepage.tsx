@@ -3,6 +3,9 @@ import useEmblaCarousel from 'embla-carousel-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import { AuthModal } from '@/components/auth/AuthModal';
+import { UserMenu } from '@/components/auth/UserMenu';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   ShoppingCart, 
   User, 
@@ -48,6 +51,8 @@ interface ValueProposition {
 }
 
 const Homepage: React.FC = () => {
+  const { isAuthenticated } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
   // Hero carousel data
   const heroSlides: HeroSlide[] = [
     {
@@ -178,20 +183,28 @@ const Homepage: React.FC = () => {
 
             {/* Account & Cart */}
             <div className="flex items-center space-x-4">
-              <a href="#" className="hidden sm:flex items-center text-foreground hover:text-primary transition-colors">
-                <User className="w-4 h-4 mr-2" />
-                My Account
-              </a>
-              <a href="#" className="hidden sm:flex items-center text-foreground hover:text-primary transition-colors">
-                <LogIn className="w-4 h-4 mr-2" />
-                Login
-              </a>
-              <div className="relative">
-                <ShoppingCart className="w-6 h-6 text-foreground hover:text-primary cursor-pointer transition-colors" />
-                <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  0
-                </span>
-              </div>
+              {isAuthenticated ? (
+                <UserMenu />
+              ) : (
+                <>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => setShowAuthModal(true)}
+                    className="hidden sm:flex items-center"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    My Account
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => setShowAuthModal(true)}
+                    className="hidden sm:flex items-center"
+                  >
+                    <LogIn className="w-4 h-4 mr-2" />
+                    Sign In
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -397,6 +410,13 @@ const Homepage: React.FC = () => {
           </div>
         </div>
       </footer>
+
+      {/* Authentication Modal */}
+      <AuthModal 
+        open={showAuthModal} 
+        onOpenChange={setShowAuthModal}
+        defaultTab="login"
+      />
     </div>
   );
 };

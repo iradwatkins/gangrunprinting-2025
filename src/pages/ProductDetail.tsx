@@ -248,7 +248,7 @@ export function ProductDetail() {
 
         {/* Product Details Tabs */}
         <Tabs value={selectedTab} onValueChange={setSelectedTab} className="mb-8">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
             <TabsTrigger value="configure">Configure</TabsTrigger>
             <TabsTrigger value="specifications">Specifications</TabsTrigger>
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
@@ -282,7 +282,7 @@ export function ProductDetail() {
           </TabsContent>
 
           <TabsContent value="related" className="mt-6">
-            <RelatedProducts categoryId={product.category_id} currentProductId={product.id} />
+            <RelatedProducts product={product} />
           </TabsContent>
         </Tabs>
       </div>

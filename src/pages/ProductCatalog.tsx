@@ -209,7 +209,7 @@ export function ProductCatalog() {
 
               {/* Sort */}
               <Select value={sortBy} onValueChange={handleSort}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-full sm:w-48">
                   <SelectValue placeholder="Sort by..." />
                 </SelectTrigger>
                 <SelectContent>

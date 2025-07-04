@@ -3,7 +3,15 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { FloatingCart } from "@/components/cart/FloatingCart";
+import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
+import { ProductCatalog } from "./pages/ProductCatalog";
+import { ProductDetail } from "./pages/ProductDetail";
+import { Cart } from "./pages/Cart";
+import { AccountDashboard } from "./pages/account/AccountDashboard";
+import { ProfileSettings } from "./pages/account/ProfileSettings";
+import { BrokerApplication } from "./pages/account/BrokerApplication";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -13,13 +21,28 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+        <div className="relative">
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/products" element={<ProductCatalog />} />
+            <Route path="/products/:slug" element={<ProductDetail />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/account" element={<AccountDashboard />} />
+            <Route path="/account/profile" element={<ProfileSettings />} />
+            <Route path="/account/broker-application" element={<BrokerApplication />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          
+          {/* Floating Cart - Available on all pages */}
+          <div className="fixed bottom-6 right-6 z-50">
+            <FloatingCart />
+          </div>
+        </div>
+        </BrowserRouter>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
