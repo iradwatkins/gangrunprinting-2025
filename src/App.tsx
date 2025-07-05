@@ -11,6 +11,7 @@ import { ProductCatalog } from "./pages/ProductCatalog";
 import ProductDetail from "./pages/ProductDetail";
 import { Cart } from "./pages/Cart";
 import Checkout from "./pages/checkout/Checkout";
+import OrderConfirmation from "./pages/checkout/OrderConfirmation";
 import { AccountDashboard } from "./pages/account/AccountDashboard";
 import { ProfileSettings } from "./pages/account/ProfileSettings";
 import { BrokerApplication } from "./pages/account/BrokerApplication";
@@ -18,6 +19,7 @@ import NotFound from "./pages/NotFound";
 import { ProductsPage } from "./pages/admin/ProductsPage";
 import { NewProductPage } from "./pages/admin/NewProductPage";
 import { EditProductPage } from "./pages/admin/EditProductPage";
+import CheckoutSettingsPage from "./pages/admin/CheckoutSettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -35,12 +37,14 @@ const App = () => (
               <Route path="/products/:slug" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
+              <Route path="/checkout/confirmation/:referenceNumber" element={<OrderConfirmation />} />
               <Route path="/account" element={<AccountDashboard />} />
               <Route path="/account/profile" element={<ProfileSettings />} />
               <Route path="/account/broker-application" element={<BrokerApplication />} />
               <Route path="/admin/products" element={<ProductsPage />} />
               <Route path="/admin/products/new" element={<NewProductPage />} />
               <Route path="/admin/products/:id/edit" element={<EditProductPage />} />
+              <Route path="/admin/checkout-settings" element={<CheckoutSettingsPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
