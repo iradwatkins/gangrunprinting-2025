@@ -18,12 +18,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import { useAuth, useProfile } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/useProfile';
 import { useCart } from '@/hooks/useCart';
 
 export function AccountDashboard() {
-  const { user, profile, isBroker } = useAuth();
+  const { user } = useAuth();
   const { addresses, brokerApplication } = useProfile();
+  
+  const isBroker = user?.profile?.is_broker || false;
   const { cart } = useCart();
 
   const getWelcomeMessage = () => {
@@ -34,7 +37,7 @@ export function AccountDashboard() {
     else if (hour < 18) greeting = 'Good afternoon';
     else greeting = 'Good evening';
 
-    const name = profile?.first_name || user?.email?.split('@')[0] || 'there';
+    const name = user?.profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'there';
     return `${greeting}, ${name}!`;
   };
 

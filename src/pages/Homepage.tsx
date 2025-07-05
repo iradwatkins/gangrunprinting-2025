@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { UserButton } from '@/components/auth/UserButton';
 
 const HeroCarousel = () => {

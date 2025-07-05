@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { PasswordReset } from '@/components/auth/PasswordReset';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
@@ -63,7 +63,7 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, signInWithMagicLink, signInWithGoogle } = useAuth();
 
   const validateLogin = () => {
     try {
@@ -118,7 +118,10 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateRegister()) {
-      const result = await signUp(registerData.email, registerData.password);
+      const result = await signUp(registerData.email, registerData.password, {
+        firstName: registerData.firstName,
+        lastName: registerData.lastName
+      });
       if (result.error) {
         setErrors({ register: result.error });
       } else {
@@ -132,15 +135,10 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
     try {
       magicLinkSchema.parse({ email: magicLinkEmail });
       setErrors({});
-      const { error } = await supabase.auth.signInWithOtp({
-        email: magicLinkEmail,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`
-        }
-      });
+      const result = await signInWithMagicLink(magicLinkEmail);
       
-      if (error) {
-        setErrors({ magicLink: error.message });
+      if (result.error) {
+        setErrors({ magicLink: result.error });
       } else {
         setMagicLinkSent(true);
       }
@@ -152,15 +150,10 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
   };
 
   const handleGoogleSignIn = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/`
-      }
-    });
+    const result = await signInWithGoogle();
     
-    if (error) {
-      setErrors({ google: error.message });
+    if (result.error) {
+      setErrors({ google: result.error });
     }
   };
 

@@ -9,8 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCheckout } from '@/hooks/useCheckout';
-import { useAuth } from '@/hooks/useAuth';
-import { useProfile } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/useProfile';
 import { MapPin, Plus, Check } from 'lucide-react';
 import type { Address } from '@/types/auth';
 

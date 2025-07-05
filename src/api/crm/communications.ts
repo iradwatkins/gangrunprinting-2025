@@ -31,7 +31,7 @@ export const getEmailInteractions = async (customerId: string, page = 1, limit =
 };
 
 export const updateEmailStatus = async (interactionId: string, status: string, timestamp?: string) => {
-  const updateData: any = { 
+  const updateData: Record<string, any> = { 
     status,
     updated_at: new Date().toISOString()
   };

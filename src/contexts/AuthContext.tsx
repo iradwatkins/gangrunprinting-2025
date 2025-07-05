@@ -2,13 +2,52 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { AuthUser } from '@/lib/auth';
+import { toast } from 'sonner';
+
+export interface AuthUser extends User {
+  profile?: {
+    id: string;
+    email: string;
+    full_name: string | null;
+    avatar_url: string | null;
+    phone: string | null;
+    company: string | null;
+    role: 'customer' | 'admin' | 'broker';
+    broker_status: 'pending' | 'approved' | 'rejected' | null;
+    is_broker: boolean;
+    broker_category_discounts: Record<string, any>;
+    created_at: string;
+    updated_at: string;
+  };
+}
+
+interface Address {
+  id: string;
+  label: string;
+  first_name: string;
+  last_name: string;
+  company?: string;
+  street_address: string;
+  street_address_2?: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+  phone?: string;
+  is_default: boolean;
+}
 
 interface AuthContextType {
   user: AuthUser | null;
   session: Session | null;
+  isAuthenticated: boolean;
   loading: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string, userData?: { firstName?: string; lastName?: string }) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: string | null }>;
+  signInWithMagicLink: (email: string) => Promise<{ error: string | null }>;
+  signInWithGoogle: () => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,55 +58,222 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        
-        if (session?.user) {
-          // Get user profile data
-          const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('is_broker, broker_category_discounts')
-            .eq('user_id', session.user.id)
-            .single();
-
-          const authUser: AuthUser = {
-            ...session.user,
-            profile: profile ? {
-              is_broker: profile.is_broker,
-              broker_category_discounts: (profile.broker_category_discounts as Record<string, any>) || {}
-            } : { is_broker: false, broker_category_discounts: {} }
-          };
-          
-          setUser(authUser);
-        } else {
-          setUser(null);
-        }
-        
-        setLoading(false);
-      }
-    );
-
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        // Trigger auth state change for initial load
-        setSession(session);
+      setSession(session);
+      if (session?.user) {
+        loadUserProfile(session.user);
       } else {
         setLoading(false);
       }
     });
 
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session);
+        
+        if (session?.user) {
+          await loadUserProfile(session.user);
+          
+          if (event === 'SIGNED_IN') {
+            toast.success('Successfully signed in!');
+          }
+        } else {
+          setUser(null);
+          setLoading(false);
+          
+          if (event === 'SIGNED_OUT') {
+            toast.success('Successfully signed out!');
+          }
+        }
+      }
+    );
+
     return () => subscription.unsubscribe();
   }, []);
 
+  const loadUserProfile = async (authUser: User) => {
+    try {
+      // Get or create user profile
+      const { data: profile, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', authUser.id)
+        .single();
+
+      if (error && error.code === 'PGRST116') {
+        // Profile doesn't exist, create it
+        const newProfile = {
+          user_id: authUser.id,
+          email: authUser.email || '',
+          full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
+          role: 'customer' as const,
+          is_broker: false,
+          broker_category_discounts: {}
+        };
+
+        const { data: createdProfile, error: createError } = await supabase
+          .from('user_profiles')
+          .insert(newProfile)
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Error creating user profile:', createError);
+          setUser({ ...authUser, profile: undefined });
+        } else {
+          setUser({ 
+            ...authUser, 
+            profile: {
+              ...createdProfile,
+              broker_category_discounts: createdProfile.broker_category_discounts || {}
+            }
+          });
+        }
+      } else if (error) {
+        console.error('Error fetching user profile:', error);
+        setUser({ ...authUser, profile: undefined });
+      } else {
+        setUser({ 
+          ...authUser, 
+          profile: {
+            ...profile,
+            broker_category_discounts: profile.broker_category_discounts || {}
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+      setUser({ ...authUser, profile: undefined });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { error: null };
+    } catch (error) {
+      return { error: 'An unexpected error occurred' };
+    }
+  };
+
+  const signUp = async (email: string, password: string, userData?: { firstName?: string; lastName?: string }) => {
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            full_name: userData ? `${userData.firstName} ${userData.lastName}`.trim() : undefined,
+            first_name: userData?.firstName,
+            last_name: userData?.lastName
+          }
+        },
+      });
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      toast.success('Check your email to confirm your account!');
+      return { error: null };
+    } catch (error) {
+      return { error: 'An unexpected error occurred' };
+    }
+  };
+
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast.error('Error signing out');
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      toast.success('Password reset email sent!');
+      return { error: null };
+    } catch (error) {
+      return { error: 'An unexpected error occurred' };
+    }
+  };
+
+  const signInWithMagicLink = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`
+        }
+      });
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { error: null };
+    } catch (error) {
+      return { error: 'An unexpected error occurred' };
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`
+        }
+      });
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { error: null };
+    } catch (error) {
+      return { error: 'An unexpected error occurred' };
+    }
+  };
+
+  const value: AuthContextType = {
+    user,
+    session,
+    isAuthenticated: !!user,
+    loading,
+    signIn,
+    signUp,
+    signOut,
+    resetPassword,
+    signInWithMagicLink,
+    signInWithGoogle,
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

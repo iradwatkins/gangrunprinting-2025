@@ -3,7 +3,7 @@
 -- Customer profiles table (extends user_profiles)
 CREATE TABLE customer_profiles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
     customer_status VARCHAR(20) DEFAULT 'active' CHECK (customer_status IN ('active', 'inactive', 'prospect', 'churned')),
     lifecycle_stage VARCHAR(20) DEFAULT 'customer' CHECK (lifecycle_stage IN ('lead', 'customer', 'loyal', 'at_risk', 'lost')),
     customer_value DECIMAL(10,2) DEFAULT 0,
@@ -289,11 +289,12 @@ CREATE POLICY "Allow authenticated users to manage export requests" ON export_re
 CREATE OR REPLACE FUNCTION sync_customer_profile()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- Create or update customer profile when user profile is created/updated
-    INSERT INTO customer_profiles (user_id, acquisition_date)
-    VALUES (NEW.id, NOW())
-    ON CONFLICT (user_id) DO UPDATE SET
-        updated_at = NOW();
+    -- Create customer profile when user profile is created
+    IF TG_OP = 'INSERT' THEN
+        INSERT INTO customer_profiles (user_id, acquisition_date)
+        VALUES (NEW.user_id, NOW())
+        ON CONFLICT (user_id) DO NOTHING;
+    END IF;
     
     RETURN NEW;
 END;
@@ -301,7 +302,7 @@ $$ language 'plpgsql';
 
 -- Create trigger to auto-create customer profiles
 CREATE TRIGGER sync_customer_profile_trigger
-    AFTER INSERT OR UPDATE ON user_profiles
+    AFTER INSERT ON user_profiles
     FOR EACH ROW EXECUTE FUNCTION sync_customer_profile();
 
 -- Create function to update customer metrics

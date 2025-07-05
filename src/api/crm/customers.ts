@@ -60,7 +60,7 @@ export const getCustomerById = async (customerId: string) => {
   return data;
 };
 
-export const updateCustomer = async (customerId: string, updates: any) => {
+export const updateCustomer = async (customerId: string, updates: Record<string, any>) => {
   const { data, error } = await supabase
     .from('customer_profiles')
     .update({
@@ -78,7 +78,7 @@ export const updateCustomer = async (customerId: string, updates: any) => {
   return data;
 };
 
-export const addCustomerNote = async (customerId: string, note: any) => {
+export const addCustomerNote = async (customerId: string, note: Record<string, any>) => {
   const { data, error } = await supabase
     .from('customer_notes')
     .insert({
@@ -97,7 +97,7 @@ export const addCustomerNote = async (customerId: string, note: any) => {
   return data;
 };
 
-export const addCustomerInteraction = async (interaction: any) => {
+export const addCustomerInteraction = async (interaction: Record<string, any>) => {
   const { data, error } = await supabase
     .from('customer_interactions')
     .insert({

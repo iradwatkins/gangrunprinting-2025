@@ -2,7 +2,7 @@ import { useState, useEffect, createContext, useContext, ReactNode } from 'react
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { checkoutApi } from '@/api/checkout';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import type { 
   CheckoutSession,
   CheckoutContextType,

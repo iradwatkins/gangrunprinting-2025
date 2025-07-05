@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useCheckout } from '@/hooks/useCheckout';
 import { useCart } from '@/hooks/useCart';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   MapPin, 
   CreditCard, 
