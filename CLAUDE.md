@@ -7,6 +7,7 @@
 **Active Agent:** **DEV AGENT** - James (Dev)
 **Next Required Action:** Implement Story 1.10 completely before proceeding
 
+
 ### BMad Method Workflow - MUST FOLLOW IN ORDER
 
 1. **PM Agent (John)** → Creates PRD → **Auto-switch to Architect Agent**
