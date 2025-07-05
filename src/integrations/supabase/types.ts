@@ -72,6 +72,411 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_feedback: {
+        Row: {
+          category: string | null
+          comment: string | null
+          created_at: string | null
+          customer_id: string
+          id: string
+          order_id: string | null
+          rating: number
+        }
+        Insert: {
+          category?: string | null
+          comment?: string | null
+          created_at?: string | null
+          customer_id: string
+          id?: string
+          order_id?: string | null
+          rating: number
+        }
+        Update: {
+          category?: string | null
+          comment?: string | null
+          created_at?: string | null
+          customer_id?: string
+          id?: string
+          order_id?: string | null
+          rating?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_feedback_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_feedback_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_interactions: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          customer_id: string
+          description: string | null
+          follow_up_date: string | null
+          id: string
+          interaction_type: string
+          outcome: string | null
+          subject: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          customer_id: string
+          description?: string | null
+          follow_up_date?: string | null
+          id?: string
+          interaction_type: string
+          outcome?: string | null
+          subject: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          customer_id?: string
+          description?: string | null
+          follow_up_date?: string | null
+          id?: string
+          interaction_type?: string
+          outcome?: string | null
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_interactions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_notes: {
+        Row: {
+          content: string
+          created_at: string | null
+          created_by: string | null
+          customer_id: string
+          id: string
+          note_type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          customer_id: string
+          id?: string
+          note_type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          customer_id?: string
+          id?: string
+          note_type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_notes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_profiles: {
+        Row: {
+          acquisition_date: string | null
+          acquisition_source: string | null
+          average_order_value: number | null
+          communication_preferences: Json | null
+          created_at: string | null
+          customer_status: string | null
+          customer_value: number | null
+          id: string
+          last_order_date: string | null
+          lifecycle_stage: string | null
+          lifetime_value: number | null
+          preferred_contact_method: string | null
+          total_orders: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          acquisition_date?: string | null
+          acquisition_source?: string | null
+          average_order_value?: number | null
+          communication_preferences?: Json | null
+          created_at?: string | null
+          customer_status?: string | null
+          customer_value?: number | null
+          id?: string
+          last_order_date?: string | null
+          lifecycle_stage?: string | null
+          lifetime_value?: number | null
+          preferred_contact_method?: string | null
+          total_orders?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          acquisition_date?: string | null
+          acquisition_source?: string | null
+          average_order_value?: number | null
+          communication_preferences?: Json | null
+          created_at?: string | null
+          customer_status?: string | null
+          customer_value?: number | null
+          id?: string
+          last_order_date?: string | null
+          lifecycle_stage?: string | null
+          lifetime_value?: number | null
+          preferred_contact_method?: string | null
+          total_orders?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      customer_segment_assignments: {
+        Row: {
+          created_at: string | null
+          customer_id: string
+          id: string
+          segment_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id: string
+          id?: string
+          segment_id: string
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string
+          id?: string
+          segment_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_segment_assignments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_segment_assignments_segment_id_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "customer_segments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_segments: {
+        Row: {
+          auto_update: boolean | null
+          created_at: string | null
+          criteria: Json
+          customer_count: number | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          auto_update?: boolean | null
+          created_at?: string | null
+          criteria?: Json
+          customer_count?: number | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          auto_update?: boolean | null
+          created_at?: string | null
+          criteria?: Json
+          customer_count?: number | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      customer_tag_assignments: {
+        Row: {
+          created_at: string | null
+          customer_id: string
+          id: string
+          tag_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id: string
+          id?: string
+          tag_id: string
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string
+          id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_tag_assignments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_tag_assignments_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "customer_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_tags: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      email_interactions: {
+        Row: {
+          campaign_id: string | null
+          clicked_at: string | null
+          content: string | null
+          customer_id: string
+          direction: string
+          email_address: string
+          id: string
+          opened_at: string | null
+          replied_at: string | null
+          sent_at: string | null
+          status: string | null
+          subject: string
+          template_id: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          clicked_at?: string | null
+          content?: string | null
+          customer_id: string
+          direction: string
+          email_address: string
+          id?: string
+          opened_at?: string | null
+          replied_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject: string
+          template_id?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          clicked_at?: string | null
+          content?: string | null
+          customer_id?: string
+          direction?: string
+          email_address?: string
+          id?: string
+          opened_at?: string | null
+          replied_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject?: string
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_interactions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      export_requests: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          created_by: string | null
+          export_type: string
+          file_url: string | null
+          filters: Json | null
+          format: string
+          id: string
+          status: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          export_type: string
+          file_url?: string | null
+          filters?: Json | null
+          format: string
+          id?: string
+          status?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          export_type?: string
+          file_url?: string | null
+          filters?: Json | null
+          format?: string
+          id?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
       order_jobs: {
         Row: {
           actual_delivery: string | null
@@ -585,6 +990,69 @@ export type Database = {
           },
         ]
       }
+      support_tickets: {
+        Row: {
+          assigned_to: string | null
+          category: string | null
+          created_at: string | null
+          customer_id: string
+          description: string
+          id: string
+          order_id: string | null
+          priority: string | null
+          resolution: string | null
+          resolved_at: string | null
+          status: string | null
+          subject: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          category?: string | null
+          created_at?: string | null
+          customer_id: string
+          description: string
+          id?: string
+          order_id?: string | null
+          priority?: string | null
+          resolution?: string | null
+          resolved_at?: string | null
+          status?: string | null
+          subject: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string | null
+          created_at?: string | null
+          customer_id?: string
+          description?: string
+          id?: string
+          order_id?: string | null
+          priority?: string | null
+          resolution?: string | null
+          resolved_at?: string | null
+          status?: string | null
+          subject?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       turnaround_times: {
         Row: {
           business_days: number
@@ -695,6 +1163,14 @@ export type Database = {
       generate_reference_number: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      is_admin_user: {
+        Args: { user_email: string }
+        Returns: boolean
+      }
+      update_customer_metrics: {
+        Args: { customer_user_id: string }
+        Returns: undefined
       }
     }
     Enums: {
