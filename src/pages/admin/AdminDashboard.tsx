@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AdminLayout } from '@/components/admin/AdminLayout';
 import { productsApi } from '@/api/products';
 import { categoriesApi } from '@/api/categories';
 import { vendorsApi } from '@/api/vendors';
@@ -126,7 +127,8 @@ export function AdminDashboard() {
   ];
 
   return (
-    <div className="space-y-6">
+    <AdminLayout>
+      <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground">
@@ -298,6 +300,7 @@ export function AdminDashboard() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }

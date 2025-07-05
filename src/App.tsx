@@ -16,12 +16,19 @@ import { AccountDashboard } from "./pages/account/AccountDashboard";
 import { ProfileSettings } from "./pages/account/ProfileSettings";
 import { BrokerApplication } from "./pages/account/BrokerApplication";
 import NotFound from "./pages/NotFound";
+import { AdminDashboard } from "./pages/admin/AdminDashboard";
 import { ProductsPage } from "./pages/admin/ProductsPage";
 import { NewProductPage } from "./pages/admin/NewProductPage";
 import { EditProductPage } from "./pages/admin/EditProductPage";
+import { AnalyticsPage } from "./pages/admin/AnalyticsPage";
+import { AdminOrdersPage } from "./pages/admin/AdminOrdersPage";
+import { AdminEmailPage } from "./pages/admin/AdminEmailPage";
+import { AdminFilesPage } from "./pages/admin/AdminFilesPage";
 import CheckoutSettingsPage from "./pages/admin/CheckoutSettingsPage";
 import FilesPage from "./pages/files/FilesPage";
 import { CRMDashboard } from "./pages/crm/CRMDashboard";
+import EmailDashboard from "./pages/email/EmailDashboard";
+import { OrdersPage } from "./pages/orders/OrdersPage";
 
 const queryClient = new QueryClient();
 
@@ -43,11 +50,16 @@ const App = () => (
               <Route path="/account" element={<AccountDashboard />} />
               <Route path="/account/profile" element={<ProfileSettings />} />
               <Route path="/account/broker-application" element={<BrokerApplication />} />
+              <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/products" element={<ProductsPage />} />
               <Route path="/admin/products/new" element={<NewProductPage />} />
               <Route path="/admin/products/:id/edit" element={<EditProductPage />} />
+              <Route path="/admin/analytics" element={<AnalyticsPage />} />
               <Route path="/admin/checkout-settings" element={<CheckoutSettingsPage />} />
               <Route path="/admin/crm" element={<CRMDashboard />} />
+              <Route path="/admin/orders" element={<AdminOrdersPage />} />
+              <Route path="/admin/email" element={<AdminEmailPage />} />
+              <Route path="/admin/files" element={<AdminFilesPage />} />
               <Route path="/files" element={<FilesPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

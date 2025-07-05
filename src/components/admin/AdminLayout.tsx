@@ -11,7 +11,12 @@ import {
   Menu,
   X,
   Home,
-  Settings
+  Settings,
+  BarChart3,
+  ShoppingCart,
+  Mail,
+  FileText,
+  MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -26,49 +31,39 @@ const navigation = [
     exact: true
   },
   {
+    name: 'Analytics',
+    href: '/admin/analytics',
+    icon: BarChart3
+  },
+  {
     name: 'Products',
     href: '/admin/products',
     icon: Package,
     badge: 'Core'
   },
   {
-    name: 'Categories',
-    href: '/admin/categories',
-    icon: Tags,
-    badge: 'Core'
+    name: 'Orders',
+    href: '/admin/orders',
+    icon: ShoppingCart
   },
   {
-    name: 'Vendors',
-    href: '/admin/vendors',
-    icon: Truck
+    name: 'CRM',
+    href: '/admin/crm',
+    icon: MessageSquare
   },
   {
-    name: 'Paper Stocks',
-    href: '/admin/paper-stocks',
-    icon: Palette,
-    badge: 'Global'
+    name: 'Email Marketing',
+    href: '/admin/email',
+    icon: Mail
   },
   {
-    name: 'Print Sizes',
-    href: '/admin/print-sizes',
-    icon: Ruler,
-    badge: 'Global'
-  },
-  {
-    name: 'Turnaround Times',
-    href: '/admin/turnaround-times',
-    icon: Clock,
-    badge: 'Global'
-  },
-  {
-    name: 'Add-ons',
-    href: '/admin/add-ons',
-    icon: Plus,
-    badge: 'Global'
+    name: 'Files',
+    href: '/admin/files',
+    icon: FileText
   },
   {
     name: 'Settings',
-    href: '/admin/settings',
+    href: '/admin/checkout-settings',
     icon: Settings
   }
 ];
