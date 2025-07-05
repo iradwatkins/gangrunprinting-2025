@@ -3,9 +3,9 @@
 ## BMad Method Auto-Workflow - STRICT ADHERENCE REQUIRED
 
 **Current Phase:** 🔄 **DEV AGENT IMPLEMENTATION**
-**Current Story:** 1.5 - User Authentication and Account Management  
+**Current Story:** 1.9 - Broker Discount System and Pricing Engine  
 **Active Agent:** **DEV AGENT** - James (Dev)
-**Next Required Action:** Implement Story 1.5 completely before proceeding
+**Next Required Action:** Implement Story 1.9 completely before proceeding
 
 ### BMad Method Workflow - MUST FOLLOW IN ORDER
 
@@ -31,15 +31,15 @@
 - ✅ **Dev Agent (James)** - Story 1.8 Complete (Order Management and Status Tracking)
 
 **🔄 CURRENT ACTIVE PHASE:**
-- **Dev Agent (James)** - Story 1.9 Implementation (Vendor Integration and Job Routing)
+- **Dev Agent (James)** - Story 1.9 Implementation (Broker Discount System and Pricing Engine)
 
 **📋 STORY IMPLEMENTATION CHECKLIST - Story 1.9:**
-- [ ] Implement vendor management and integration system
-- [ ] Create automatic job routing and assignment logic
-- [ ] Build vendor communication interfaces
-- [ ] Implement production status tracking from vendors
-- [ ] Create vendor performance monitoring
-- [ ] Build vendor onboarding and setup tools
+- [ ] Implement broker account identification and discount application
+- [ ] Create category-specific discount configuration in admin
+- [ ] Build volume-based pricing tiers and calculations
+- [ ] Implement broker-specific pricing display throughout platform
+- [ ] Create broker dashboard with pricing summaries and order history
+- [ ] Build admin interface for managing broker accounts and discounts
 - [ ] Update story file with completion status
 - [ ] Mark story as complete before proceeding
 
@@ -60,4 +60,4 @@
 5. **ALWAYS update this CLAUDE.md** file with current status
 6. **FOLLOW BMad workflow sequence** - no exceptions
 
-**🚨 CRITICAL: I am currently operating as DEV AGENT (James) and must implement Story 1.8 completely**
+**🚨 CRITICAL: I am currently operating as DEV AGENT (James) and must implement Story 1.9 completely**
