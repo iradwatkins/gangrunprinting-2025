@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { getCurrentUser } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { ApiResponse, handleApiError } from '@/lib/errors';
 import { 
   CartItem, 
@@ -98,7 +98,7 @@ class CartApi {
 
   async getCart(): Promise<ApiResponse<CartState>> {
     try {
-      const user = await getCurrentUser();
+      const user = await auth.getCurrentUser();
       const sessionId = this.getSessionId();
 
       // Try to get cart from localStorage first for immediate response

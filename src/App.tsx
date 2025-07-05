@@ -8,7 +8,7 @@ import { FloatingCart } from "@/components/cart/FloatingCart";
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import { ProductCatalog } from "./pages/ProductCatalog";
-import { ProductDetail } from "./pages/ProductDetail";
+import ProductDetail from "./pages/ProductDetail";
 import { Cart } from "./pages/Cart";
 import Checkout from "./pages/checkout/Checkout";
 import { AccountDashboard } from "./pages/account/AccountDashboard";

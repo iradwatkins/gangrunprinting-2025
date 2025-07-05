@@ -1,3 +1,10 @@
+// API Response types
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
 // Error types for the application
 export class AppError extends Error {
   constructor(
@@ -115,6 +122,30 @@ export const validateQuantity = (quantity: number, fieldName: string = 'Quantity
   if (quantity > 10000) {
     throw new ValidationError(`${fieldName} is too high`);
   }
+};
+
+// API error handler utility
+export const handleApiError = <T>(error: unknown, defaultMessage: string = 'An error occurred'): ApiResponse<T> => {
+  console.error('API Error:', error);
+  
+  if (error instanceof AppError) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+
+  if (error instanceof Error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+
+  return {
+    success: false,
+    error: defaultMessage
+  };
 };
 
 // Success response utility

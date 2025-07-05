@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { getCurrentUser } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { ApiResponse, handleApiError } from '@/lib/errors';
 import type { 
   UserProfile, 
@@ -12,7 +12,7 @@ import type {
 class ProfileApi {
   async getProfile(): Promise<ApiResponse<UserProfile | null>> {
     try {
-      const user = await getCurrentUser();
+      const user = await auth.getCurrentUser();
       if (!user) {
         return { success: true, data: null };
       }

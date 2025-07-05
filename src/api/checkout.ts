@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { getCurrentUser } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { ApiResponse, handleApiError } from '@/lib/errors';
 import { 
   CheckoutSession,
@@ -49,7 +49,7 @@ class CheckoutApi {
 
   async createSession(request: CreateCheckoutSessionRequest): Promise<ApiResponse<CheckoutSession>> {
     try {
-      const user = await getCurrentUser();
+      const user = await auth.getCurrentUser();
       const sessionId = this.getSessionId();
       const now = new Date().toISOString();
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours
