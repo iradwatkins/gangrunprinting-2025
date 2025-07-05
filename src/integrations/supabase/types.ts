@@ -42,6 +42,48 @@ export type Database = {
         }
         Relationships: []
       }
+      artwork_files: {
+        Row: {
+          created_at: string | null
+          file_path: string
+          file_size: number
+          id: string
+          mime_type: string
+          original_filename: string
+          preview_url: string | null
+          stored_filename: string
+          updated_at: string | null
+          upload_status: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_path: string
+          file_size: number
+          id?: string
+          mime_type: string
+          original_filename: string
+          preview_url?: string | null
+          stored_filename: string
+          updated_at?: string | null
+          upload_status?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          file_path?: string
+          file_size?: number
+          id?: string
+          mime_type?: string
+          original_filename?: string
+          preview_url?: string | null
+          stored_filename?: string
+          updated_at?: string | null
+          upload_status?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       coatings: {
         Row: {
           created_at: string
