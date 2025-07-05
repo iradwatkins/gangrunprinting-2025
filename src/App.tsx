@@ -21,6 +21,7 @@ import { NewProductPage } from "./pages/admin/NewProductPage";
 import { EditProductPage } from "./pages/admin/EditProductPage";
 import CheckoutSettingsPage from "./pages/admin/CheckoutSettingsPage";
 import FilesPage from "./pages/files/FilesPage";
+import { CRMDashboard } from "./pages/crm/CRMDashboard";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
               <Route path="/admin/products/new" element={<NewProductPage />} />
               <Route path="/admin/products/:id/edit" element={<EditProductPage />} />
               <Route path="/admin/checkout-settings" element={<CheckoutSettingsPage />} />
+              <Route path="/admin/crm" element={<CRMDashboard />} />
               <Route path="/files" element={<FilesPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

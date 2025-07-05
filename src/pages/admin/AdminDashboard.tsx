@@ -7,7 +7,8 @@ import {
   ShoppingCart,
   TrendingUp,
   Users,
-  Plus
+  Plus,
+  MessageSquare
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -90,13 +91,13 @@ export function AdminDashboard() {
       href: '/admin/vendors'
     },
     {
-      title: 'Orders',
+      title: 'CRM & Support',
       value: 0,
-      description: 'Coming soon',
-      icon: ShoppingCart,
+      description: 'Customer management',
+      icon: MessageSquare,
       color: 'text-orange-600',
       bgColor: 'bg-orange-100',
-      href: '#'
+      href: '/admin/crm'
     }
   ];
 
