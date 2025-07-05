@@ -47,6 +47,7 @@ export type Database = {
           created_at: string | null
           file_path: string
           file_size: number
+          file_type: string | null
           id: string
           mime_type: string
           original_filename: string
@@ -55,11 +56,13 @@ export type Database = {
           updated_at: string | null
           upload_status: string | null
           user_id: string
+          validation_status: string | null
         }
         Insert: {
           created_at?: string | null
           file_path: string
           file_size: number
+          file_type?: string | null
           id?: string
           mime_type: string
           original_filename: string
@@ -68,11 +71,13 @@ export type Database = {
           updated_at?: string | null
           upload_status?: string | null
           user_id: string
+          validation_status?: string | null
         }
         Update: {
           created_at?: string | null
           file_path?: string
           file_size?: number
+          file_type?: string | null
           id?: string
           mime_type?: string
           original_filename?: string
@@ -81,6 +86,7 @@ export type Database = {
           updated_at?: string | null
           upload_status?: string | null
           user_id?: string
+          validation_status?: string | null
         }
         Relationships: []
       }
@@ -594,6 +600,41 @@ export type Database = {
             columns: ["vendor_id"]
             isOneToOne: false
             referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_status_history: {
+        Row: {
+          changed_by: string | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          order_id: string
+          status: string
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          order_id: string
+          status: string
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          order_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_status_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
         ]
