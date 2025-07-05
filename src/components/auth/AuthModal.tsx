@@ -102,33 +102,27 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
     }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateLogin()) {
-      signIn({
-        email: loginData.email,
-        password: loginData.password,
-        rememberMe: loginData.rememberMe
-      });
-      onOpenChange(false);
+      const result = await signIn(loginData.email, loginData.password);
+      if (result.error) {
+        setErrors({ login: result.error });
+      } else {
+        onOpenChange(false);
+      }
     }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateRegister()) {
-      signUp({
-        email: registerData.email,
-        password: registerData.password,
-        confirmPassword: registerData.confirmPassword,
-        firstName: registerData.firstName,
-        lastName: registerData.lastName,
-        companyName: registerData.companyName,
-        phone: registerData.phone,
-        acceptTerms: registerData.acceptTerms,
-        marketingOptIn: registerData.marketingOptIn
-      });
-      onOpenChange(false);
+      const result = await signUp(registerData.email, registerData.password);
+      if (result.error) {
+        setErrors({ register: result.error });
+      } else {
+        onOpenChange(false);
+      }
     }
   };
 
@@ -173,6 +167,11 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
 
           {/* Login Tab */}
           <TabsContent value="login" className="space-y-4 mt-6">
+            {errors.login && (
+              <Alert variant="destructive">
+                <AlertDescription>{errors.login}</AlertDescription>
+              </Alert>
+            )}
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="login-email">Email</Label>
@@ -243,6 +242,11 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
 
           {/* Register Tab */}
           <TabsContent value="register" className="space-y-4 mt-6">
+            {errors.register && (
+              <Alert variant="destructive">
+                <AlertDescription>{errors.register}</AlertDescription>
+              </Alert>
+            )}
             <form onSubmit={handleRegister} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
