@@ -338,6 +338,13 @@ export default function Homepage() {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-sm text-gray-400 mb-4 md:mb-0">
               © 2024 GangRun Printing. All rights reserved.
+              {process.env.NODE_ENV === 'development' && (
+                <span className="ml-4">
+                  <a href="/admin" className="text-blue-400 hover:text-blue-300 underline">
+                    Admin Panel (Dev)
+                  </a>
+                </span>
+              )}
             </p>
             <div className="flex space-x-4">
               <Facebook className="h-5 w-5 text-gray-400 hover:text-white cursor-pointer" />
