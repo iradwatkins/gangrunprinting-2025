@@ -11,7 +11,7 @@ import { ProductConfiguration } from '@/components/products/ProductConfiguration
 import { PriceCalculator } from '@/components/products/PriceCalculator';
 import { ProductSpecs } from '@/components/products/ProductSpecs';
 import { AuthModal } from '@/components/auth/AuthModal';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { ShoppingCart, Heart, Share2, User } from 'lucide-react';
 import { toast } from 'sonner';
 

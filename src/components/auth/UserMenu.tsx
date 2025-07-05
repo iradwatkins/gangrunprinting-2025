@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   User, 
@@ -22,30 +21,27 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface UserMenuProps {
   className?: string;
 }
 
 export function UserMenu({ className }: UserMenuProps) {
-  const { user, profile, isBroker, signOut } = useAuth();
+  const { user, signOut } = useAuth();
+  
+  // Check if user has broker privileges
+  const isBroker = user?.profile?.is_broker || false;
 
   if (!user) {
     return null;
   }
 
   const getInitials = () => {
-    if (profile?.first_name && profile?.last_name) {
-      return `${profile.first_name[0]}${profile.last_name[0]}`.toUpperCase();
-    }
     return user.email?.[0]?.toUpperCase() || 'U';
   };
 
   const getDisplayName = () => {
-    if (profile?.first_name && profile?.last_name) {
-      return `${profile.first_name} ${profile.last_name}`;
-    }
     return user.email || 'User';
   };
 
@@ -59,7 +55,6 @@ export function UserMenu({ className }: UserMenuProps) {
         <Button variant="ghost" className={`h-auto p-2 ${className}`}>
           <div className="flex items-center space-x-3">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={profile?.profile_picture_url} />
               <AvatarFallback className="text-xs">
                 {getInitials()}
               </AvatarFallback>
@@ -74,11 +69,6 @@ export function UserMenu({ className }: UserMenuProps) {
                   </Badge>
                 )}
               </div>
-              {profile?.company_name && (
-                <span className="text-xs text-muted-foreground">
-                  {profile.company_name}
-                </span>
-              )}
             </div>
             <ChevronDown className="h-4 w-4 text-muted-foreground" />
           </div>
