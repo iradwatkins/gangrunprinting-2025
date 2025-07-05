@@ -137,6 +137,9 @@ export interface PaymentRecord {
 export interface BrokerRequest {
   id: string;
   user_id: string;
+  company_name: string;
+  business_type: string;
+  annual_volume: string;
   request_type: 'new_application' | 'tier_upgrade' | 'credit_increase';
   status: 'pending' | 'approved' | 'rejected' | 'under_review';
   requested_tier?: BrokerTier;

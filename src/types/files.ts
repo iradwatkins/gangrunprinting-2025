@@ -16,7 +16,7 @@ export interface ArtworkFile {
     dpi?: number;
   };
   color_space?: string;
-  validation_status: 'pending' | 'valid' | 'invalid' | 'needs_review';
+  validation_status: string | null;
   validation_notes?: string;
   preview_url?: string;
   thumbnail_url?: string;

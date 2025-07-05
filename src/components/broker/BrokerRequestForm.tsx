@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useRouter } from 'next/router';
+import { useNavigate } from 'react-router-dom';
 import { useBroker } from '@/hooks/useBroker';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,7 @@ import {
   AlertCircle,
   TrendingUp
 } from 'lucide-react';
-import type { BrokerApplicationRequest } from '@/types/broker';
+import type { BrokerApplicationRequest } from '@/types/auth';
 
 interface BrokerRequestFormProps {
   onSuccess?: () => void;
@@ -28,7 +28,7 @@ interface BrokerRequestFormProps {
 }
 
 export function BrokerRequestForm({ onSuccess, onCancel }: BrokerRequestFormProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { applyForBrokerStatus } = useBroker();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -77,7 +77,7 @@ export function BrokerRequestForm({ onSuccess, onCancel }: BrokerRequestFormProp
       setFormData(prev => ({
         ...prev,
         [parent]: {
-          ...prev[parent as keyof BrokerApplicationRequest],
+          ...(prev[parent as keyof BrokerApplicationRequest] as any),
           [child]: value
         }
       }));
@@ -133,7 +133,7 @@ export function BrokerRequestForm({ onSuccess, onCancel }: BrokerRequestFormProp
       if (onSuccess) {
         onSuccess();
       } else {
-        router.push('/broker/dashboard');
+        navigate('/broker/dashboard');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit application');

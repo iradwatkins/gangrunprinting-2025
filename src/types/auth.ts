@@ -31,10 +31,18 @@ export interface UserPreferences {
   };
 }
 
-export interface UserProfile extends Tables<'user_profiles'> {
+export interface UserProfile {
+  id: string;
+  user_id: string;
+  is_broker: boolean;
+  broker_category_discounts?: Record<string, any>;
+  company_name?: string;
+  phone?: string;
+  created_at: string;
+  updated_at: string;
   billing_address?: Address;
-  shipping_addresses: Address[];
-  preferences: UserPreferences;
+  shipping_addresses?: Address[];
+  preferences?: UserPreferences;
 }
 
 export interface AuthUser extends User {

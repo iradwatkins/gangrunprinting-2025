@@ -40,7 +40,7 @@ export interface OrderFilter {
 export interface OrderStatusHistory {
   id: string;
   order_id: string;
-  status: OrderStatus;
+  status: string;
   notes?: string;
   created_at: string;
   created_by?: string;
@@ -102,11 +102,10 @@ export interface ProductConfiguration {
 }
 
 export interface ConfigurationDisplay {
-  size: string;
-  paper: string;
-  coating?: string;
-  turnaround: string;
-  add_ons?: string[];
+  paper_stock_name?: string;
+  print_size_name?: string;
+  turnaround_time_name?: string;
+  add_on_names: string[];
 }
 
 export interface OrderJobDetail {

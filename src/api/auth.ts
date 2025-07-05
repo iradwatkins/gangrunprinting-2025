@@ -43,8 +43,6 @@ class AuthApi {
 
       // Create user profile
       const profileResponse = await profileApi.createProfile({
-        first_name: data.firstName,
-        last_name: data.lastName,
         company_name: data.companyName,
         phone: data.phone
       });

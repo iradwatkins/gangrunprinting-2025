@@ -324,7 +324,7 @@ export function OrderReview({ onPrev, onComplete }: OrderReviewProps) {
             <Checkbox 
               id="marketing"
               checked={marketingOptIn}
-              onCheckedChange={setMarketingOptIn}
+              onCheckedChange={(checked) => setMarketingOptIn(checked === true)}
               className="mt-1"
             />
             <Label htmlFor="marketing" className="text-sm leading-relaxed">
