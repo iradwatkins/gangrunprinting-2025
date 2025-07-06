@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { OrderHistory } from '@/components/orders/OrderHistory';
 import { OrderDetail } from '@/components/orders/OrderDetail';
-import { Header } from '@/components/Header';
 import { 
   ArrowLeft, 
   Package, 
@@ -79,7 +78,6 @@ export function AccountOrdersPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
       
       <div className="container mx-auto px-4 py-8">
         <div className="space-y-6">

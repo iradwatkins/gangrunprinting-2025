@@ -3,11 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileUploadZone } from '@/components/files/FileUploadZone';
-import { Header } from '@/components/Header';
 import { useCart } from '@/hooks/useCart';
 import { useAuth } from '@/contexts/AuthContext';
 import { filesApi } from '@/api/files';
-import { Upload, ArrowRight, Skip } from 'lucide-react';
+import { Upload, ArrowRight, SkipForward } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ArtworkFile } from '@/types/files';
 
@@ -92,7 +91,6 @@ export default function UploadArtworkPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
       
       <div className="container mx-auto py-8 px-4">
         <div className="max-w-4xl mx-auto">
@@ -217,7 +215,7 @@ export default function UploadArtworkPage() {
                       className="w-full"
                       size="lg"
                     >
-                      <Skip className="mr-2 w-4 h-4" />
+                      <SkipForward className="mr-2 w-4 h-4" />
                       Skip - Upload Later
                     </Button>
                     <p className="text-xs text-center text-gray-500">

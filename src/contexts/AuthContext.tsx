@@ -42,10 +42,7 @@ interface AuthContextType {
   session: Session | null;
   isAuthenticated: boolean;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
-  signUp: (email: string, password: string, userData?: { firstName?: string; lastName?: string }) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<{ error: string | null }>;
   signInWithMagicLink: (email: string) => Promise<{ error: string | null }>;
   signInWithGoogle: () => Promise<{ error: string | null }>;
 }
@@ -104,11 +101,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error && error.code === 'PGRST116') {
         // Profile doesn't exist, create it
+        const isHardcodedAdmin = authUser.email === 'iradwatkins@gmail.com';
         const newProfile = {
           user_id: authUser.id,
           email: authUser.email || '',
           full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
-          role: 'customer' as const,
+          role: isHardcodedAdmin ? 'admin' as const : 'customer' as const,
           is_broker: false,
           broker_category_discounts: {}
         };
@@ -151,48 +149,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signIn = async (email: string, password: string) => {
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        return { error: error.message };
-      }
-
-      return { error: null };
-    } catch (error) {
-      return { error: 'An unexpected error occurred' };
-    }
-  };
-
-  const signUp = async (email: string, password: string, userData?: { firstName?: string; lastName?: string }) => {
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            full_name: userData ? `${userData.firstName} ${userData.lastName}`.trim() : undefined,
-            first_name: userData?.firstName,
-            last_name: userData?.lastName
-          }
-        },
-      });
-
-      if (error) {
-        return { error: error.message };
-      }
-
-      toast.success('Check your email to confirm your account!');
-      return { error: null };
-    } catch (error) {
-      return { error: 'An unexpected error occurred' };
-    }
-  };
 
   const signOut = async () => {
     try {
@@ -204,22 +160,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const resetPassword = async (email: string) => {
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-
-      if (error) {
-        return { error: error.message };
-      }
-
-      toast.success('Password reset email sent!');
-      return { error: null };
-    } catch (error) {
-      return { error: 'An unexpected error occurred' };
-    }
-  };
 
   const signInWithMagicLink = async (email: string) => {
     try {
@@ -264,10 +204,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     session,
     isAuthenticated: !!user,
     loading,
-    signIn,
-    signUp,
     signOut,
-    resetPassword,
     signInWithMagicLink,
     signInWithGoogle,
   };
