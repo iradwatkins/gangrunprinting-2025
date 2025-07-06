@@ -59,7 +59,7 @@ export function UserButton() {
         <DropdownMenuItem asChild>
           <Link to="/account">
             <LayoutDashboard className="mr-2 h-4 w-4" />
-            Dashboard
+            {isAdminMode ? 'Admin Dashboard' : 'Dashboard'}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
@@ -83,14 +83,6 @@ export function UserButton() {
               )}
               {isAdminMode ? 'Switch to Customer Mode' : 'Switch to Admin Mode'}
             </DropdownMenuItem>
-            {isAdminMode && (
-              <DropdownMenuItem asChild>
-                <Link to="/admin">
-                  <Shield className="mr-2 h-4 w-4" />
-                  Admin Panel
-                </Link>
-              </DropdownMenuItem>
-            )}
           </>
         )}
         <DropdownMenuSeparator />

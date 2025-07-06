@@ -15,6 +15,7 @@ import { Cart } from "./pages/Cart";
 import Checkout from "./pages/checkout/Checkout";
 import OrderConfirmation from "./pages/checkout/OrderConfirmation";
 import { AccountDashboard } from "./pages/account/AccountDashboard";
+import { DashboardRouter } from "./components/DashboardRouter";
 import { ProfileSettings } from "./pages/account/ProfileSettings";
 import { BrokerApplication } from "./pages/account/BrokerApplication";
 import { AccountOrdersPage } from "./pages/account/AccountOrdersPage";
@@ -58,7 +59,7 @@ const App = () => (
               <Route path="/upload-artwork" element={<UploadArtworkPage />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/checkout/confirmation/:referenceNumber" element={<OrderConfirmation />} />
-              <Route path="/account" element={<AccountDashboard />} />
+              <Route path="/account" element={<DashboardRouter />} />
               <Route path="/account/profile" element={<ProfileSettings />} />
               <Route path="/account/orders" element={<AccountOrdersPage />} />
               <Route path="/account/broker-application" element={<BrokerApplication />} />

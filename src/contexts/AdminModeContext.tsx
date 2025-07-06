@@ -16,6 +16,13 @@ interface AdminModeProviderProps {
 export function AdminModeProvider({ children, userRole }: AdminModeProviderProps) {
   const [isAdminMode, setIsAdminMode] = useState(() => {
     const saved = localStorage.getItem('adminMode');
+    const canUseAdminMode = userRole === 'admin' || process.env.NODE_ENV === 'development';
+    
+    // If user is admin and no preference is saved, default to admin mode
+    if (canUseAdminMode && saved === null) {
+      return true;
+    }
+    
     return saved === 'true';
   });
 
@@ -36,6 +43,14 @@ export function AdminModeProvider({ children, userRole }: AdminModeProviderProps
       localStorage.setItem('adminMode', 'false');
     }
   }, [canUseAdminMode, isAdminMode]);
+
+  // Set default admin mode for admin users
+  useEffect(() => {
+    if (canUseAdminMode && localStorage.getItem('adminMode') === null) {
+      setIsAdminMode(true);
+      localStorage.setItem('adminMode', 'true');
+    }
+  }, [canUseAdminMode]);
 
   const value: AdminModeContextType = {
     isAdminMode,
