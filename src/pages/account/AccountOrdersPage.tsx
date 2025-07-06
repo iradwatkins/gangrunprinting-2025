@@ -86,11 +86,11 @@ export function AccountOrdersPage() {
             <div>
               <div className="flex items-center space-x-2 mb-2">
                 <Link 
-                  to="/account" 
+                  to="/my-account" 
                   className="text-blue-600 hover:text-blue-800 flex items-center"
                 >
                   <ArrowLeft className="w-4 h-4 mr-1" />
-                  Back to Account
+                  Back to My Account
                 </Link>
               </div>
               <h1 className="text-3xl font-bold">Your Orders</h1>

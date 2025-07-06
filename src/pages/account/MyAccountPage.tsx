@@ -42,7 +42,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useCart } from '@/hooks/useCart';
 
-export function AccountDashboard() {
+export function MyAccountPage() {
   const { user } = useAuth();
   const { addresses, brokerApplication } = useProfile();
   
@@ -74,7 +74,7 @@ export function AccountDashboard() {
       icon: Package,
       title: 'View Orders',
       description: 'Track your order history',
-      href: '/account/orders',
+      href: '/my-account/orders',
       color: 'bg-green-50 text-green-600 border-green-200 hover:bg-green-100 dark:bg-green-950 dark:text-green-400 dark:border-green-800 dark:hover:bg-green-900'
     },
     {
@@ -88,7 +88,7 @@ export function AccountDashboard() {
       icon: User,
       title: 'Account Settings',
       description: 'Update profile & preferences',
-      href: '/account/profile',
+      href: '/my-account/profile',
       color: 'bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100 dark:bg-orange-950 dark:text-orange-400 dark:border-orange-800 dark:hover:bg-orange-900'
     }
   ];
@@ -350,7 +350,7 @@ export function AccountDashboard() {
                     </div>
                   </div>
                   <Button asChild className="w-full mt-4">
-                    <Link to="/account/profile">
+                    <Link to="/my-account/profile">
                       Complete Profile
                       <ArrowRight className="h-4 w-4 ml-2" />
                     </Link>
@@ -414,12 +414,12 @@ export function AccountDashboard() {
               <CardContent className="p-0">
                 <nav className="space-y-1">
                   {[
-                    { icon: User, label: 'Profile Settings', href: '/account/profile' },
-                    { icon: Package, label: 'Order History', href: '/account/orders' },
+                    { icon: User, label: 'Profile Settings', href: '/my-account/profile' },
+                    { icon: Package, label: 'Order History', href: '/my-account/orders' },
                     { icon: FileText, label: 'Upload Files', href: '/upload-artwork' },
-                    { icon: MapPin, label: 'Addresses', href: '/account/addresses' },
-                    { icon: CreditCard, label: 'Payment Methods', href: '/account/payment' },
-                    { icon: Bell, label: 'Notifications', href: '/account/notifications' }
+                    { icon: MapPin, label: 'Addresses', href: '/my-account/addresses' },
+                    { icon: CreditCard, label: 'Payment Methods', href: '/my-account/payment' },
+                    { icon: Bell, label: 'Notifications', href: '/my-account/notifications' }
                   ].map((item, index) => {
                     const Icon = item.icon;
                     return (
@@ -443,7 +443,7 @@ export function AccountDashboard() {
                     <>
                       <Separator className="my-2" />
                       <Link
-                        to="/account/broker-application"
+                        to="/my-account/broker-application"
                         className="flex items-center justify-between px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
                       >
                         <div className="flex items-center space-x-3">

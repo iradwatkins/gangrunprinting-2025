@@ -14,7 +14,7 @@ import ProductDetail from "./pages/ProductDetail";
 import { Cart } from "./pages/Cart";
 import Checkout from "./pages/checkout/Checkout";
 import OrderConfirmation from "./pages/checkout/OrderConfirmation";
-import { AccountDashboard } from "./pages/account/AccountDashboard";
+import { MyAccountPage } from "./pages/account/MyAccountPage";
 import { DashboardRouter } from "./components/DashboardRouter";
 import { ProfileSettings } from "./pages/account/ProfileSettings";
 import { BrokerApplication } from "./pages/account/BrokerApplication";
@@ -60,9 +60,10 @@ const App = () => (
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/checkout/confirmation/:referenceNumber" element={<OrderConfirmation />} />
               <Route path="/account" element={<DashboardRouter />} />
-              <Route path="/account/profile" element={<ProfileSettings />} />
-              <Route path="/account/orders" element={<AccountOrdersPage />} />
-              <Route path="/account/broker-application" element={<BrokerApplication />} />
+              <Route path="/my-account" element={<MyAccountPage />} />
+              <Route path="/my-account/profile" element={<ProfileSettings />} />
+              <Route path="/my-account/orders" element={<AccountOrdersPage />} />
+              <Route path="/my-account/broker-application" element={<BrokerApplication />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/products" element={<ProductsPage />} />
               <Route path="/admin/products/new" element={<NewProductPage />} />

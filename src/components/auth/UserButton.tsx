@@ -13,12 +13,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAdminMode } from '@/contexts/AdminModeContext';
-import { User, LogOut, Settings, Shield, LayoutDashboard, ToggleLeft, ToggleRight } from 'lucide-react';
+import { User, LogOut, Settings, LayoutDashboard } from 'lucide-react';
 
 export function UserButton() {
   const { user, signOut } = useAuth();
-  const { isAdminMode, toggleAdminMode, canUseAdminMode } = useAdminMode();
+  
+  // Check if user can access admin features
+  const canUseAdminMode = user?.profile?.role === 'admin';
 
   if (!user) return null;
 
@@ -44,8 +45,8 @@ export function UserButton() {
             <div className="flex items-center gap-2">
               <p className="font-medium">{user.email}</p>
               {canUseAdminMode && (
-                <Badge variant={isAdminMode ? "destructive" : "secondary"} className="text-xs">
-                  {isAdminMode ? 'Admin' : 'Customer'}
+                <Badge variant="secondary" className="text-xs">
+                  Admin
                 </Badge>
               )}
             </div>
@@ -57,13 +58,13 @@ export function UserButton() {
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link to="/account">
+          <Link to={canUseAdminMode ? '/admin' : '/my-account'}>
             <LayoutDashboard className="mr-2 h-4 w-4" />
-            {isAdminMode ? 'Admin Dashboard' : 'Dashboard'}
+            {canUseAdminMode ? 'Admin Dashboard' : 'My Account'}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link to="/account/profile">
+          <Link to="/my-account/profile">
             <User className="mr-2 h-4 w-4" />
             Profile
           </Link>
@@ -72,16 +73,14 @@ export function UserButton() {
           <Settings className="mr-2 h-4 w-4" />
           Settings
         </DropdownMenuItem>
-        {canUseAdminMode && (
+{canUseAdminMode && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={toggleAdminMode}>
-              {isAdminMode ? (
-                <ToggleRight className="mr-2 h-4 w-4 text-red-600" />
-              ) : (
-                <ToggleLeft className="mr-2 h-4 w-4 text-gray-400" />
-              )}
-              {isAdminMode ? 'Switch to Customer Mode' : 'Switch to Admin Mode'}
+            <DropdownMenuItem asChild>
+              <Link to="/my-account">
+                <User className="mr-2 h-4 w-4" />
+                View as Customer
+              </Link>
             </DropdownMenuItem>
           </>
         )}
