@@ -1,5 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -33,6 +35,9 @@ import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserButton } from '@/components/auth/UserButton';
+import { categoriesApi } from '@/api/categories';
+import { productsApi } from '@/api/products';
+import type { Tables } from '@/integrations/supabase/types';
 
 const HeroCarousel = () => {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [Autoplay()]);
@@ -83,9 +88,11 @@ const HeroCarousel = () => {
                       {slide.description}
                     </p>
                     <div className="space-x-4">
-                      <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50">
-                        Shop Now
-                      </Button>
+                      <Link to="/products">
+                        <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50">
+                          Shop Now
+                        </Button>
+                      </Link>
                       <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
                         Get Quote
                       </Button>
@@ -118,18 +125,58 @@ export default function Homepage() {
   const { user, isLoading } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
-  const productCategories = [
-    { name: 'Business Cards', icon: CreditCard, color: 'text-blue-600' },
-    { name: 'Flyers', icon: FileText, color: 'text-green-600' },
-    { name: 'Postcards', icon: MailIcon, color: 'text-purple-600' },
-    { name: 'Posters', icon: Image, color: 'text-red-600' },
-    { name: 'Banners', icon: Megaphone, color: 'text-yellow-600' },
-    { name: 'Brochures', icon: FileText, color: 'text-indigo-600' },
-    { name: 'Calendars', icon: Calendar, color: 'text-pink-600' },
-    { name: 'Stickers', icon: Award, color: 'text-teal-600' },
-    { name: 'Labels', icon: Package, color: 'text-orange-600' },
-    { name: 'Booklets', icon: Printer, color: 'text-gray-600' }
-  ];
+  // Load real categories from database
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories', 'active'],
+    queryFn: async () => {
+      const response = await categoriesApi.getCategories({ is_active: true });
+      return response.data || [];
+    }
+  });
+
+  // Load featured products
+  const { data: featuredProducts = [] } = useQuery({
+    queryKey: ['products', 'featured'],
+    queryFn: async () => {
+      const response = await productsApi.getProducts({ 
+        is_active: true, 
+        limit: 6 
+      });
+      return response.data || [];
+    }
+  });
+
+  // Icon mapping for categories
+  const getIconForCategory = (categoryName: string) => {
+    const name = categoryName.toLowerCase();
+    if (name.includes('business') || name.includes('card')) return CreditCard;
+    if (name.includes('flyer')) return FileText;
+    if (name.includes('postcard')) return MailIcon;
+    if (name.includes('poster')) return Image;
+    if (name.includes('banner')) return Megaphone;
+    if (name.includes('brochure')) return FileText;
+    if (name.includes('calendar')) return Calendar;
+    if (name.includes('sticker')) return Award;
+    if (name.includes('label')) return Package;
+    if (name.includes('booklet')) return Printer;
+    return Package; // Default icon
+  };
+
+  const getColorForCategory = (index: number) => {
+    const colors = [
+      'text-blue-600',
+      'text-green-600', 
+      'text-purple-600',
+      'text-red-600',
+      'text-yellow-600',
+      'text-indigo-600',
+      'text-pink-600',
+      'text-teal-600',
+      'text-orange-600',
+      'text-gray-600'
+    ];
+    return colors[index % colors.length];
+  };
 
   const valueProps = [
     {
@@ -214,15 +261,22 @@ export default function Homepage() {
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-            {productCategories.map((category, index) => {
-              const IconComponent = category.icon;
+            {categories.map((category, index) => {
+              const IconComponent = getIconForCategory(category.name);
+              const color = getColorForCategory(index);
               return (
-                <Card key={index} className="group hover:shadow-lg transition-shadow cursor-pointer">
-                  <CardContent className="p-6 text-center">
-                    <IconComponent className={`h-12 w-12 mx-auto mb-4 ${category.color} group-hover:scale-110 transition-transform`} />
-                    <h3 className="font-semibold text-gray-900">{category.name}</h3>
-                  </CardContent>
-                </Card>
+                <Link 
+                  key={category.id} 
+                  to={`/products?category=${category.slug}`}
+                  className="group"
+                >
+                  <Card className="group-hover:shadow-lg transition-shadow cursor-pointer">
+                    <CardContent className="p-6 text-center">
+                      <IconComponent className={`h-12 w-12 mx-auto mb-4 ${color} group-hover:scale-110 transition-transform`} />
+                      <h3 className="font-semibold text-gray-900">{category.name}</h3>
+                    </CardContent>
+                  </Card>
+                </Link>
               );
             })}
           </div>
