@@ -298,23 +298,36 @@ class CheckoutApi {
       const now = new Date().toISOString();
       const reference_number = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
 
-      const order_jobs = session.cart_items.map(item => ({
-        product_id: item.product_id,
-        product_name: item.product_name,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-        total_price: item.total_price,
-        configuration: item.configuration,
-        configuration_display: item.configuration_display,
-        status: 'pending' as const,
-        estimated_completion_date: undefined
-      }));
+      // Check for uploaded files for each cart item
+      const uploadedFiles = JSON.parse(localStorage.getItem('cart_uploaded_files') || '{}');
+      
+      const order_jobs = session.cart_items.map(item => {
+        const itemFiles = uploadedFiles[item.id] || [];
+        const hasFiles = itemFiles.length > 0;
+        
+        return {
+          product_id: item.product_id,
+          product_name: item.product_name,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          total_price: item.total_price,
+          configuration: item.configuration,
+          configuration_display: item.configuration_display,
+          status: hasFiles ? 'pending' : 'on_hold_awaiting_files' as const,
+          uploaded_files: itemFiles,
+          estimated_completion_date: undefined
+        };
+      });
+
+      // Determine overall order status based on files
+      const hasAllFiles = order_jobs.every(job => job.uploaded_files && job.uploaded_files.length > 0);
+      const orderStatus = hasAllFiles ? 'pending_payment' : 'on_hold_awaiting_files';
 
       const order: OrderCreationData = {
         user_id: session.user_id,
         session_id: session.session_id,
         reference_number,
-        status: 'pending_payment',
+        status: orderStatus,
         subtotal: session.subtotal,
         tax_amount: session.tax_amount,
         shipping_cost: session.shipping_cost,
@@ -324,12 +337,16 @@ class CheckoutApi {
         billing_address: session.billing_address,
         payment_method: session.payment_method.type,
         payment_status: 'pending',
-        order_jobs
+        order_jobs,
+        notes: hasAllFiles ? undefined : 'Order on hold - awaiting customer artwork files'
       };
 
       // In a real implementation, this would save to the database
       // For now, we'll store in localStorage
       localStorage.setItem(`order_${reference_number}`, JSON.stringify(order));
+
+      // Clear uploaded files from localStorage since they're now part of the order
+      localStorage.removeItem('cart_uploaded_files');
 
       return { success: true, data: order };
     } catch (error) {

@@ -38,6 +38,8 @@ export interface CartItem {
   added_at: string;
   updated_at: string;
   validation_errors?: string[];
+  uploaded_files?: string[]; // Array of file IDs
+  has_required_files: boolean;
 }
 
 export interface CartState {

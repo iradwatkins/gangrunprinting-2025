@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { FloatingCart } from "@/components/cart/FloatingCart";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import Index from "./pages/Index";
 import { ProductCatalog } from "./pages/ProductCatalog";
 import ProductDetail from "./pages/ProductDetail";
@@ -15,6 +16,7 @@ import OrderConfirmation from "./pages/checkout/OrderConfirmation";
 import { AccountDashboard } from "./pages/account/AccountDashboard";
 import { ProfileSettings } from "./pages/account/ProfileSettings";
 import { BrokerApplication } from "./pages/account/BrokerApplication";
+import { AccountOrdersPage } from "./pages/account/AccountOrdersPage";
 import NotFound from "./pages/NotFound";
 import { AdminDashboard } from "./pages/admin/AdminDashboard";
 import { ProductsPage } from "./pages/admin/ProductsPage";
@@ -29,6 +31,7 @@ import { CategoriesPage } from "./pages/admin/CategoriesPage";
 import { VendorsPage } from "./pages/admin/VendorsPage";
 import CheckoutSettingsPage from "./pages/admin/CheckoutSettingsPage";
 import FilesPage from "./pages/files/FilesPage";
+import UploadArtworkPage from "./pages/UploadArtworkPage";
 import { CRMDashboard } from "./pages/crm/CRMDashboard";
 import EmailDashboard from "./pages/email/EmailDashboard";
 import { OrdersPage } from "./pages/orders/OrdersPage";
@@ -37,8 +40,9 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
@@ -48,10 +52,12 @@ const App = () => (
               <Route path="/products" element={<ProductCatalog />} />
               <Route path="/products/:slug" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
+              <Route path="/upload-artwork" element={<UploadArtworkPage />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/checkout/confirmation/:referenceNumber" element={<OrderConfirmation />} />
               <Route path="/account" element={<AccountDashboard />} />
               <Route path="/account/profile" element={<ProfileSettings />} />
+              <Route path="/account/orders" element={<AccountOrdersPage />} />
               <Route path="/account/broker-application" element={<BrokerApplication />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/products" element={<ProductsPage />} />
@@ -77,8 +83,9 @@ const App = () => (
             </div>
           </div>
         </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
+        </TooltipProvider>
+      </AuthProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { OrderStatusTracker } from './OrderStatusTracker';
 import { OrderJobCard } from './OrderJobCard';
 import { ReorderInterface } from './ReorderInterface';
+import { OrderFilesPanel } from '@/components/admin/OrderFilesPanel';
 import { OrderPDFGenerator } from '@/utils/pdf/orderPDF';
 import { 
   Package, 
@@ -18,7 +19,8 @@ import {
   Edit3,
   Save,
   X,
-  RefreshCw
+  RefreshCw,
+  Files
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -33,6 +35,7 @@ export const OrderDetail: React.FC<OrderDetailProps> = ({ orderId, onBack }) => 
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
+  const [showFilesPanel, setShowFilesPanel] = useState(false);
   const { toast } = useToast();
 
   const handleEditNotes = () => {
@@ -113,6 +116,7 @@ export const OrderDetail: React.FC<OrderDetailProps> = ({ orderId, onBack }) => 
       case 'delivered': return 'bg-green-100 text-green-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
       case 'refunded': return 'bg-red-100 text-red-800';
+      case 'on_hold_awaiting_files': return 'bg-orange-100 text-orange-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -183,6 +187,14 @@ export const OrderDetail: React.FC<OrderDetailProps> = ({ orderId, onBack }) => 
               Order {order.reference_number}
             </CardTitle>
             <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowFilesPanel(true)}
+              >
+                <Files className="w-4 h-4 mr-2" />
+                Files
+              </Button>
               <Badge className={getStatusColor(order.status)}>
                 {formatStatus(order.status)}
               </Badge>
@@ -381,6 +393,21 @@ export const OrderDetail: React.FC<OrderDetailProps> = ({ orderId, onBack }) => 
           Download Receipt
         </Button>
       </div>
+
+      {/* Files Panel Overlay */}
+      {showFilesPanel && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-end">
+          <div className="w-full max-w-md bg-white h-full shadow-xl">
+            <OrderFilesPanel
+              orderId={order.id}
+              orderStatus={order.status}
+              jobs={order.jobs || []}
+              files={[]} // In real implementation, this would come from order data or API
+              onClose={() => setShowFilesPanel(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

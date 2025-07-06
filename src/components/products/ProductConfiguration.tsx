@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { Calculator, Package, Palette, Ruler, Clock, Plus, ShoppingCart, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -68,6 +69,7 @@ export function ProductConfiguration({ product }: ProductConfigurationProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const { addToCart, isAddingToCart } = useCart();
+  const navigate = useNavigate();
 
   // Load available coatings for selected paper stock
   const { data: availableCoatings = [] } = useQuery({
@@ -299,20 +301,40 @@ export function ProductConfiguration({ product }: ProductConfigurationProps) {
     }
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (validateConfiguration()) {
-      addToCart({
-        product_id: product.id,
-        quantity: configuration.quantity,
-        configuration: {
-          paper_stock_id: configuration.paper_stock_id,
-          print_size_id: configuration.print_size_id,
-          coating_id: configuration.coating_id,
-          turnaround_time_id: configuration.turnaround_time_id,
-          add_on_ids: configuration.add_on_ids,
-          notes: configuration.notes
-        }
-      });
+      try {
+        // Add to cart with custom implementation
+        await new Promise<void>((resolve, reject) => {
+          addToCart({
+            product_id: product.id,
+            quantity: configuration.quantity,
+            configuration: {
+              paper_stock_id: configuration.paper_stock_id,
+              print_size_id: configuration.print_size_id,
+              coating_id: configuration.coating_id,
+              turnaround_time_id: configuration.turnaround_time_id,
+              add_on_ids: configuration.add_on_ids,
+              notes: configuration.notes
+            }
+          });
+          
+          // Give the mutation a moment to complete
+          setTimeout(() => {
+            resolve();
+          }, 500);
+        });
+
+        // Navigate to upload page after successful add to cart
+        navigate('/upload-artwork');
+      } catch (error) {
+        console.error('Failed to add to cart:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to add item to cart',
+          variant: 'destructive'
+        });
+      }
     }
   };
 

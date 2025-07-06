@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle, Download, Mail, Package, Truck, User, Home, ShoppingBag } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CheckCircle, Download, Mail, Package, Truck, User, Home, ShoppingBag, Upload, AlertTriangle, Image as ImageIcon } from 'lucide-react';
 
 // Mock order data - in a real app, this would come from an API
 const mockOrderData = {
@@ -54,17 +55,61 @@ const mockOrderData = {
 
 export default function OrderConfirmation() {
   const { referenceNumber } = useParams();
-  const [order, setOrder] = useState(mockOrderData);
+  const [order, setOrder] = useState(null);
   const [emailSent, setEmailSent] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Load actual order data from localStorage
+    const loadOrder = () => {
+      if (referenceNumber) {
+        const orderData = localStorage.getItem(`order_${referenceNumber}`);
+        if (orderData) {
+          setOrder(JSON.parse(orderData));
+        } else {
+          // Fallback to mock data if order not found
+          setOrder({...mockOrderData, reference_number: referenceNumber});
+        }
+      } else {
+        setOrder(mockOrderData);
+      }
+      setLoading(false);
+    };
+
+    loadOrder();
+
     // Simulate email confirmation
     const timer = setTimeout(() => {
       setEmailSent(true);
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [referenceNumber]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p>Loading order confirmation...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Order Not Found</h1>
+          <p className="text-gray-600 mb-6">We couldn't find an order with that reference number.</p>
+          <Link to="/">
+            <Button>Return to Home</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const formatEstimatedDelivery = (dateString: string) => {
     const date = new Date(dateString);
@@ -135,6 +180,29 @@ export default function OrderConfirmation() {
           </CardContent>
         </Card>
 
+        {/* Order Status Alert */}
+        {order.status === 'on_hold_awaiting_files' && (
+          <Alert className="mb-8 border-orange-200 bg-orange-50">
+            <AlertTriangle className="h-4 w-4 text-orange-600" />
+            <AlertDescription className="text-orange-800">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Order on Hold - Artwork Files Required</p>
+                  <p className="text-sm">
+                    Your order is waiting for artwork files. Please upload your design files to begin production.
+                  </p>
+                </div>
+                <Link to="/account">
+                  <Button size="sm" variant="outline" className="ml-4">
+                    <Upload className="w-3 h-3 mr-1" />
+                    Upload Files Now
+                  </Button>
+                </Link>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Order Details */}
           <div className="space-y-6">
@@ -148,31 +216,71 @@ export default function OrderConfirmation() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {order.items.map((item) => (
-                    <div key={item.id} className="flex justify-between items-start p-4 border rounded-lg">
-                      <div className="flex-1">
-                        <h4 className="font-medium">{item.product_name}</h4>
-                        <p className="text-sm text-gray-600 mt-1">
-                          Quantity: {item.quantity.toLocaleString()}
-                        </p>
-                        <div className="text-sm text-gray-600 mt-1 space-y-1">
-                          {item.configuration_display.paper_stock_name && (
-                            <p>Paper: {item.configuration_display.paper_stock_name}</p>
-                          )}
-                          {item.configuration_display.print_size_name && (
-                            <p>Size: {item.configuration_display.print_size_name}</p>
-                          )}
-                          {item.configuration_display.turnaround_time_name && (
-                            <p>Turnaround: {item.configuration_display.turnaround_time_name}</p>
-                          )}
+                  {(order.order_jobs || order.items || []).map((item) => (
+                    <div key={item.id} className="p-4 border rounded-lg">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1">
+                          <h4 className="font-medium">{item.product_name}</h4>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Quantity: {item.quantity.toLocaleString()}
+                          </p>
+                          <div className="text-sm text-gray-600 mt-1 space-y-1">
+                            {item.configuration_display?.paper_stock_name && (
+                              <p>Paper: {item.configuration_display.paper_stock_name}</p>
+                            )}
+                            {item.configuration_display?.print_size_name && (
+                              <p>Size: {item.configuration_display.print_size_name}</p>
+                            )}
+                            {item.configuration_display?.turnaround_time_name && (
+                              <p>Turnaround: {item.configuration_display.turnaround_time_name}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">${item.total_price.toFixed(2)}</p>
+                          <p className="text-sm text-gray-600">
+                            ${item.unit_price.toFixed(3)} each
+                          </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-semibold">${item.total_price.toFixed(2)}</p>
-                        <p className="text-sm text-gray-600">
-                          ${item.unit_price.toFixed(3)} each
-                        </p>
-                      </div>
+
+                      {/* File Upload Status */}
+                      {item.uploaded_files && item.uploaded_files.length > 0 ? (
+                        <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <CheckCircle className="w-4 h-4 text-green-600" />
+                            <span className="text-sm font-medium text-green-800">
+                              Artwork Files Uploaded
+                            </span>
+                          </div>
+                          <div className="space-y-1">
+                            {item.uploaded_files.map((fileId, index) => (
+                              <div key={fileId} className="flex items-center space-x-2 text-sm text-green-700">
+                                <ImageIcon className="w-3 h-3" />
+                                <span>File {index + 1} - Ready for printing</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <Alert className="mt-3 border-orange-200 bg-orange-50">
+                          <AlertTriangle className="h-4 w-4 text-orange-600" />
+                          <AlertDescription className="text-orange-800">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium">Order on hold - Awaiting artwork files</p>
+                                <p className="text-sm">Please upload your design files to continue production.</p>
+                              </div>
+                              <Link to="/account">
+                                <Button size="sm" variant="outline" className="ml-4">
+                                  <Upload className="w-3 h-3 mr-1" />
+                                  Upload Files
+                                </Button>
+                              </Link>
+                            </div>
+                          </AlertDescription>
+                        </Alert>
+                      )}
                     </div>
                   ))}
                 </div>

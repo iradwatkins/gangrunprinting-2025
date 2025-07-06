@@ -10,8 +10,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, LogOut, Settings, Shield } from 'lucide-react';
+import { User, LogOut, Settings, Shield, LayoutDashboard } from 'lucide-react';
 
 export function UserButton() {
   const { user, signOut } = useAuth();
@@ -35,17 +36,24 @@ export function UserButton() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
-        <div className="flex items-center justify-start gap-2 p-2">
+        <div className="flex items-center justify-between gap-2 p-2">
           <div className="flex flex-col space-y-1 leading-none">
             <p className="font-medium">{user.email}</p>
             {user.profile?.is_broker && (
               <p className="text-xs text-muted-foreground">Broker Account</p>
             )}
           </div>
+          <ThemeToggle />
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link to="/account">
+            <LayoutDashboard className="mr-2 h-4 w-4" />
+            Dashboard
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/account/profile">
             <User className="mr-2 h-4 w-4" />
             Profile
           </Link>

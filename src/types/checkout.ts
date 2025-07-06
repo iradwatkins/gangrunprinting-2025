@@ -55,7 +55,7 @@ export interface OrderCreationData {
   user_id?: string;
   session_id?: string;
   reference_number: string;
-  status: 'pending_payment' | 'payment_confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status: 'pending_payment' | 'payment_confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'on_hold_awaiting_files';
   subtotal: number;
   tax_amount: number;
   shipping_cost: number;
@@ -69,6 +69,7 @@ export interface OrderCreationData {
   order_jobs: OrderJobCreationData[];
   special_instructions?: string;
   tracking_number?: string;
+  notes?: string;
 }
 
 export interface OrderJobCreationData {
@@ -84,8 +85,9 @@ export interface OrderJobCreationData {
     turnaround_time_name: string;
     add_on_names: string[];
   };
-  status: 'pending' | 'in_production' | 'ready' | 'shipped' | 'completed';
+  status: 'pending' | 'in_production' | 'ready' | 'shipped' | 'completed' | 'on_hold_awaiting_files';
   estimated_completion_date?: string;
+  uploaded_files?: string[]; // Array of file IDs
 }
 
 // Request/Response types

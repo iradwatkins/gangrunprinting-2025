@@ -1,7 +1,8 @@
 import { Database } from '@/integrations/supabase/types';
 
-export type OrderStatus = Database['public']['Enums']['order_status'];
-export type JobStatus = Database['public']['Enums']['job_status'];
+// Extend the database enum with our custom status
+export type OrderStatus = Database['public']['Enums']['order_status'] | 'on_hold_awaiting_files';
+export type JobStatus = Database['public']['Enums']['job_status'] | 'on_hold_awaiting_files';
 
 export interface Address {
   street1: string;
