@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -50,6 +51,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,6 +77,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           
           if (event === 'SIGNED_IN') {
             toast.success('Successfully signed in!');
+            // Redirect based on user role after successful login
+            const profile = await getUserProfile(session.user);
+            if (profile?.role === 'admin') {
+              navigate('/admin');
+            } else {
+              navigate('/');
+            }
           }
         } else {
           setUser(null);
@@ -82,13 +91,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           
           if (event === 'SIGNED_OUT') {
             toast.success('Successfully signed out!');
+            // Redirect to home page after logout
+            navigate('/');
           }
         }
       }
     );
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
+
+  // Helper function to get user profile
+  const getUserProfile = async (authUser: User) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', authUser.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching user profile:', error);
+        return null;
+      }
+
+      if (!profile) {
+        // Create profile if it doesn't exist
+        const isHardcodedAdmin = authUser.email === 'iradwatkins@gmail.com';
+        const newProfile = {
+          user_id: authUser.id,
+          email: authUser.email || '',
+          full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
+          role: isHardcodedAdmin ? 'admin' as const : 'customer' as const,
+        };
+
+        const { data: createdProfile } = await supabase
+          .from('user_profiles')
+          .insert(newProfile)
+          .select()
+          .single();
+
+        return createdProfile;
+      }
+
+      return profile;
+    } catch (error) {
+      console.error('Error in getUserProfile:', error);
+      return null;
+    }
+  };
 
   const loadUserProfile = async (authUser: User) => {
     try {
@@ -154,6 +205,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      // Clear any cached state and redirect to home
+      localStorage.removeItem('adminMode');
+      navigate('/');
     } catch (error) {
       console.error('Error signing out:', error);
       toast.error('Error signing out');

@@ -1,17 +1,10 @@
 import React from 'react';
-import { AdminModeProvider } from '@/contexts/AdminModeContext';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface AdminModeWrapperProps {
   children: React.ReactNode;
 }
 
+// Simplified wrapper - no longer needed since we use separate routes
 export function AdminModeWrapper({ children }: AdminModeWrapperProps) {
-  const { user } = useAuth();
-  
-  return (
-    <AdminModeProvider userRole={user?.profile?.role}>
-      {children}
-    </AdminModeProvider>
-  );
+  return <>{children}</>;
 }
