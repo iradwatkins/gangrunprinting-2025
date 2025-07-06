@@ -39,10 +39,15 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { CustomerList } from '@/components/crm/CustomerList';
+import { SupportTickets } from '@/components/crm/SupportTickets';
 import { productsApi } from '@/api/products';
 import { categoriesApi } from '@/api/categories';
 import { vendorsApi } from '@/api/vendors';
+import { useCustomerAnalytics } from '@/hooks/useCrm';
+import type { CustomerProfile } from '@/types/crm';
 
 interface DashboardStats {
   totalProducts: number;
@@ -59,10 +64,29 @@ export function AdminDashboard() {
     totalVendors: 0
   });
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerProfile | null>(null);
+  const { analytics, loading: analyticsLoading } = useCustomerAnalytics();
 
   useEffect(() => {
     loadDashboardStats();
   }, []);
+
+  const handleSelectCustomer = (customer: CustomerProfile) => {
+    setSelectedCustomer(customer);
+    setActiveTab('customers');
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  };
+
+  const formatPercentage = (value: number) => {
+    return `${value.toFixed(1)}%`;
+  };
 
   const loadDashboardStats = async () => {
     setLoading(true);
@@ -101,15 +125,15 @@ export function AdminDashboard() {
       href: '/admin/products'
     },
     {
-      title: 'Total Revenue',
-      value: '$0',
-      change: '+0%',
-      changeType: 'neutral' as const,
+      title: 'Total Customers',
+      value: analytics?.total_customers || 0,
+      change: `+${analytics?.new_customers_this_month || 0}`,
+      changeType: 'positive' as const,
       description: 'This month',
-      icon: DollarSign,
+      icon: Users,
       color: 'text-green-600',
       bgColor: 'bg-green-50 dark:bg-green-950',
-      href: '/admin/analytics'
+      href: '#'
     },
     {
       title: 'Categories',
@@ -145,17 +169,17 @@ export function AdminDashboard() {
       primary: true
     },
     {
-      title: 'View Analytics',
-      description: 'Sales & performance',
-      href: '/admin/analytics',
-      icon: BarChart3,
+      title: 'View Customers',
+      description: 'Manage customer relationships',
+      action: () => setActiveTab('customers'),
+      icon: Users,
       color: 'bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600'
     },
     {
-      title: 'Manage Orders',
-      description: 'Process customer orders',
-      href: '/admin/orders',
-      icon: ShoppingCart,
+      title: 'Support Tickets',
+      description: 'Handle customer support',
+      action: () => setActiveTab('support'),
+      icon: MessageSquare,
       color: 'bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600'
     },
     {
@@ -222,15 +246,15 @@ export function AdminDashboard() {
 
   return (
     <AdminLayout>
-      <div className="space-y-8">
+      <div className="space-y-6">
         {/* Header Section */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-              Dashboard
+              Admin Dashboard
             </h1>
             <p className="text-gray-500 dark:text-gray-400 mt-1">
-              Welcome back! Here's what's happening with your printing business.
+              Complete business management platform with integrated CRM
             </p>
           </div>
           <div className="flex items-center space-x-3">
@@ -247,84 +271,140 @@ export function AdminDashboard() {
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {statCards.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <Card key={index} className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-200 bg-white dark:bg-gray-800">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                        {stat.title}
-                      </p>
-                      <div className="flex items-baseline space-x-2">
-                        <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                          {loading ? (
-                            <Skeleton className="h-8 w-16" />
-                          ) : (
-                            typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value
-                          )}
-                        </p>
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          stat.changeType === 'positive' 
-                            ? 'text-green-700 bg-green-100 dark:text-green-400 dark:bg-green-900' 
-                            : stat.changeType === 'negative'
-                            ? 'text-red-700 bg-red-100 dark:text-red-400 dark:bg-red-900'
-                            : 'text-gray-700 bg-gray-100 dark:text-gray-400 dark:bg-gray-700'
-                        }`}>
-                          {stat.change}
-                        </span>
+        {/* Tabs Navigation */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="dashboard">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="customers">
+              <Users className="w-4 h-4 mr-2" />
+              Customers
+            </TabsTrigger>
+            <TabsTrigger value="support">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Support
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard" className="space-y-6 mt-6">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {statCards.map((stat, index) => {
+                const Icon = stat.icon;
+                return (
+                  <Card key={index} className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-200 bg-white dark:bg-gray-800">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                            {stat.title}
+                          </p>
+                          <div className="flex items-baseline space-x-2">
+                            <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                              {loading || analyticsLoading ? (
+                                <Skeleton className="h-8 w-16" />
+                              ) : (
+                                typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value
+                              )}
+                            </p>
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              stat.changeType === 'positive' 
+                                ? 'text-green-700 bg-green-100 dark:text-green-400 dark:bg-green-900' 
+                                : stat.changeType === 'negative'
+                                ? 'text-red-700 bg-red-100 dark:text-red-400 dark:bg-red-900'
+                                : 'text-gray-700 bg-gray-100 dark:text-gray-400 dark:bg-gray-700'
+                            }`}>
+                              {stat.change}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            {stat.description}
+                          </p>
+                        </div>
+                        <div className={`p-3 rounded-xl ${stat.bgColor}`}>
+                          <Icon className={`h-6 w-6 ${stat.color}`} />
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {stat.description}
-                      </p>
+                      {stat.href !== '#' && (
+                        <Link 
+                          to={stat.href}
+                          className="absolute inset-0 flex items-end justify-end p-4 opacity-0 hover:opacity-100 transition-opacity"
+                        >
+                          <ArrowUpRight className="h-4 w-4 text-gray-400" />
+                        </Link>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* CRM Analytics Section */}
+            {analytics && (
+              <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">
+                    Customer Analytics
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {formatPercentage(analytics.communication_stats?.email_open_rate || 0)}
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Email Open Rate</p>
                     </div>
-                    <div className={`p-3 rounded-xl ${stat.bgColor}`}>
-                      <Icon className={`h-6 w-6 ${stat.color}`} />
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">
+                        {formatCurrency(analytics.average_customer_value || 0)}
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Avg Customer Value</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-purple-600">
+                        {formatPercentage(analytics.churn_rate || 0)}
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Churn Rate</p>
                     </div>
                   </div>
-                  <Link 
-                    to={stat.href}
-                    className="absolute inset-0 flex items-end justify-end p-4 opacity-0 hover:opacity-100 transition-opacity"
-                  >
-                    <ArrowUpRight className="h-4 w-4 text-gray-400" />
-                  </Link>
                 </CardContent>
               </Card>
-            );
-          })}
-        </div>
+            )}
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {quickActions.map((action, index) => {
-            const Icon = action.icon;
-            return (
-              <Link key={index} to={action.href} className="group">
-                <Card className={`h-full transition-all duration-200 hover:shadow-md border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700 ${action.primary ? 'ring-2 ring-blue-100 dark:ring-blue-900 border-blue-200 dark:border-blue-800' : ''} bg-white dark:bg-gray-800`}>
-                  <CardContent className="p-6">
-                    <div className="flex items-center space-x-4">
-                      <div className={`p-3 rounded-lg ${action.color} group-hover:scale-105 transition-transform`}>
-                        <Icon className="h-6 w-6 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                          {action.title}
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                          {action.description}
-                        </p>
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
+            {/* Quick Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {quickActions.map((action, index) => {
+                const Icon = action.icon;
+                const CardWrapper = action.href ? Link : 'div';
+                const cardProps = action.href ? { to: action.href } : {};
+                
+                return (
+                  <CardWrapper key={index} {...cardProps} className="group" onClick={action.action}>
+                    <Card className={`h-full transition-all duration-200 hover:shadow-md border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700 ${action.primary ? 'ring-2 ring-blue-100 dark:ring-blue-900 border-blue-200 dark:border-blue-800' : ''} bg-white dark:bg-gray-800 cursor-pointer`}>
+                      <CardContent className="p-6">
+                        <div className="flex items-center space-x-4">
+                          <div className={`p-3 rounded-lg ${action.color} group-hover:scale-105 transition-transform`}>
+                            <Icon className="h-6 w-6 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                              {action.title}
+                            </h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                              {action.description}
+                            </p>
+                          </div>
+                          <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </CardWrapper>
+                );
+              })}
+            </div>
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
