@@ -24,6 +24,9 @@ import { AnalyticsPage } from "./pages/admin/AnalyticsPage";
 import { AdminOrdersPage } from "./pages/admin/AdminOrdersPage";
 import { AdminEmailPage } from "./pages/admin/AdminEmailPage";
 import { AdminFilesPage } from "./pages/admin/AdminFilesPage";
+import { PaperStocksPage } from "./pages/admin/PaperStocksPage";
+import { CategoriesPage } from "./pages/admin/CategoriesPage";
+import { VendorsPage } from "./pages/admin/VendorsPage";
 import CheckoutSettingsPage from "./pages/admin/CheckoutSettingsPage";
 import FilesPage from "./pages/files/FilesPage";
 import { CRMDashboard } from "./pages/crm/CRMDashboard";
@@ -60,6 +63,9 @@ const App = () => (
               <Route path="/admin/orders" element={<AdminOrdersPage />} />
               <Route path="/admin/email" element={<AdminEmailPage />} />
               <Route path="/admin/files" element={<AdminFilesPage />} />
+              <Route path="/admin/paper-stocks" element={<PaperStocksPage />} />
+              <Route path="/admin/categories" element={<CategoriesPage />} />
+              <Route path="/admin/vendors" element={<VendorsPage />} />
               <Route path="/files" element={<FilesPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

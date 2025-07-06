@@ -42,6 +42,21 @@ const navigation = [
     badge: 'Core'
   },
   {
+    name: 'Paper Stocks',
+    href: '/admin/paper-stocks',
+    icon: Palette
+  },
+  {
+    name: 'Categories',
+    href: '/admin/categories',
+    icon: Tags
+  },
+  {
+    name: 'Vendors',
+    href: '/admin/vendors',
+    icon: Truck
+  },
+  {
     name: 'Orders',
     href: '/admin/orders',
     icon: ShoppingCart

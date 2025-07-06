@@ -16,7 +16,7 @@ export interface ApiResponse<T> {
 
 export interface ProductFilters {
   category_id?: string;
-  vendor_id?: string;
+  vendor_id?: string | null;
   is_active?: boolean;
   search?: string;
   page?: number;
@@ -40,8 +40,12 @@ export const productsApi = {
       if (filters.category_id) {
         query = query.eq('category_id', filters.category_id);
       }
-      if (filters.vendor_id) {
-        query = query.eq('vendor_id', filters.vendor_id);
+      if (filters.vendor_id !== undefined) {
+        if (filters.vendor_id === null) {
+          query = query.is('vendor_id', null);
+        } else {
+          query = query.eq('vendor_id', filters.vendor_id);
+        }
       }
       if (filters.is_active !== undefined) {
         query = query.eq('is_active', filters.is_active);
@@ -108,6 +112,50 @@ export const productsApi = {
           )
         `)
         .eq('id', id)
+        .single();
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data };
+    } catch (error) {
+      return { error: 'Failed to fetch product' };
+    }
+  },
+
+  // Get single product by slug
+  async getProductBySlug(slug: string): Promise<ApiResponse<Tables<'products'>>> {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          product_categories(id, name, slug),
+          vendors(id, name, email),
+          product_paper_stocks(
+            paper_stocks(id, name, weight, price_per_sq_inch),
+            is_default,
+            price_override
+          ),
+          product_print_sizes(
+            print_sizes(id, name, width, height),
+            is_default,
+            price_modifier
+          ),
+          product_turnaround_times(
+            turnaround_times(id, name, business_days, price_markup_percent),
+            is_default,
+            price_override
+          ),
+          product_add_ons(
+            add_ons(id, name, pricing_model, configuration),
+            is_mandatory,
+            price_override
+          )
+        `)
+        .eq('slug', slug)
+        .eq('is_active', true)
         .single();
 
       if (error) {

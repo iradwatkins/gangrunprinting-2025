@@ -153,5 +153,124 @@ export const vendorsApi = {
     } catch (error) {
       return { error: 'Failed to delete vendor' };
     }
+  },
+
+  // Bulk activate/deactivate vendors
+  async bulkUpdateVendors(ids: string[], updates: TablesUpdate<'vendors'>): Promise<ApiResponse<void>> {
+    try {
+      const { error } = await supabase
+        .from('vendors')
+        .update(updates)
+        .in('id', ids);
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data: undefined };
+    } catch (error) {
+      return { error: 'Failed to bulk update vendors' };
+    }
+  },
+
+  // Get vendor performance metrics
+  async getVendorPerformance(vendorId: string): Promise<ApiResponse<any>> {
+    try {
+      // Get order statistics for the vendor
+      const { data: orderStats, error: orderError } = await supabase
+        .from('orders')
+        .select('id, status, total_amount, created_at')
+        .eq('vendor_id', vendorId);
+
+      if (orderError) {
+        return { error: orderError.message };
+      }
+
+      // Calculate performance metrics
+      const totalOrders = orderStats?.length || 0;
+      const completedOrders = orderStats?.filter(o => o.status === 'completed').length || 0;
+      const totalRevenue = orderStats?.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0;
+      const completionRate = totalOrders > 0 ? (completedOrders / totalOrders) * 100 : 0;
+
+      // Get recent orders for trend analysis
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const recentOrders = orderStats?.filter(o => 
+        new Date(o.created_at) >= thirtyDaysAgo
+      ).length || 0;
+
+      return {
+        data: {
+          totalOrders,
+          completedOrders,
+          totalRevenue,
+          completionRate,
+          recentOrders,
+          averageOrderValue: totalOrders > 0 ? totalRevenue / totalOrders : 0
+        }
+      };
+    } catch (error) {
+      return { error: 'Failed to get vendor performance' };
+    }
+  },
+
+  // Get vendors with product assignments
+  async getVendorsWithProducts(): Promise<ApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('vendors')
+        .select(`
+          *,
+          products(id, name, is_active, category_id),
+          _count:products(count)
+        `)
+        .eq('is_active', true)
+        .order('name');
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data: data || [] };
+    } catch (error) {
+      return { error: 'Failed to fetch vendors with products' };
+    }
+  },
+
+  // Assign products to vendor
+  async assignProductsToVendor(vendorId: string, productIds: string[]): Promise<ApiResponse<void>> {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ vendor_id: vendorId })
+        .in('id', productIds);
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data: undefined };
+    } catch (error) {
+      return { error: 'Failed to assign products to vendor' };
+    }
+  },
+
+  // Remove products from vendor
+  async removeProductsFromVendor(productIds: string[]): Promise<ApiResponse<void>> {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ vendor_id: null })
+        .in('id', productIds);
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data: undefined };
+    } catch (error) {
+      return { error: 'Failed to remove products from vendor' };
+    }
   }
 };
