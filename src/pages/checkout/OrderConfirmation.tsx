@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Layout } from '@/components/layout/Layout';
 import { CheckCircle, Download, Mail, Package, Truck, User, Home, ShoppingBag, Upload, AlertTriangle, Image as ImageIcon } from 'lucide-react';
 
 // Mock order data - in a real app, this would come from an API
@@ -88,26 +89,30 @@ export default function OrderConfirmation() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Loading order confirmation...</p>
+      <Layout>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p>Loading order confirmation...</p>
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Order Not Found</h1>
-          <p className="text-gray-600 mb-6">We couldn't find an order with that reference number.</p>
-          <Link to="/">
-            <Button>Return to Home</Button>
-          </Link>
+      <Layout>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Order Not Found</h1>
+            <p className="text-gray-600 mb-6">We couldn't find an order with that reference number.</p>
+            <Link to="/">
+              <Button>Return to Home</Button>
+            </Link>
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
@@ -130,8 +135,9 @@ export default function OrderConfirmation() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <Layout>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Success Header */}
         <div className="text-center mb-12">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -461,7 +467,8 @@ export default function OrderConfirmation() {
             </div>
           </CardContent>
         </Card>
+        </div>
       </div>
-    </div>
+    </Layout>
   );
 }

@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
+import { Layout } from '@/components/layout/Layout';
 import { z } from 'zod';
 
 const profileSchema = z.object({
@@ -147,27 +148,28 @@ export function ProfileSettings() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-card border-b">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" asChild>
-              <Link to="/account">
-                <ArrowLeft className="h-4 w-4" />
-              </Link>
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">Profile Settings</h1>
-              <p className="text-muted-foreground">
-                Manage your account information and preferences
-              </p>
+    <Layout>
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <div className="bg-card border-b">
+          <div className="container mx-auto px-4 py-6">
+            <div className="flex items-center space-x-4">
+              <Button variant="ghost" size="icon" asChild>
+                <Link to="/my-account">
+                  <ArrowLeft className="h-4 w-4" />
+                </Link>
+              </Button>
+              <div>
+                <h1 className="text-2xl font-bold">Profile Settings</h1>
+                <p className="text-muted-foreground">
+                  Manage your account information and preferences
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4 py-6">
         <div className="max-w-4xl mx-auto">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-3">
@@ -583,5 +585,6 @@ export function ProfileSettings() {
         </div>
       </div>
     </div>
+    </Layout>
   );
 }

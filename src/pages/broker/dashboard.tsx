@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useRouter } from 'next/router';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBroker } from '@/hooks/useBroker';
 import { BrokerDashboard } from '@/components/broker/BrokerDashboard';
@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Layout } from '@/components/layout/Layout';
 import { 
   Crown, 
   Clock, 
@@ -17,21 +18,23 @@ import {
 } from 'lucide-react';
 
 export default function BrokerDashboardPage() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { brokerStatus, isLoading: brokerLoading, error } = useBroker();
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push('/auth/login?redirect=/broker/dashboard');
+      navigate('/auth/login?redirect=/broker/dashboard');
     }
-  }, [isAuthenticated, authLoading, router]);
+  }, [isAuthenticated, authLoading, navigate]);
 
   if (authLoading || brokerLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      </Layout>
     );
   }
 
@@ -41,71 +44,79 @@ export default function BrokerDashboardPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <Alert variant="destructive" className="max-w-md">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      </div>
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <Alert variant="destructive" className="max-w-md">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        </div>
+      </Layout>
     );
   }
 
   // Show broker dashboard if approved
   if (brokerStatus.is_broker) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
-          <BrokerDashboard />
+      <Layout>
+        <div className="min-h-screen bg-gray-50">
+          <div className="container mx-auto px-4 py-8">
+            <BrokerDashboard />
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   // Show application status if pending/rejected
   if (brokerStatus.application_status) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full">
-          <ApplicationStatus
-            status={brokerStatus.application_status}
-            companyName={brokerStatus.company_name}
-            submittedDate={brokerStatus.submitted_date}
-            onReapply={() => router.push('/broker/apply')}
-          />
+      <Layout>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+          <div className="max-w-md w-full">
+            <ApplicationStatus
+              status={brokerStatus.application_status}
+              companyName={brokerStatus.company_name}
+              submittedDate={brokerStatus.submitted_date}
+              onReapply={() => navigate('/broker/apply')}
+            />
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   // Show apply option if no application exists
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <Card className="max-w-md w-full">
-        <CardHeader className="text-center">
-          <div className="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
-            <Crown className="h-8 w-8 text-yellow-600" />
-          </div>
-          <CardTitle>Become a Broker</CardTitle>
-        </CardHeader>
-        <CardContent className="text-center space-y-4">
-          <p className="text-gray-600">
-            Apply for broker status to unlock exclusive discounts and benefits.
-          </p>
-          <div className="space-y-2 text-sm">
-            <div>✓ Up to 20% discount on all orders</div>
-            <div>✓ Volume-based pricing tiers</div>
-            <div>✓ Dedicated account support</div>
-            <div>✓ Extended payment terms</div>
-          </div>
-          <Button 
-            className="w-full" 
-            onClick={() => router.push('/broker/apply')}
-          >
-            Apply for Broker Status
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
+    <Layout>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+              <Crown className="h-8 w-8 text-yellow-600" />
+            </div>
+            <CardTitle>Become a Broker</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <p className="text-gray-600">
+              Apply for broker status to unlock exclusive discounts and benefits.
+            </p>
+            <div className="space-y-2 text-sm">
+              <div>✓ Up to 20% discount on all orders</div>
+              <div>✓ Volume-based pricing tiers</div>
+              <div>✓ Dedicated account support</div>
+              <div>✓ Extended payment terms</div>
+            </div>
+            <Button 
+              className="w-full" 
+              onClick={() => navigate('/broker/apply')}
+            >
+              Apply for Broker Status
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </Layout>
   );
 }
 

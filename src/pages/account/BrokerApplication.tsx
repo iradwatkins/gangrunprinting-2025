@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
+import { Layout } from '@/components/layout/Layout';
 import type { BrokerApplicationRequest } from '@/types/auth';
 import { z } from 'zod';
 
@@ -108,24 +109,25 @@ export function BrokerApplication() {
   // If user is already a broker
   if (isBroker) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="bg-card border-b">
-          <div className="container mx-auto px-4 py-6">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="icon" asChild>
-                <Link to="/account">
-                  <ArrowLeft className="h-4 w-4" />
-                </Link>
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold">Broker Status</h1>
-                <p className="text-muted-foreground">
-                  Your broker account details
-                </p>
+      <Layout>
+        <div className="min-h-screen bg-background">
+          <div className="bg-card border-b">
+            <div className="container mx-auto px-4 py-6">
+              <div className="flex items-center space-x-4">
+                <Button variant="ghost" size="icon" asChild>
+                  <Link to="/my-account">
+                    <ArrowLeft className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <div>
+                  <h1 className="text-2xl font-bold">Broker Status</h1>
+                  <p className="text-muted-foreground">
+                    Your broker account details
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
         <div className="container mx-auto px-4 py-6">
           <div className="max-w-2xl mx-auto">
@@ -179,31 +181,33 @@ export function BrokerApplication() {
             </Card>
           </div>
         </div>
-      </div>
+        </div>
+      </Layout>
     );
   }
 
   // If application exists and is pending/rejected
   if (brokerApplication) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="bg-card border-b">
-          <div className="container mx-auto px-4 py-6">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="icon" asChild>
-                <Link to="/account">
-                  <ArrowLeft className="h-4 w-4" />
-                </Link>
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold">Broker Application Status</h1>
-                <p className="text-muted-foreground">
-                  Track your broker application progress
-                </p>
+      <Layout>
+        <div className="min-h-screen bg-background">
+          <div className="bg-card border-b">
+            <div className="container mx-auto px-4 py-6">
+              <div className="flex items-center space-x-4">
+                <Button variant="ghost" size="icon" asChild>
+                  <Link to="/my-account">
+                    <ArrowLeft className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <div>
+                  <h1 className="text-2xl font-bold">Broker Application Status</h1>
+                  <p className="text-muted-foreground">
+                    Track your broker application progress
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
         <div className="container mx-auto px-4 py-6">
           <div className="max-w-2xl mx-auto">
@@ -266,30 +270,32 @@ export function BrokerApplication() {
             </Card>
           </div>
         </div>
-      </div>
+        </div>
+      </Layout>
     );
   }
 
   // New application form
   return (
-    <div className="min-h-screen bg-background">
-      <div className="bg-card border-b">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" asChild>
-              <Link to="/account">
-                <ArrowLeft className="h-4 w-4" />
-              </Link>
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">Apply for Broker Account</h1>
-              <p className="text-muted-foreground">
-                Get access to special pricing and volume discounts
-              </p>
+    <Layout>
+      <div className="min-h-screen bg-background">
+        <div className="bg-card border-b">
+          <div className="container mx-auto px-4 py-6">
+            <div className="flex items-center space-x-4">
+              <Button variant="ghost" size="icon" asChild>
+                <Link to="/my-account">
+                  <ArrowLeft className="h-4 w-4" />
+                </Link>
+              </Button>
+              <div>
+                <h1 className="text-2xl font-bold">Apply for Broker Account</h1>
+                <p className="text-muted-foreground">
+                  Get access to special pricing and volume discounts
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
       <div className="container mx-auto px-4 py-6">
         <div className="max-w-2xl mx-auto">
@@ -562,5 +568,6 @@ export function BrokerApplication() {
         </div>
       </div>
     </div>
+    </Layout>
   );
 }

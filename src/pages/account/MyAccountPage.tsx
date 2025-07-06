@@ -38,6 +38,7 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
+import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useCart } from '@/hooks/useCart';
@@ -148,54 +149,55 @@ export function MyAccountPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Modern Shopify-style Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-3">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={user?.user_metadata?.avatar_url} />
-                  <AvatarFallback className="bg-blue-500 text-white">
-                    {user?.email?.charAt(0)?.toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {getWelcomeMessage()}
-                  </h1>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {user?.email}
-                  </p>
+    <Layout>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        {/* Custom Page Header */}
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={user?.user_metadata?.avatar_url} />
+                    <AvatarFallback className="bg-blue-500 text-white">
+                      {user?.email?.charAt(0)?.toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {getWelcomeMessage()}
+                    </h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {user?.email}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              {isBroker && (
-                <Badge className="bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0">
-                  <Shield className="h-3 w-3 mr-1" />
-                  Broker Account
-                </Badge>
-              )}
-              <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/products">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Order
-                  </Link>
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Bell className="h-4 w-4" />
-                </Button>
+              <div className="flex items-center space-x-4">
+                {isBroker && (
+                  <Badge className="bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0">
+                    <Shield className="h-3 w-3 mr-1" />
+                    Broker Account
+                  </Badge>
+                )}
+                <div className="flex items-center space-x-2">
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/products">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Order
+                    </Link>
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Bell className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => {
@@ -523,5 +525,6 @@ export function MyAccountPage() {
         </div>
       </div>
     </div>
+    </Layout>
   );
 }

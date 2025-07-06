@@ -4,6 +4,7 @@ import { OrderDetail } from '@/components/orders/OrderDetail';
 import { useOrderSummary } from '@/hooks/useOrders';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Layout } from '@/components/layout/Layout';
 import { Package, DollarSign, Clock, Truck, CheckCircle } from 'lucide-react';
 
 export const OrdersPage: React.FC = () => {
@@ -20,15 +21,18 @@ export const OrdersPage: React.FC = () => {
 
   if (selectedOrderId) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <OrderDetail orderId={selectedOrderId} onBack={handleBackToOrders} />
-      </div>
+      <Layout>
+        <div className="container mx-auto px-4 py-8">
+          <OrderDetail orderId={selectedOrderId} onBack={handleBackToOrders} />
+        </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="space-y-6">
+    <Layout>
+      <div className="container mx-auto px-4 py-8">
+        <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Your Orders</h1>
           <p className="text-gray-600 mt-2">Track and manage all your orders in one place</p>
@@ -100,5 +104,6 @@ export const OrdersPage: React.FC = () => {
         <OrderHistory onOrderSelect={handleOrderSelect} />
       </div>
     </div>
+    </Layout>
   );
 };
