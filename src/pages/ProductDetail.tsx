@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { BreadcrumbNav } from '@/components/products/BreadcrumbNav';
 import { ProductImageGallery } from '@/components/products/ProductImageGallery';
 import { ProductConfiguration } from '@/components/products/ProductConfiguration';
@@ -14,6 +15,7 @@ import { ProductSpecs } from '@/components/products/ProductSpecs';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProduct } from '@/hooks/useProduct';
+import { getProductImageUrls, getPlaceholderImages } from '@/utils/images';
 import { ShoppingCart, Heart, Share2, User, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -106,6 +108,10 @@ export default function ProductDetail() {
     return specs;
   };
 
+  // Get product images with fallback
+  const productImages = getProductImageUrls(product.images, product.name);
+  const displayImages = productImages.length > 0 ? productImages : getPlaceholderImages(product.name);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -114,18 +120,24 @@ export default function ProductDetail() {
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Product Images */}
           <div>
-            <ProductImageGallery />
+            <ProductImageGallery 
+              images={displayImages.map(img => img.url)}
+              productName={product.name}
+            />
           </div>
 
           {/* Product Info */}
           <div className="space-y-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
-              <div className="mt-2 flex items-center space-x-2">
+              <div className="mt-2 flex items-center flex-wrap gap-2">
                 <Badge variant="outline">{product.product_categories?.name || 'Product'}</Badge>
                 {product.vendors?.name && (
                   <Badge variant="secondary">{product.vendors.name}</Badge>
                 )}
+                <Badge variant={product.is_active ? 'default' : 'destructive'}>
+                  {product.is_active ? 'Available' : 'Currently Unavailable'}
+                </Badge>
                 {user?.profile?.is_broker && (
                   <Badge variant="secondary" className="bg-green-100 text-green-800">
                     Broker Pricing
@@ -165,8 +177,29 @@ export default function ProductDetail() {
 
             <p className="text-gray-600">{product.description || 'No description available.'}</p>
 
+            {/* Availability Alert */}
+            {!product.is_active && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  This product is currently unavailable for ordering. Please contact us for more information or check back later.
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Configuration */}
-            <ProductConfiguration product={product} />
+            {product.is_active ? (
+              <ProductConfiguration product={product} />
+            ) : (
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <h3 className="text-lg font-semibold mb-2">Product Configuration</h3>
+                  <p className="text-muted-foreground">
+                    Configuration options are not available while this product is inactive.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Action Buttons */}
             <div className="space-y-4">

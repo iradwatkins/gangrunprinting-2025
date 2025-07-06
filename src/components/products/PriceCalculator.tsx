@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Calculator, TrendingUp, TrendingDown, Info } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,15 +8,40 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Tables } from '@/integrations/supabase/types';
 
-type Product = Tables<'products'>;
+type Product = Tables<'products'> & {
+  product_categories?: Tables<'product_categories'>;
+  vendors?: Tables<'vendors'>;
+  product_paper_stocks?: Array<{
+    paper_stocks: Tables<'paper_stocks'>;
+    is_default: boolean;
+    price_override?: number;
+  }>;
+  product_print_sizes?: Array<{
+    print_sizes: Tables<'print_sizes'>;
+    is_default: boolean;
+    price_modifier?: number;
+  }>;
+  product_turnaround_times?: Array<{
+    turnaround_times: Tables<'turnaround_times'>;
+    is_default: boolean;
+    price_override?: number;
+  }>;
+  product_add_ons?: Array<{
+    add_ons: Tables<'add_ons'>;
+    is_mandatory: boolean;
+    price_override?: any;
+  }>;
+};
 
 interface PriceCalculatorProps {
   product: Product;
   configuration: {
     paper_stock_id?: string;
     print_size_id?: string;
+    coating_id?: string;
     turnaround_time_id?: string;
     add_on_ids: string[];
     quantity: number;
@@ -26,6 +53,7 @@ interface PriceBreakdown {
   base_price: number;
   paper_cost: number;
   size_modifier: number;
+  coating_modifier: number;
   turnaround_modifier: number;
   add_on_costs: number;
   subtotal: number;
@@ -39,7 +67,30 @@ interface PriceBreakdown {
 export function PriceCalculator({ product, configuration }: PriceCalculatorProps) {
   const [priceBreakdown, setPriceBreakdown] = useState<PriceBreakdown | null>(null);
   const [loading, setLoading] = useState(false);
-  const [isBroker, setIsBroker] = useState(false); // TODO: Get from auth context
+  const { user } = useAuth();
+  const isBroker = user?.profile?.is_broker || false;
+
+  // Load coating data for price calculation
+  const { data: selectedCoating } = useQuery({
+    queryKey: ['coating', configuration.coating_id],
+    queryFn: async () => {
+      if (!configuration.coating_id) return null;
+      
+      const { data, error } = await supabase
+        .from('coatings')
+        .select('*')
+        .eq('id', configuration.coating_id)
+        .single();
+
+      if (error) {
+        console.error('Error loading coating:', error);
+        return null;
+      }
+
+      return data;
+    },
+    enabled: !!configuration.coating_id
+  });
 
   useEffect(() => {
     calculatePrice();
@@ -54,21 +105,77 @@ export function PriceCalculator({ product, configuration }: PriceCalculatorProps
     setLoading(true);
 
     try {
-      // TODO: This should call the actual pricing API
-      // For now, we'll simulate the calculation
-      
-      const basePrice = product.base_price;
+      const basePrice = product.base_price || 0;
       const quantity = configuration.quantity;
 
-      // Mock price calculation
-      const paperCost = Math.random() * 5; // Paper stock cost per unit
-      const sizeModifier = Math.random() * 2; // Size-based modifier
-      const turnaroundModifier = Math.random() * 10; // Turnaround time modifier
-      const addOnCosts = configuration.add_on_ids.length * Math.random() * 15; // Add-on costs
+      // Calculate paper stock cost
+      const selectedPaperStock = product.product_paper_stocks?.find(
+        ps => ps.paper_stocks.id === configuration.paper_stock_id
+      );
+      const paperCostPerSqInch = selectedPaperStock?.paper_stocks.price_per_sq_inch || 0;
+      const paperOverride = selectedPaperStock?.price_override;
+      
+      // Calculate print size modifier  
+      const selectedPrintSize = product.product_print_sizes?.find(
+        ps => ps.print_sizes.id === configuration.print_size_id
+      );
+      const sizeArea = selectedPrintSize ? 
+        (selectedPrintSize.print_sizes.width || 0) * (selectedPrintSize.print_sizes.height || 0) : 1;
+      
+      // Apply price modifier from junction table (percentage-based)
+      const priceModifierPercent = selectedPrintSize?.price_modifier || 0;
+      const sizeModifier = basePrice * (priceModifierPercent / 100);
+      
+      // Paper cost calculation (price per square inch * area)
+      const paperCost = paperOverride !== null ? 
+        paperOverride : 
+        (paperCostPerSqInch * sizeArea);
 
-      const subtotal = (basePrice + paperCost + sizeModifier + turnaroundModifier + addOnCosts) * quantity;
+      // Calculate coating modifier
+      const coatingModifierPercent = selectedCoating?.price_modifier || 0;
+      const coatingModifier = basePrice * (coatingModifierPercent / 100);
 
-      // Quantity discounts
+      // Calculate turnaround time modifier
+      const selectedTurnaround = product.product_turnaround_times?.find(
+        tt => tt.turnaround_times.id === configuration.turnaround_time_id
+      );
+      const turnaroundMarkup = selectedTurnaround?.turnaround_times.price_markup_percent || 0;
+      const turnaroundOverride = selectedTurnaround?.price_override;
+      
+      // Turnaround modifier calculation
+      const turnaroundModifier = turnaroundOverride !== null ?
+        turnaroundOverride :
+        (basePrice * (turnaroundMarkup / 100));
+
+      // Calculate add-on costs
+      let addOnCosts = 0;
+      if (configuration.add_on_ids.length > 0) {
+        addOnCosts = configuration.add_on_ids.reduce((total, addOnId) => {
+          const addOnOption = product.product_add_ons?.find(
+            ao => ao.add_ons.id === addOnId
+          );
+          if (addOnOption) {
+            // Check for price override first
+            if (addOnOption.price_override !== null) {
+              return total + (addOnOption.price_override || 0);
+            }
+            
+            // Parse pricing from configuration JSONB
+            const pricingConfig = addOnOption.add_ons.configuration;
+            if (pricingConfig && typeof pricingConfig === 'object') {
+              const pricing = (pricingConfig as any).pricing || 0;
+              return total + pricing;
+            }
+          }
+          return total;
+        }, 0);
+      }
+
+      // Calculate unit cost before quantity discounts
+      const unitCost = basePrice + paperCost + sizeModifier + coatingModifier + turnaroundModifier + addOnCosts;
+      const subtotal = unitCost * quantity;
+
+      // Apply quantity discounts
       let quantityDiscountPercent = 0;
       if (quantity >= 1000) quantityDiscountPercent = 15;
       else if (quantity >= 500) quantityDiscountPercent = 10;
@@ -76,8 +183,13 @@ export function PriceCalculator({ product, configuration }: PriceCalculatorProps
 
       const quantityDiscount = subtotal * (quantityDiscountPercent / 100);
 
-      // Broker discount (if applicable)
-      const brokerDiscountPercent = isBroker ? 20 : 0;
+      // Apply broker discount (if applicable)
+      let brokerDiscountPercent = 0;
+      if (isBroker && user?.profile?.broker_category_discounts && product.product_categories?.slug) {
+        const categoryKey = product.product_categories.slug.toLowerCase().replace(/-/g, '_');
+        brokerDiscountPercent = user.profile.broker_category_discounts[categoryKey] || 0;
+      }
+      
       const afterQuantityDiscount = subtotal - quantityDiscount;
       const brokerDiscount = afterQuantityDiscount * (brokerDiscountPercent / 100);
 
@@ -89,6 +201,7 @@ export function PriceCalculator({ product, configuration }: PriceCalculatorProps
         base_price: basePrice,
         paper_cost: paperCost,
         size_modifier: sizeModifier,
+        coating_modifier: coatingModifier,
         turnaround_modifier: turnaroundModifier,
         add_on_costs: addOnCosts,
         subtotal,
@@ -102,6 +215,7 @@ export function PriceCalculator({ product, configuration }: PriceCalculatorProps
       setPriceBreakdown(breakdown);
     } catch (error) {
       console.error('Failed to calculate price:', error);
+      setPriceBreakdown(null);
     }
 
     setLoading(false);
@@ -199,6 +313,13 @@ export function PriceCalculator({ product, configuration }: PriceCalculatorProps
               <div className="flex justify-between">
                 <span>Size modifier</span>
                 <span>+${(priceBreakdown.size_modifier * configuration.quantity).toFixed(2)}</span>
+              </div>
+            )}
+            
+            {priceBreakdown.coating_modifier > 0 && (
+              <div className="flex justify-between">
+                <span>Coating</span>
+                <span>+${(priceBreakdown.coating_modifier * configuration.quantity).toFixed(2)}</span>
               </div>
             )}
             

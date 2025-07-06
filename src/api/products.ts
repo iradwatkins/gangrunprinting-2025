@@ -91,22 +91,22 @@ export const productsApi = {
           product_categories(id, name, slug),
           vendors(id, name, email),
           product_paper_stocks(
-            paper_stocks(id, name, weight, price_per_sq_inch),
+            paper_stocks(id, name, description, weight, price_per_sq_inch, is_active),
             is_default,
             price_override
           ),
           product_print_sizes(
-            print_sizes(id, name, width, height),
+            print_sizes(id, name, width, height, is_active),
             is_default,
             price_modifier
           ),
           product_turnaround_times(
-            turnaround_times(id, name, business_days, price_markup_percent),
+            turnaround_times(id, name, business_days, price_markup_percent, is_active),
             is_default,
             price_override
           ),
           product_add_ons(
-            add_ons(id, name, pricing_model, configuration),
+            add_ons(id, name, description, pricing_model, configuration, is_active),
             is_mandatory,
             price_override
           )

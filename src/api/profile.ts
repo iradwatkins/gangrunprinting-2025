@@ -162,7 +162,8 @@ class ProfileApi {
       }
 
       const addressesResponse = await this.getAddresses();
-      return { success: true, data: addresses[0] || null };
+      if (!addressesResponse.success) {
+        return { success: false, error: 'Failed to load addresses' };
       }
 
       const addresses = addressesResponse.data;

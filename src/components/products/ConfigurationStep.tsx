@@ -64,6 +64,7 @@ export function ConfigurationStep({
     // Handle different option structures based on the relationship
     if (option.paper_stocks) return option.paper_stocks;
     if (option.print_sizes) return option.print_sizes;
+    if (option.coatings) return option.coatings;
     if (option.turnaround_times) return option.turnaround_times;
     if (option.add_ons) return option.add_ons;
     return option;
@@ -86,6 +87,10 @@ export function ConfigurationStep({
 
     if (data.price_markup_percent) {
       return `+${data.price_markup_percent}%`;
+    }
+
+    if (data.price_modifier) {
+      return `+${data.price_modifier}%`;
     }
 
     return '';
@@ -243,6 +248,11 @@ export function ConfigurationStep({
                             ? 'Same day' 
                             : `${data.business_days} business day${data.business_days !== 1 ? 's' : ''}`
                           }
+                        </p>
+                      )}
+                      {data.price_markup_percent && (
+                        <p className="text-xs text-muted-foreground">
+                          Markup: +{data.price_markup_percent}%
                         </p>
                       )}
                     </div>

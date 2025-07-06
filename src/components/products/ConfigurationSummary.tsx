@@ -2,6 +2,8 @@ import { FileText, Check, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Product = Tables<'products'> & {
@@ -30,6 +32,7 @@ interface ConfigurationSummaryProps {
   configuration: {
     paper_stock_id?: string;
     print_size_id?: string;
+    coating_id?: string;
     turnaround_time_id?: string;
     add_on_ids: string[];
     quantity: number;
@@ -38,6 +41,28 @@ interface ConfigurationSummaryProps {
 }
 
 export function ConfigurationSummary({ product, configuration }: ConfigurationSummaryProps) {
+  // Load coating data
+  const { data: selectedCoating } = useQuery({
+    queryKey: ['coating', configuration.coating_id],
+    queryFn: async () => {
+      if (!configuration.coating_id) return null;
+      
+      const { data, error } = await supabase
+        .from('coatings')
+        .select('*')
+        .eq('id', configuration.coating_id)
+        .single();
+
+      if (error) {
+        console.error('Error loading coating:', error);
+        return null;
+      }
+
+      return data;
+    },
+    enabled: !!configuration.coating_id
+  });
+
   const getPaperStock = () => {
     return product.product_paper_stocks
       ?.find(ps => ps.paper_stocks.id === configuration.paper_stock_id)
@@ -137,6 +162,26 @@ export function ConfigurationSummary({ product, configuration }: ConfigurationSu
               )}
             </div>
           </div>
+
+          {configuration.coating_id && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Coating:</span>
+              <div className="text-right">
+                {selectedCoating ? (
+                  <div>
+                    <div className="text-sm">{selectedCoating.name}</div>
+                    {selectedCoating.description && (
+                      <div className="text-xs text-muted-foreground">
+                        {selectedCoating.description}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-sm text-muted-foreground">Loading...</span>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Turnaround Time:</span>
