@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileUploadZone } from '@/components/files/FileUploadZone';
+import { Layout } from '@/components/layout/Layout';
 import { useCart } from '@/hooks/useCart';
 import { useAuth } from '@/contexts/AuthContext';
 import { filesApi } from '@/api/files';
@@ -90,7 +91,7 @@ export default function UploadArtworkPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <Layout className="bg-gray-50 dark:bg-gray-900">
       
       <div className="container mx-auto py-8 px-4">
         <div className="max-w-4xl mx-auto">
@@ -241,6 +242,6 @@ export default function UploadArtworkPage() {
           </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 }

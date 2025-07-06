@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { AuthModal } from '@/components/auth/AuthModal';
+import { Layout } from '@/components/layout/Layout';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { 
@@ -34,7 +34,6 @@ import {
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { useAuth } from '@/contexts/AuthContext';
-import { UserButton } from '@/components/auth/UserButton';
 import { categoriesApi } from '@/api/categories';
 import { productsApi } from '@/api/products';
 import type { Tables } from '@/integrations/supabase/types';
@@ -123,7 +122,6 @@ const HeroCarousel = () => {
 
 export default function Homepage() {
   const { user, isLoading } = useAuth();
-  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   // Load real categories from database
   const { data: categories = [] } = useQuery({
@@ -205,47 +203,7 @@ export default function Homepage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <div className="flex items-center space-x-2">
-              <Printer className="h-8 w-8 text-blue-600" />
-              <span className="text-xl font-bold text-gray-900">GangRun</span>
-            </div>
-            
-            {/* Navigation */}
-            <nav className="hidden md:flex space-x-8">
-              <a href="#" className="text-gray-700 hover:text-blue-600 font-medium">All Products</a>
-              <a href="#" className="text-gray-700 hover:text-blue-600 font-medium">Business Cards</a>
-              <a href="#" className="text-gray-700 hover:text-blue-600 font-medium">Flyers</a>
-              <a href="#" className="text-gray-700 hover:text-blue-600 font-medium">Postcards</a>
-              <a href="#" className="text-gray-700 hover:text-blue-600 font-medium">Banners</a>
-            </nav>
-            
-            {/* User Actions */}
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm" className="relative">
-                <ShoppingCart className="h-5 w-5" />
-                <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs">
-                  3
-                </Badge>
-              </Button>
-              
-              {user ? (
-                <UserButton />
-              ) : (
-                <Button onClick={() => setAuthModalOpen(true)} variant="outline" size="sm">
-                  <User className="h-4 w-4 mr-2" />
-                  Sign In
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+    <Layout>
 
       {/* Hero Carousel */}
       <HeroCarousel />
@@ -320,98 +278,6 @@ export default function Homepage() {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8">
-            {/* Company Info */}
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <Printer className="h-8 w-8 text-blue-400" />
-                <span className="text-xl font-bold">GangRun</span>
-              </div>
-              <p className="text-gray-400 mb-4">
-                Professional printing services for businesses of all sizes.
-              </p>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center space-x-2">
-                  <Phone className="h-4 w-4 text-blue-400" />
-                  <span>404-668-2401</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Mail className="h-4 w-4 text-blue-400" />
-                  <span>support@gangrunprinting.com</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <MapPin className="h-4 w-4 text-blue-400" />
-                  <span>Atlanta, GA</span>
-                </div>
-              </div>
-            </div>
-            
-            {/* Products */}
-            <div>
-              <h3 className="font-semibold mb-4">Products</h3>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white">Business Cards</a></li>
-                <li><a href="#" className="hover:text-white">Flyers</a></li>
-                <li><a href="#" className="hover:text-white">Postcards</a></li>
-                <li><a href="#" className="hover:text-white">Banners</a></li>
-                <li><a href="#" className="hover:text-white">Brochures</a></li>
-              </ul>
-            </div>
-            
-            {/* Services */}
-            <div>
-              <h3 className="font-semibold mb-4">Services</h3>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white">Design Services</a></li>
-                <li><a href="#" className="hover:text-white">Rush Orders</a></li>
-                <li><a href="#" className="hover:text-white">Bulk Printing</a></li>
-                <li><a href="#" className="hover:text-white">Direct Mail</a></li>
-                <li><a href="#" className="hover:text-white">Fulfillment</a></li>
-              </ul>
-            </div>
-            
-            {/* Support */}
-            <div>
-              <h3 className="font-semibold mb-4">Support</h3>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white">Contact Us</a></li>
-                <li><a href="#" className="hover:text-white">FAQ</a></li>
-                <li><a href="#" className="hover:text-white">Order Status</a></li>
-                <li><a href="#" className="hover:text-white">File Upload</a></li>
-                <li><a href="#" className="hover:text-white">Proofing</a></li>
-              </ul>
-            </div>
-          </div>
-          
-          <Separator className="my-8 bg-gray-800" />
-          
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-sm text-gray-400 mb-4 md:mb-0">
-              © 2024 GangRun Printing. All rights reserved.
-              {process.env.NODE_ENV === 'development' && (
-                <span className="ml-4">
-                  <a href="/admin" className="text-blue-400 hover:text-blue-300 underline">
-                    Admin Panel (Dev)
-                  </a>
-                </span>
-              )}
-            </p>
-            <div className="flex space-x-4">
-              <Facebook className="h-5 w-5 text-gray-400 hover:text-white cursor-pointer" />
-              <Twitter className="h-5 w-5 text-gray-400 hover:text-white cursor-pointer" />
-              <Instagram className="h-5 w-5 text-gray-400 hover:text-white cursor-pointer" />
-              <Linkedin className="h-5 w-5 text-gray-400 hover:text-white cursor-pointer" />
-            </div>
-          </div>
-        </div>
-      </footer>
-
-      {/* Auth Modal */}
-      <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
-    </div>
+    </Layout>
   );
 }

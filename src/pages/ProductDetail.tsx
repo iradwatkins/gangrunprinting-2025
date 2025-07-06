@@ -13,6 +13,7 @@ import { ProductConfiguration } from '@/components/products/ProductConfiguration
 import { PriceCalculator } from '@/components/products/PriceCalculator';
 import { ProductSpecs } from '@/components/products/ProductSpecs';
 import { AuthModal } from '@/components/auth/AuthModal';
+import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProduct } from '@/hooks/useProduct';
 import { getProductImageUrls, getPlaceholderImages } from '@/utils/images';
@@ -113,7 +114,7 @@ export default function ProductDetail() {
   const displayImages = productImages.length > 0 ? productImages : getPlaceholderImages(product.name);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <Layout className="bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <BreadcrumbNav />
         
@@ -260,14 +261,14 @@ export default function ProductDetail() {
       
       {/* Authentication Modal */}
       <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
-    </div>
+    </Layout>
   );
 }
 
 // Loading skeleton component
 function ProductDetailSkeleton() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <Layout className="bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-4 mb-8">
           <Skeleton className="h-4 w-full max-w-md" />
@@ -303,14 +304,14 @@ function ProductDetailSkeleton() {
           </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 }
 
 // Error component
 function ProductDetailError({ error }: { error: string | null }) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <Layout className="bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center py-12">
           <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
@@ -323,6 +324,6 @@ function ProductDetailError({ error }: { error: string | null }) {
           </Button>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 }

@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { CartItem } from '@/components/cart/CartItem';
 import { CartSummary } from '@/components/cart/CartSummary';
 import { CartValidation } from '@/components/cart/CartValidation';
+import { Layout } from '@/components/layout/Layout';
 import { useCart } from '@/hooks/useCart';
 
 export function Cart() {
@@ -13,7 +14,7 @@ export function Cart() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
+      <Layout>
         <div className="container mx-auto px-4 py-6">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center justify-center py-12">
@@ -21,12 +22,12 @@ export function Cart() {
             </div>
           </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <Layout>
       {/* Header */}
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-6">
@@ -145,6 +146,6 @@ export function Cart() {
           )}
         </div>
       </div>
-    </div>
+    </Layout>
   );
 }

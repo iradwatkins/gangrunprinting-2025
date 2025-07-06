@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { FloatingCart } from "@/components/cart/FloatingCart";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { AdminModeWrapper } from "@/components/AdminModeWrapper";
 import Index from "./pages/Index";
 import { ProductCatalog } from "./pages/ProductCatalog";
 import ProductDetail from "./pages/ProductDetail";
@@ -35,6 +36,7 @@ import UploadArtworkPage from "./pages/UploadArtworkPage";
 import { CRMDashboard } from "./pages/crm/CRMDashboard";
 import EmailDashboard from "./pages/email/EmailDashboard";
 import { OrdersPage } from "./pages/orders/OrdersPage";
+import InvoicePaymentPage from "./pages/InvoicePaymentPage";
 
 const queryClient = new QueryClient();
 
@@ -42,7 +44,8 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <AuthProvider>
-        <TooltipProvider>
+        <AdminModeWrapper>
+          <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
@@ -73,6 +76,7 @@ const App = () => (
               <Route path="/admin/categories" element={<CategoriesPage />} />
               <Route path="/admin/vendors" element={<VendorsPage />} />
               <Route path="/files" element={<FilesPage />} />
+              <Route path="/invoice/:invoiceNumber/pay" element={<InvoicePaymentPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
@@ -83,7 +87,8 @@ const App = () => (
             </div>
           </div>
         </BrowserRouter>
-        </TooltipProvider>
+          </TooltipProvider>
+        </AdminModeWrapper>
       </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>

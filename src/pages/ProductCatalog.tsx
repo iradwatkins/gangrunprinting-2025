@@ -24,6 +24,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ProductCard } from '@/components/products/ProductCard';
 import { ProductFilters } from '@/components/products/ProductFilters';
 import { BreadcrumbNav } from '@/components/products/BreadcrumbNav';
+import { Layout } from '@/components/layout/Layout';
 import { useToast } from '@/hooks/use-toast';
 import { productsApi, type ProductFilters as ProductFiltersType } from '@/api/products';
 import { categoriesApi } from '@/api/categories';
@@ -144,7 +145,7 @@ export function ProductCatalog() {
   const currentCategory = categories.find(c => c.slug === categorySlug);
 
   return (
-    <div className="min-h-screen bg-background">
+    <Layout>
       {/* Header */}
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-6">
@@ -363,6 +364,6 @@ export function ProductCatalog() {
           </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 }

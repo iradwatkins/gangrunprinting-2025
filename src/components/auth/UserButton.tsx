@@ -10,12 +10,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, LogOut, Settings, Shield, LayoutDashboard } from 'lucide-react';
+import { useAdminMode } from '@/contexts/AdminModeContext';
+import { User, LogOut, Settings, Shield, LayoutDashboard, ToggleLeft, ToggleRight } from 'lucide-react';
 
 export function UserButton() {
   const { user, signOut } = useAuth();
+  const { isAdminMode, toggleAdminMode, canUseAdminMode } = useAdminMode();
 
   if (!user) return null;
 
@@ -38,7 +41,14 @@ export function UserButton() {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <div className="flex items-center justify-between gap-2 p-2">
           <div className="flex flex-col space-y-1 leading-none">
-            <p className="font-medium">{user.email}</p>
+            <div className="flex items-center gap-2">
+              <p className="font-medium">{user.email}</p>
+              {canUseAdminMode && (
+                <Badge variant={isAdminMode ? "destructive" : "secondary"} className="text-xs">
+                  {isAdminMode ? 'Admin' : 'Customer'}
+                </Badge>
+              )}
+            </div>
             {user.profile?.is_broker && (
               <p className="text-xs text-muted-foreground">Broker Account</p>
             )}
@@ -62,15 +72,25 @@ export function UserButton() {
           <Settings className="mr-2 h-4 w-4" />
           Settings
         </DropdownMenuItem>
-        {(user.profile?.role === 'admin' || process.env.NODE_ENV === 'development') && (
+        {canUseAdminMode && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link to="/admin">
-                <Shield className="mr-2 h-4 w-4" />
-                Admin Panel
-              </Link>
+            <DropdownMenuItem onClick={toggleAdminMode}>
+              {isAdminMode ? (
+                <ToggleRight className="mr-2 h-4 w-4 text-red-600" />
+              ) : (
+                <ToggleLeft className="mr-2 h-4 w-4 text-gray-400" />
+              )}
+              {isAdminMode ? 'Switch to Customer Mode' : 'Switch to Admin Mode'}
             </DropdownMenuItem>
+            {isAdminMode && (
+              <DropdownMenuItem asChild>
+                <Link to="/admin">
+                  <Shield className="mr-2 h-4 w-4" />
+                  Admin Panel
+                </Link>
+              </DropdownMenuItem>
+            )}
           </>
         )}
         <DropdownMenuSeparator />

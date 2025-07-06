@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { OrderHistory } from '@/components/orders/OrderHistory';
 import { OrderDetail } from '@/components/orders/OrderDetail';
+import { Layout } from '@/components/layout/Layout';
 import { 
   ArrowLeft, 
   Package, 
@@ -67,17 +68,16 @@ export function AccountOrdersPage() {
 
   if (selectedOrderId) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
+      <Layout className="bg-gray-50 dark:bg-gray-900">
         <div className="container mx-auto px-4 py-8">
           <OrderDetail orderId={selectedOrderId} onBack={handleBackToOrders} />
         </div>
-      </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <Layout className="bg-gray-50 dark:bg-gray-900">
       
       <div className="container mx-auto px-4 py-8">
         <div className="space-y-6">
@@ -270,6 +270,6 @@ export function AccountOrdersPage() {
           </Card>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 }
