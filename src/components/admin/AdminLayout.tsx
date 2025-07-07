@@ -17,7 +17,8 @@ import {
   BarChart3,
   ShoppingCart,
   Mail,
-  FileText
+  FileText,
+  Database
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -113,6 +114,12 @@ const navigation = [
     name: 'Settings',
     href: '/admin/checkout-settings',
     icon: Settings
+  },
+  {
+    name: 'Database Test',
+    href: '/admin/database-test',
+    icon: Database,
+    badge: 'Debug'
   }
 ];
 

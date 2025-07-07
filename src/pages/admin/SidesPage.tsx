@@ -40,7 +40,12 @@ export function SidesPage() {
   const { data: sides, isLoading, error } = useQuery({
     queryKey: ['admin-sides'],
     queryFn: async () => {
+      console.log('Fetching sides...');
       const response = await sidesApi.getAll();
+      console.log('Sides API response:', response);
+      if (response.error) {
+        throw new Error(response.error);
+      }
       return response.data;
     }
   });

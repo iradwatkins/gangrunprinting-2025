@@ -37,6 +37,7 @@ import { TurnaroundTimesPage } from "./pages/admin/TurnaroundTimesPage";
 import { AddOnsPage } from "./pages/admin/AddOnsPage";
 import { QuantitiesPage } from "./pages/admin/QuantitiesPage";
 import { SidesPage } from "./pages/admin/SidesPage";
+import { DatabaseTest } from "./pages/admin/DatabaseTest";
 import CheckoutSettingsPage from "./pages/admin/CheckoutSettingsPage";
 import FilesPage from "./pages/files/FilesPage";
 import UploadArtworkPage from "./pages/UploadArtworkPage";
@@ -85,6 +86,7 @@ const App = () => (
               <Route path="/admin/add-ons" element={<AddOnsPage />} />
               <Route path="/admin/quantities" element={<QuantitiesPage />} />
               <Route path="/admin/sides" element={<SidesPage />} />
+              <Route path="/admin/database-test" element={<DatabaseTest />} />
               <Route path="/admin/categories" element={<CategoriesPage />} />
               <Route path="/admin/vendors" element={<VendorsPage />} />
               <Route path="/files" element={<FilesPage />} />

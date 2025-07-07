@@ -1199,6 +1199,72 @@ export type Database = {
         }
         Relationships: []
       }
+      quantities: {
+        Row: {
+          created_at: string
+          id: string
+          increment_value: number | null
+          is_active: boolean
+          is_custom: boolean
+          min_custom_value: number | null
+          name: string
+          updated_at: string
+          value: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          increment_value?: number | null
+          is_active?: boolean
+          is_custom?: boolean
+          min_custom_value?: number | null
+          name: string
+          updated_at?: string
+          value?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          increment_value?: number | null
+          is_active?: boolean
+          is_custom?: boolean
+          min_custom_value?: number | null
+          name?: string
+          updated_at?: string
+          value?: number | null
+        }
+        Relationships: []
+      }
+      sides: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          multiplier: number
+          name: string
+          tooltip_text: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          multiplier?: number
+          name: string
+          tooltip_text?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          multiplier?: number
+          name?: string
+          tooltip_text?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       vendors: {
         Row: {
           address: Json | null
