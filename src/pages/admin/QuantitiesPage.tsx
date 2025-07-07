@@ -11,17 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { quantitiesApi } from '@/api/global-options';
+import type { Tables } from '@/integrations/supabase/types';
 
-interface Quantity {
-  id: string;
-  name: string;
-  value: number | null;
-  is_custom: boolean;
-  min_custom_value: number | null;
-  increment_value: number | null;
-  is_active: boolean;
-}
+type Quantity = Tables<'quantities'>;
 
 interface QuantityFormData {
   name: string;
@@ -50,20 +43,13 @@ export function QuantitiesPage() {
   const { data: quantities, isLoading, error } = useQuery({
     queryKey: ['admin-quantities'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('quantities')
-        .select('*')
-        .order('value', { ascending: true, nullsLast: true });
-      if (error) throw error;
-      return data;
+      const response = await quantitiesApi.getAll();
+      return response.data;
     }
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: QuantityFormData) => {
-      const { error } = await supabase.from('quantities').insert([data]);
-      if (error) throw error;
-    },
+    mutationFn: quantitiesApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-quantities'] });
       toast({ title: 'Success', description: 'Quantity created successfully' });
@@ -76,10 +62,7 @@ export function QuantitiesPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<QuantityFormData> }) => {
-      const { error } = await supabase.from('quantities').update(data).eq('id', id);
-      if (error) throw error;
-    },
+    mutationFn: ({ id, data }: { id: string; data: Partial<QuantityFormData> }) => quantitiesApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-quantities'] });
       toast({ title: 'Success', description: 'Quantity updated successfully' });
@@ -92,10 +75,7 @@ export function QuantitiesPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from('quantities').delete().eq('id', id);
-      if (error) throw error;
-    },
+    mutationFn: quantitiesApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-quantities'] });
       toast({ title: 'Success', description: 'Quantity deleted successfully' });

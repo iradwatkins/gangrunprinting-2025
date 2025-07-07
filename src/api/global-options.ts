@@ -95,6 +95,20 @@ export const paperStocksApi = {
     } catch (error) {
       return { error: 'Failed to delete paper stock' };
     }
+  },
+
+  // Convenience methods for consistency
+  async getAll(filters: GlobalOptionsFilters = {}) {
+    return this.getPaperStocks(filters);
+  },
+  async create(data: TablesInsert<'paper_stocks'>) {
+    return this.createPaperStock(data);
+  },
+  async update(id: string, data: TablesUpdate<'paper_stocks'>) {
+    return this.updatePaperStock(id, data);
+  },
+  async delete(id: string) {
+    return this.deletePaperStock(id);
   }
 };
 
@@ -175,6 +189,20 @@ export const coatingsApi = {
     } catch (error) {
       return { error: 'Failed to delete coating' };
     }
+  },
+
+  // Convenience methods for consistency
+  async getAll(filters: GlobalOptionsFilters = {}) {
+    return this.getCoatings(filters);
+  },
+  async create(data: TablesInsert<'coatings'>) {
+    return this.createCoating(data);
+  },
+  async update(id: string, data: TablesUpdate<'coatings'>) {
+    return this.updateCoating(id, data);
+  },
+  async delete(id: string) {
+    return this.deleteCoating(id);
   }
 };
 
@@ -255,6 +283,20 @@ export const printSizesApi = {
     } catch (error) {
       return { error: 'Failed to delete print size' };
     }
+  },
+
+  // Convenience methods for consistency
+  async getAll(filters: GlobalOptionsFilters = {}) {
+    return this.getPrintSizes(filters);
+  },
+  async create(data: TablesInsert<'print_sizes'>) {
+    return this.createPrintSize(data);
+  },
+  async update(id: string, data: TablesUpdate<'print_sizes'>) {
+    return this.updatePrintSize(id, data);
+  },
+  async delete(id: string) {
+    return this.deletePrintSize(id);
   }
 };
 
@@ -335,6 +377,20 @@ export const turnaroundTimesApi = {
     } catch (error) {
       return { error: 'Failed to delete turnaround time' };
     }
+  },
+
+  // Convenience methods for consistency
+  async getAll(filters: GlobalOptionsFilters = {}) {
+    return this.getTurnaroundTimes(filters);
+  },
+  async create(data: TablesInsert<'turnaround_times'>) {
+    return this.createTurnaroundTime(data);
+  },
+  async update(id: string, data: TablesUpdate<'turnaround_times'>) {
+    return this.updateTurnaroundTime(id, data);
+  },
+  async delete(id: string) {
+    return this.deleteTurnaroundTime(id);
   }
 };
 
@@ -415,5 +471,207 @@ export const addOnsApi = {
     } catch (error) {
       return { error: 'Failed to delete add-on' };
     }
+  },
+
+  // Convenience methods for consistency
+  async getAll(filters: GlobalOptionsFilters = {}) {
+    return this.getAddOns(filters);
+  },
+  async create(data: TablesInsert<'add_ons'>) {
+    return this.createAddOn(data);
+  },
+  async update(id: string, data: TablesUpdate<'add_ons'>) {
+    return this.updateAddOn(id, data);
+  },
+  async delete(id: string) {
+    return this.deleteAddOn(id);
+  }
+};
+
+// Quantities API
+export const quantitiesApi = {
+  async getQuantities(filters: GlobalOptionsFilters = {}): Promise<ApiResponse<Tables<'quantities'>[]>> {
+    try {
+      let query = supabase.from('quantities').select('*');
+
+      if (filters.is_active !== undefined) {
+        query = query.eq('is_active', filters.is_active);
+      }
+      if (filters.search) {
+        query = query.ilike('name', `%${filters.search}%`);
+      }
+
+      const { data, error } = await query.order('value', { ascending: true, nullsLast: true });
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data: data || [] };
+    } catch (error) {
+      return { error: 'Failed to fetch quantities' };
+    }
+  },
+
+  async createQuantity(quantity: TablesInsert<'quantities'>): Promise<ApiResponse<Tables<'quantities'>>> {
+    try {
+      const { data, error } = await supabase
+        .from('quantities')
+        .insert(quantity)
+        .select()
+        .single();
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data };
+    } catch (error) {
+      return { error: 'Failed to create quantity' };
+    }
+  },
+
+  async updateQuantity(id: string, updates: TablesUpdate<'quantities'>): Promise<ApiResponse<Tables<'quantities'>>> {
+    try {
+      const { data, error } = await supabase
+        .from('quantities')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data };
+    } catch (error) {
+      return { error: 'Failed to update quantity' };
+    }
+  },
+
+  async deleteQuantity(id: string): Promise<ApiResponse<void>> {
+    try {
+      const { error } = await supabase
+        .from('quantities')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data: undefined };
+    } catch (error) {
+      return { error: 'Failed to delete quantity' };
+    }
+  },
+
+  // Convenience methods for consistency
+  async getAll(filters: GlobalOptionsFilters = {}) {
+    return this.getQuantities(filters);
+  },
+  async create(data: TablesInsert<'quantities'>) {
+    return this.createQuantity(data);
+  },
+  async update(id: string, data: TablesUpdate<'quantities'>) {
+    return this.updateQuantity(id, data);
+  },
+  async delete(id: string) {
+    return this.deleteQuantity(id);
+  }
+};
+
+// Sides API
+export const sidesApi = {
+  async getSides(filters: GlobalOptionsFilters = {}): Promise<ApiResponse<Tables<'sides'>[]>> {
+    try {
+      let query = supabase.from('sides').select('*');
+
+      if (filters.is_active !== undefined) {
+        query = query.eq('is_active', filters.is_active);
+      }
+      if (filters.search) {
+        query = query.ilike('name', `%${filters.search}%`);
+      }
+
+      const { data, error } = await query.order('multiplier', { ascending: true });
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data: data || [] };
+    } catch (error) {
+      return { error: 'Failed to fetch sides' };
+    }
+  },
+
+  async createSide(side: TablesInsert<'sides'>): Promise<ApiResponse<Tables<'sides'>>> {
+    try {
+      const { data, error } = await supabase
+        .from('sides')
+        .insert(side)
+        .select()
+        .single();
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data };
+    } catch (error) {
+      return { error: 'Failed to create side' };
+    }
+  },
+
+  async updateSide(id: string, updates: TablesUpdate<'sides'>): Promise<ApiResponse<Tables<'sides'>>> {
+    try {
+      const { data, error } = await supabase
+        .from('sides')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data };
+    } catch (error) {
+      return { error: 'Failed to update side' };
+    }
+  },
+
+  async deleteSide(id: string): Promise<ApiResponse<void>> {
+    try {
+      const { error } = await supabase
+        .from('sides')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data: undefined };
+    } catch (error) {
+      return { error: 'Failed to delete side' };
+    }
+  },
+
+  // Convenience methods for consistency
+  async getAll(filters: GlobalOptionsFilters = {}) {
+    return this.getSides(filters);
+  },
+  async create(data: TablesInsert<'sides'>) {
+    return this.createSide(data);
+  },
+  async update(id: string, data: TablesUpdate<'sides'>) {
+    return this.updateSide(id, data);
+  },
+  async delete(id: string) {
+    return this.deleteSide(id);
   }
 };

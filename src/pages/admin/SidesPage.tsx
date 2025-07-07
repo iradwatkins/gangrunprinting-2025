@@ -12,15 +12,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { sidesApi } from '@/api/global-options';
+import type { Tables } from '@/integrations/supabase/types';
 
-interface Side {
-  id: string;
-  name: string;
-  multiplier: number;
-  tooltip_text: string | null;
-  is_active: boolean;
-}
+type Side = Tables<'sides'>;
 
 interface SideFormData {
   name: string;
@@ -45,20 +40,13 @@ export function SidesPage() {
   const { data: sides, isLoading, error } = useQuery({
     queryKey: ['admin-sides'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('sides')
-        .select('*')
-        .order('multiplier', { ascending: true });
-      if (error) throw error;
-      return data;
+      const response = await sidesApi.getAll();
+      return response.data;
     }
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: SideFormData) => {
-      const { error } = await supabase.from('sides').insert([data]);
-      if (error) throw error;
-    },
+    mutationFn: sidesApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-sides'] });
       toast({ title: 'Success', description: 'Side option created successfully' });
@@ -71,10 +59,7 @@ export function SidesPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<SideFormData> }) => {
-      const { error } = await supabase.from('sides').update(data).eq('id', id);
-      if (error) throw error;
-    },
+    mutationFn: ({ id, data }: { id: string; data: Partial<SideFormData> }) => sidesApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-sides'] });
       toast({ title: 'Success', description: 'Side option updated successfully' });
@@ -87,10 +72,7 @@ export function SidesPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from('sides').delete().eq('id', id);
-      if (error) throw error;
-    },
+    mutationFn: sidesApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-sides'] });
       toast({ title: 'Success', description: 'Side option deleted successfully' });
