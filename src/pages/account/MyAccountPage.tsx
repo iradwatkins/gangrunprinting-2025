@@ -417,11 +417,9 @@ export function MyAccountPage() {
                 <nav className="space-y-1">
                   {[
                     { icon: User, label: 'Profile Settings', href: '/my-account/profile' },
-                    { icon: Package, label: 'Order History', href: '/my-account/orders' },
-                    { icon: FileText, label: 'Upload Files', href: '/upload-artwork' },
-                    { icon: MapPin, label: 'Addresses', href: '/my-account/addresses' },
-                    { icon: CreditCard, label: 'Payment Methods', href: '/my-account/payment' },
-                    { icon: Bell, label: 'Notifications', href: '/my-account/notifications' }
+                    { icon: Package, label: 'My Orders', href: '/my-account/orders' },
+                    { icon: FileText, label: 'Upload Artwork', href: '/upload-artwork' },
+                    { icon: MapPin, label: 'Shipping Addresses', href: '/my-account/addresses' }
                   ].map((item, index) => {
                     const Icon = item.icon;
                     return (
@@ -464,17 +462,17 @@ export function MyAccountPage() {
               </CardContent>
             </Card>
 
-            {/* Help & Support */}
+            {/* Customer Support */}
             <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
               <CardHeader>
                 <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Help & Support
+                  Need Help?
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button variant="outline" className="w-full justify-start hover:bg-gray-50 dark:hover:bg-gray-700">
                   <Star className="h-4 w-4 mr-3" />
-                  Help Center
+                  Order Help
                 </Button>
                 <Button variant="outline" className="w-full justify-start hover:bg-gray-50 dark:hover:bg-gray-700">
                   <Bell className="h-4 w-4 mr-3" />
@@ -482,21 +480,21 @@ export function MyAccountPage() {
                 </Button>
                 <Button variant="outline" className="w-full justify-start hover:bg-gray-50 dark:hover:bg-gray-700">
                   <FileText className="h-4 w-4 mr-3" />
-                  Documentation
+                  Upload Guidelines
                 </Button>
               </CardContent>
             </Card>
 
-            {/* Account Stats */}
+            {/* My Account Summary */}
             <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
               <CardHeader>
                 <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Quick Stats
+                  Account Summary
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Active Orders</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">My Orders</span>
                   <span className="font-semibold text-gray-900 dark:text-white">0</span>
                 </div>
                 <div className="flex items-center justify-between">

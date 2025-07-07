@@ -153,13 +153,17 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       <div className="flex flex-1 flex-col overflow-hidden">
         <header className="border-b bg-card px-6 py-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold tracking-tight">Product Catalog Management</h2>
+            <h2 className="text-2xl font-bold tracking-tight">Business Management</h2>
             <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm">
-                View Store
+              <Button variant="outline" size="sm" asChild>
+                <a href="/" target="_blank" rel="noopener noreferrer">
+                  View Store
+                </a>
               </Button>
-              <Button size="sm">
-                Add Product
+              <Button size="sm" asChild>
+                <a href="/admin/products/new">
+                  Add Product
+                </a>
               </Button>
             </div>
           </div>
