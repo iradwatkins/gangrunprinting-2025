@@ -131,9 +131,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   );
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background dark:bg-gray-900">
       {/* Desktop Sidebar */}
-      <div className="hidden w-64 flex-col border-r bg-card lg:flex">
+      <div className="hidden w-64 flex-col border-r bg-card dark:bg-gray-800 lg:flex">
         <SidebarContent />
       </div>
 
@@ -151,9 +151,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="border-b bg-card px-6 py-4">
+        <header className="border-b bg-card dark:bg-gray-800 px-6 py-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold tracking-tight">Business Management</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-foreground dark:text-white">Business Management</h2>
             <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm" asChild>
                 <a href="/" target="_blank" rel="noopener noreferrer">
