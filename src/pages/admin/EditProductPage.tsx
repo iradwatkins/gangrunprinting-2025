@@ -1,10 +1,10 @@
 import { AdminLayout } from '@/components/admin/AdminLayout';
-import { ProductForm } from '@/components/admin/ProductForm';
+import { EnhancedProductForm } from '@/components/admin/EnhancedProductForm';
 
 export function EditProductPage() {
   return (
     <AdminLayout>
-      <ProductForm mode="edit" />
+      <EnhancedProductForm mode="edit" />
     </AdminLayout>
   );
 }
