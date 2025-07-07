@@ -251,10 +251,10 @@ export function AdminDashboard() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {statCards.map((stat, index) => {
-                const Icon = stat.icon;
-                return (
-                  <Card key={index} className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-200 bg-white dark:bg-gray-800">
+          {statCards.map((stat, index) => {
+            const Icon = stat.icon;
+            return (
+              <Card key={index} className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-200 bg-white dark:bg-gray-800">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
                         <div>
@@ -297,20 +297,19 @@ export function AdminDashboard() {
                       )}
                     </CardContent>
                   </Card>
-                );
-              })}
-            </div>
+            );
+          })}
+        </div>
 
-
-            {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {quickActions.map((action, index) => {
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {quickActions.map((action, index) => {
                 const Icon = action.icon;
                 const CardWrapper = action.href ? Link : 'div';
                 const cardProps = action.href ? { to: action.href } : {};
                 
                 return (
-                  <CardWrapper key={index} {...cardProps} className="group" onClick={action.action}>
+                  <CardWrapper key={index} {...cardProps} className="group">
                     <Card className={`h-full transition-all duration-200 hover:shadow-md border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700 ${action.primary ? 'ring-2 ring-blue-100 dark:ring-blue-900 border-blue-200 dark:border-blue-800' : ''} bg-white dark:bg-gray-800 cursor-pointer`}>
                       <CardContent className="p-6">
                         <div className="flex items-center space-x-4">
@@ -330,14 +329,14 @@ export function AdminDashboard() {
                       </CardContent>
                     </Card>
                   </CardWrapper>
-                );
-              })}
-            </div>
+            );
+          })}
+        </div>
 
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Left Column - Setup Progress & Activity */}
-              <div className="lg:col-span-2 space-y-6">
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - Setup Progress & Activity */}
+          <div className="lg:col-span-2 space-y-6">
                 {/* Setup Progress */}
                 <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
                   <CardHeader className="pb-4">
