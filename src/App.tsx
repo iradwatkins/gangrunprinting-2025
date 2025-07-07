@@ -34,7 +34,6 @@ import { VendorsPage } from "./pages/admin/VendorsPage";
 import CheckoutSettingsPage from "./pages/admin/CheckoutSettingsPage";
 import FilesPage from "./pages/files/FilesPage";
 import UploadArtworkPage from "./pages/UploadArtworkPage";
-import { CRMDashboard } from "./pages/crm/CRMDashboard";
 import EmailDashboard from "./pages/email/EmailDashboard";
 import { OrdersPage } from "./pages/orders/OrdersPage";
 import InvoicePaymentPage from "./pages/InvoicePaymentPage";
@@ -70,7 +69,6 @@ const App = () => (
               <Route path="/admin/products/:id/edit" element={<EditProductPage />} />
               <Route path="/admin/analytics" element={<AnalyticsPage />} />
               <Route path="/admin/checkout-settings" element={<CheckoutSettingsPage />} />
-              <Route path="/admin/crm" element={<CRMDashboard />} />
               <Route path="/admin/orders" element={<AdminOrdersPage />} />
               <Route path="/admin/email" element={<AdminEmailPage />} />
               <Route path="/admin/files" element={<AdminFilesPage />} />

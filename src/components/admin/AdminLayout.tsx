@@ -15,8 +15,7 @@ import {
   BarChart3,
   ShoppingCart,
   Mail,
-  FileText,
-  MessageSquare
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -60,11 +59,6 @@ const navigation = [
     name: 'Orders',
     href: '/admin/orders',
     icon: ShoppingCart
-  },
-  {
-    name: 'CRM',
-    href: '/admin/crm',
-    icon: MessageSquare
   },
   {
     name: 'Email Marketing',

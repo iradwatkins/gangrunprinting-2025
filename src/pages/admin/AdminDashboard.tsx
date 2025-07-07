@@ -406,72 +406,72 @@ export function AdminDashboard() {
               })}
             </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Setup Progress & Activity */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Setup Progress */}
-            <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">
-                      Setup Progress
-                    </CardTitle>
-                    <CardDescription className="mt-1">
-                      Complete these steps to get your store ready
-                    </CardDescription>
-                  </div>
-                  <Badge 
-                    variant="outline" 
-                    className={`${setupProgress === 100 ? 'text-green-600 bg-green-100 border-green-200 dark:bg-green-900 dark:border-green-800' : 'text-orange-600 bg-orange-100 border-orange-200 dark:bg-orange-900 dark:border-orange-800'}`}
-                  >
-                    {completedTasks}/{setupTasks.length} Complete
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-300">Overall Progress</span>
-                    <span className="font-medium text-gray-900 dark:text-white">{Math.round(setupProgress)}%</span>
-                  </div>
-                  <Progress value={setupProgress} className="h-2" />
-                  
-                  <div className="space-y-3 mt-6">
-                    {setupTasks.map((task, index) => {
-                      const Icon = task.icon;
-                      return (
-                        <div key={index} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group">
-                          <div className={`p-2 rounded-lg ${task.completed ? 'bg-green-100 dark:bg-green-900' : 'bg-gray-100 dark:bg-gray-700'}`}>
-                            {task.completed ? (
-                              <CheckCircle className="h-5 w-5 text-green-600" />
-                            ) : (
-                              <Icon className="h-5 w-5 text-gray-400" />
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <p className={`font-medium ${task.completed ? 'text-gray-500 dark:text-gray-400 line-through' : 'text-gray-900 dark:text-white'}`}>
-                              {task.title}
-                            </p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              {task.description}
-                            </p>
-                          </div>
-                          {!task.completed && (
-                            <Button size="sm" variant="ghost" asChild>
-                              <Link to={task.href}>
-                                <ChevronRight className="h-4 w-4" />
-                              </Link>
-                            </Button>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Left Column - Setup Progress & Activity */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Setup Progress */}
+                <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">
+                          Setup Progress
+                        </CardTitle>
+                        <CardDescription className="mt-1">
+                          Complete these steps to get your store ready
+                        </CardDescription>
+                      </div>
+                      <Badge 
+                        variant="outline" 
+                        className={`${setupProgress === 100 ? 'text-green-600 bg-green-100 border-green-200 dark:bg-green-900 dark:border-green-800' : 'text-orange-600 bg-orange-100 border-orange-200 dark:bg-orange-900 dark:border-orange-800'}`}
+                      >
+                        {completedTasks}/{setupTasks.length} Complete
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-300">Overall Progress</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{Math.round(setupProgress)}%</span>
+                      </div>
+                      <Progress value={setupProgress} className="h-2" />
+                      
+                      <div className="space-y-3 mt-6">
+                        {setupTasks.map((task, index) => {
+                          const Icon = task.icon;
+                          return (
+                            <div key={index} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group">
+                              <div className={`p-2 rounded-lg ${task.completed ? 'bg-green-100 dark:bg-green-900' : 'bg-gray-100 dark:bg-gray-700'}`}>
+                                {task.completed ? (
+                                  <CheckCircle className="h-5 w-5 text-green-600" />
+                                ) : (
+                                  <Icon className="h-5 w-5 text-gray-400" />
+                                )}
+                              </div>
+                              <div className="flex-1">
+                                <p className={`font-medium ${task.completed ? 'text-gray-500 dark:text-gray-400 line-through' : 'text-gray-900 dark:text-white'}`}>
+                                  {task.title}
+                                </p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                  {task.description}
+                                </p>
+                              </div>
+                              {!task.completed && (
+                                <Button size="sm" variant="ghost" asChild>
+                                  <Link to={task.href}>
+                                    <ChevronRight className="h-4 w-4" />
+                                  </Link>
+                                </Button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
             {/* Recent Activity */}
             <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
@@ -529,7 +529,6 @@ export function AdminDashboard() {
                     { icon: Truck, label: 'Vendors', href: '/admin/vendors', badge: stats.totalVendors },
                     { icon: Palette, label: 'Paper Stocks', href: '/admin/paper-stocks' },
                     { icon: ShoppingCart, label: 'Orders', href: '/admin/orders' },
-                    { icon: Users, label: 'CRM', href: '/admin/crm' },
                     { icon: Mail, label: 'Email Marketing', href: '/admin/email' },
                     { icon: FileText, label: 'Files', href: '/admin/files' }
                   ].map((item, index) => {
@@ -623,8 +622,26 @@ export function AdminDashboard() {
                 </div>
               </CardContent>
             </Card>
-          </div>
-        </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* CRM Customers Tab */}
+          <TabsContent value="customers">
+            <CustomerList
+              onSelectCustomer={handleSelectCustomer}
+              onEditCustomer={(customer) => {
+                setSelectedCustomer(customer);
+                setActiveTab('customers');
+              }}
+            />
+          </TabsContent>
+
+          {/* Support Tab */}
+          <TabsContent value="support">
+            <SupportTickets />
+          </TabsContent>
+        </Tabs>
       </div>
     </AdminLayout>
   );
