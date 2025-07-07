@@ -251,7 +251,7 @@ export function AdminDashboard() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-              Admin Dashboard
+              Admin Dashboard & CRM
             </h1>
             <p className="text-gray-500 dark:text-gray-400 mt-1">
               Complete business management platform with integrated CRM functionality
