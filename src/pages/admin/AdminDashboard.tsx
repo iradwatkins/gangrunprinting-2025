@@ -254,7 +254,7 @@ export function AdminDashboard() {
               Admin Dashboard
             </h1>
             <p className="text-gray-500 dark:text-gray-400 mt-1">
-              Complete business management platform with integrated CRM
+              Complete business management platform with integrated CRM functionality
             </p>
           </div>
           <div className="flex items-center space-x-3">
