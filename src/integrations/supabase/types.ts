@@ -746,6 +746,9 @@ export type Database = {
           is_active: boolean
           name: string
           price_per_sq_inch: number
+          second_side_markup_percent: number | null
+          sort_order: number | null
+          tooltip_text: string | null
           updated_at: string
           weight: number
         }
@@ -756,6 +759,9 @@ export type Database = {
           is_active?: boolean
           name: string
           price_per_sq_inch?: number
+          second_side_markup_percent?: number | null
+          sort_order?: number | null
+          tooltip_text?: string | null
           updated_at?: string
           weight: number
         }
@@ -766,6 +772,9 @@ export type Database = {
           is_active?: boolean
           name?: string
           price_per_sq_inch?: number
+          second_side_markup_percent?: number | null
+          sort_order?: number | null
+          tooltip_text?: string | null
           updated_at?: string
           weight?: number
         }

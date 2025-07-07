@@ -666,6 +666,9 @@ export const sidesApi = {
     return this.getSides(filters);
   },
   async create(data: TablesInsert<'sides'>) {
+    return this.createSides(data);
+  },
+  async createSides(data: TablesInsert<'sides'>) {
     return this.createSide(data);
   },
   async update(id: string, data: TablesUpdate<'sides'>) {

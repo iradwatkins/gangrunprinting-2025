@@ -19,7 +19,7 @@ import {
   Mail,
   FileText,
   Database,
-  Sparkles
+  Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -54,6 +54,12 @@ const navigation = [
   },
   
   // Global Options
+  {
+    name: 'Quick Setup',
+    href: '/admin/global-options/quick',
+    icon: Zap,
+    badge: 'Start Here'
+  },
   {
     name: 'Paper Stocks',
     href: '/admin/paper-stocks',
@@ -122,12 +128,6 @@ const navigation = [
     icon: Database,
     badge: 'Debug'
   },
-  {
-    name: 'Sample Data',
-    href: '/admin/sample-data',
-    icon: Sparkles,
-    badge: 'Demo'
-  }
 ];
 
 interface AdminLayoutProps {

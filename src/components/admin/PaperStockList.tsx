@@ -217,9 +217,16 @@ export function PaperStockList() {
               </SelectContent>
             </Select>
 
-            <Button onClick={() => setShowForm(true)}>
+            <Button asChild>
+              <a href="/admin/paper-stocks/new">
+                <Plus className="h-4 w-4 mr-2" />
+                Create Paper Stock
+              </a>
+            </Button>
+
+            <Button variant="outline" onClick={() => setShowForm(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Add Paper Stock
+              Quick Add
             </Button>
 
             <Button variant="outline" onClick={() => setShowBulkImport(true)}>
