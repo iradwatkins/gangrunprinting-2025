@@ -43,14 +43,14 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-      <AuthProvider>
-        <AdminModeWrapper>
-          <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <div className="relative">
-            <Routes>
+      <BrowserRouter>
+        <AuthProvider>
+          <AdminModeWrapper>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <div className="relative">
+                <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/products" element={<ProductCatalog />} />
               <Route path="/products/:slug" element={<ProductDetail />} />
@@ -81,15 +81,15 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
             
-            {/* Floating Cart - Available on all pages */}
-            <div className="fixed bottom-6 right-6 z-50">
-              <FloatingCart />
-            </div>
-          </div>
-        </BrowserRouter>
-          </TooltipProvider>
-        </AdminModeWrapper>
-      </AuthProvider>
+                {/* Floating Cart - Available on all pages */}
+                <div className="fixed bottom-6 right-6 z-50">
+                  <FloatingCart />
+                </div>
+              </div>
+            </TooltipProvider>
+          </AdminModeWrapper>
+        </AuthProvider>
+      </BrowserRouter>
     </ThemeProvider>
   </QueryClientProvider>
 );
