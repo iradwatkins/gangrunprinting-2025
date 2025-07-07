@@ -8,6 +8,8 @@ import {
   Ruler, 
   Clock, 
   Plus,
+  Hash,
+  Copy,
   Menu,
   X,
   Home,
@@ -23,6 +25,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 
 const navigation = [
+  // Main Dashboard
   {
     name: 'Dashboard',
     href: '/admin',
@@ -34,6 +37,8 @@ const navigation = [
     href: '/admin/analytics',
     icon: BarChart3
   },
+  
+  // Core Product Management
   {
     name: 'Products',
     href: '/admin/products',
@@ -41,35 +46,69 @@ const navigation = [
     badge: 'Core'
   },
   {
-    name: 'Paper Stocks',
-    href: '/admin/paper-stocks',
-    icon: Palette
-  },
-  {
     name: 'Categories',
     href: '/admin/categories',
     icon: Tags
   },
+  
+  // Global Options
   {
-    name: 'Vendors',
-    href: '/admin/vendors',
-    icon: Truck
+    name: 'Paper Stocks',
+    href: '/admin/paper-stocks',
+    icon: Palette,
+    badge: 'Global'
   },
+  {
+    name: 'Coatings',
+    href: '/admin/coatings',
+    icon: Palette
+  },
+  {
+    name: 'Print Sizes',
+    href: '/admin/print-sizes',
+    icon: Ruler
+  },
+  {
+    name: 'Turnaround Times',
+    href: '/admin/turnaround-times',
+    icon: Clock
+  },
+  {
+    name: 'Add-on Services',
+    href: '/admin/add-ons',
+    icon: Plus
+  },
+  {
+    name: 'Quantities',
+    href: '/admin/quantities',
+    icon: Hash
+  },
+  {
+    name: 'Print Sides',
+    href: '/admin/sides',
+    icon: Copy
+  },
+  
+  // Operations
   {
     name: 'Orders',
     href: '/admin/orders',
     icon: ShoppingCart
   },
   {
+    name: 'Vendors',
+    href: '/admin/vendors',
+    icon: Truck
+  },
+  
+  // Marketing & Content
+  {
     name: 'Email Marketing',
     href: '/admin/email',
     icon: Mail
   },
-  {
-    name: 'Files',
-    href: '/admin/files',
-    icon: FileText
-  },
+  
+  // System
   {
     name: 'Settings',
     href: '/admin/checkout-settings',
