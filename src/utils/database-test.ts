@@ -4,8 +4,8 @@ export async function testDatabaseConnection() {
   try {
     console.log('Testing database connection...');
     
-    // Test basic connection
-    const { data, error } = await supabase.from('coatings').select('count').limit(1);
+    // Test basic connection with a simple query
+    const { data, error } = await supabase.from('products').select('count').limit(1);
     if (error) {
       console.error('Database connection error:', error);
       return { success: false, error: error.message };

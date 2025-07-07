@@ -253,19 +253,27 @@ export function CategoryTree() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const response = await categoriesApi.getCategoryHierarchy();
+      console.log('Loading categories...');
+      // First try getting all categories (not just active ones)
+      const response = await categoriesApi.getCategories({});
+      
+      console.log('Categories API response:', response);
       
       if (response.error) {
+        console.error('Categories API error:', response.error);
         toast({
           title: "Error",
           description: response.error,
           variant: "destructive",
         });
       } else {
-        const treeData = buildCategoryTree(response.data || []);
+        const categories = response.data || [];
+        console.log('Categories loaded:', categories.length);
+        const treeData = buildCategoryTree(categories);
         setCategories(treeData);
       }
     } catch (error) {
+      console.error('Failed to load categories:', error);
       toast({
         title: "Error",
         description: "Failed to load categories",
