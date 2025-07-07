@@ -18,7 +18,8 @@ import {
   ShoppingCart,
   Mail,
   FileText,
-  Database
+  Database,
+  Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -120,6 +121,12 @@ const navigation = [
     href: '/admin/database-test',
     icon: Database,
     badge: 'Debug'
+  },
+  {
+    name: 'Sample Data',
+    href: '/admin/sample-data',
+    icon: Sparkles,
+    badge: 'Demo'
   }
 ];
 
