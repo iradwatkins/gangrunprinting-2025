@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -54,7 +54,11 @@ const mockOrders = [
 
 export function AccountOrdersPage() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  
+  const filter = searchParams.get('filter');
+  const isFilteringNeedsFiles = filter === 'needs-files';
 
   const handleOrderSelect = (orderId: string) => {
     setSelectedOrderId(orderId);
@@ -65,6 +69,7 @@ export function AccountOrdersPage() {
   };
 
   const ordersAwaitingFiles = mockOrders.filter(order => order.status === 'on_hold_awaiting_files');
+  const displayedOrders = isFilteringNeedsFiles ? ordersAwaitingFiles : mockOrders;
 
   if (selectedOrderId) {
     return (
@@ -93,13 +98,36 @@ export function AccountOrdersPage() {
                   Back to My Account
                 </Link>
               </div>
-              <h1 className="text-3xl font-bold">Your Orders</h1>
-              <p className="text-gray-600 mt-2">Manage and track all your orders</p>
+              <h1 className="text-3xl font-bold">
+                {isFilteringNeedsFiles ? 'Upload Artwork' : 'Your Orders'}
+              </h1>
+              <p className="text-gray-600 mt-2">
+                {isFilteringNeedsFiles 
+                  ? 'Orders requiring artwork files for production' 
+                  : 'Manage and track all your orders'}
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              {isFilteringNeedsFiles && (
+                <Button variant="outline" asChild>
+                  <Link to="/my-account/orders">
+                    View All Orders
+                  </Link>
+                </Button>
+              )}
+              {!isFilteringNeedsFiles && ordersAwaitingFiles.length > 0 && (
+                <Button variant="outline" asChild>
+                  <Link to="/my-account/orders?filter=needs-files">
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Artwork ({ordersAwaitingFiles.length})
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
 
           {/* Orders Awaiting Files Alert */}
-          {ordersAwaitingFiles.length > 0 && (
+          {!isFilteringNeedsFiles && ordersAwaitingFiles.length > 0 && (
             <Alert className="border-orange-200 bg-orange-50">
               <AlertTriangle className="h-4 w-4 text-orange-600" />
               <AlertDescription className="text-orange-800">
@@ -131,8 +159,26 @@ export function AccountOrdersPage() {
             </Alert>
           )}
 
+          {/* Upload Instructions for Filtered View */}
+          {isFilteringNeedsFiles && (
+            <Alert className="border-blue-200 bg-blue-50">
+              <Upload className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-800">
+                <div>
+                  <p className="font-medium mb-1">
+                    Upload Artwork Files for Production
+                  </p>
+                  <p className="text-sm">
+                    These orders are on hold waiting for your design files. Click on any order below to upload artwork and continue production.
+                  </p>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Order Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {!isFilteringNeedsFiles && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center space-x-2">
@@ -184,17 +230,20 @@ export function AccountOrdersPage() {
                 </div>
               </CardContent>
             </Card>
-          </div>
+            </div>
+          )}
 
           {/* Orders List */}
           <Card>
             <CardHeader>
-              <CardTitle>Order History</CardTitle>
+              <CardTitle>
+                {isFilteringNeedsFiles ? 'Orders Needing Artwork' : 'Order History'}
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              {mockOrders.length > 0 ? (
+              {displayedOrders.length > 0 ? (
                 <div className="space-y-4">
-                  {mockOrders.map(order => (
+                  {displayedOrders.map(order => (
                     <div 
                       key={order.id}
                       className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
@@ -257,13 +306,27 @@ export function AccountOrdersPage() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <Package className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-600 mb-4">You haven't placed any orders yet</p>
-                  <Button asChild>
-                    <Link to="/products">
-                      Start Shopping
-                    </Link>
-                  </Button>
+                  {isFilteringNeedsFiles ? (
+                    <>
+                      <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                      <p className="text-gray-600 mb-4">No orders currently need artwork files</p>
+                      <Button asChild>
+                        <Link to="/my-account/orders">
+                          View All Orders
+                        </Link>
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Package className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                      <p className="text-gray-600 mb-4">You haven't placed any orders yet</p>
+                      <Button asChild>
+                        <Link to="/products">
+                          Start Shopping
+                        </Link>
+                      </Button>
+                    </>
+                  )}
                 </div>
               )}
             </CardContent>

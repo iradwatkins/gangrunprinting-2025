@@ -192,7 +192,7 @@ export function MyAccountPage() {
                   {[
                     { icon: User, label: 'Profile Settings', href: '/my-account/profile' },
                     { icon: Package, label: 'My Orders', href: '/my-account/orders' },
-                    { icon: FileText, label: 'Upload Artwork', href: '/upload-artwork' },
+                    { icon: FileText, label: 'Upload Artwork', href: '/my-account/orders?filter=needs-files' },
                     { icon: MapPin, label: 'Shipping Addresses', href: '/my-account/addresses' }
                   ].map((item, index) => {
                     const Icon = item.icon;
@@ -212,26 +212,6 @@ export function MyAccountPage() {
                       </Link>
                     );
                   })}
-                  
-                  {!isBroker && (
-                    <>
-                      <Separator className="my-2" />
-                      <Link
-                        to="/my-account/broker-application"
-                        className="flex items-center justify-between px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <Shield className="h-4 w-4 text-blue-500" />
-                          <span className="text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
-                            Become a Broker
-                          </span>
-                        </div>
-                        <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50 dark:bg-blue-900 dark:border-blue-800">
-                          Special
-                        </Badge>
-                      </Link>
-                    </>
-                  )}
                 </nav>
               </CardContent>
             </Card>
