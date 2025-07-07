@@ -39,15 +39,10 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AdminLayout } from '@/components/admin/AdminLayout';
-import { CustomerList } from '@/components/crm/CustomerList';
-import { SupportTickets } from '@/components/crm/SupportTickets';
 import { productsApi } from '@/api/products';
 import { categoriesApi } from '@/api/categories';
 import { vendorsApi } from '@/api/vendors';
-import { useCustomerAnalytics } from '@/hooks/useCrm';
-import type { CustomerProfile } from '@/types/crm';
 
 interface DashboardStats {
   totalProducts: number;
@@ -65,28 +60,11 @@ export function AdminDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [selectedCustomer, setSelectedCustomer] = useState<CustomerProfile | null>(null);
-  const { analytics, loading: analyticsLoading } = useCustomerAnalytics();
 
   useEffect(() => {
     loadDashboardStats();
   }, []);
 
-  const handleSelectCustomer = (customer: CustomerProfile) => {
-    setSelectedCustomer(customer);
-    setActiveTab('customers');
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
-
-  const formatPercentage = (value: number) => {
-    return `${value.toFixed(1)}%`;
-  };
 
   const loadDashboardStats = async () => {
     setLoading(true);
@@ -125,15 +103,15 @@ export function AdminDashboard() {
       href: '/admin/products'
     },
     {
-      title: 'Total Customers',
-      value: analytics?.total_customers || 0,
-      change: `+${analytics?.new_customers_this_month || 0}`,
-      changeType: 'positive' as const,
+      title: 'Total Revenue',
+      value: '$0',
+      change: '+0%',
+      changeType: 'neutral' as const,
       description: 'This month',
-      icon: Users,
+      icon: DollarSign,
       color: 'text-green-600',
       bgColor: 'bg-green-50 dark:bg-green-950',
-      href: '#'
+      href: '/admin/analytics'
     },
     {
       title: 'Categories',
@@ -169,17 +147,17 @@ export function AdminDashboard() {
       primary: true
     },
     {
-      title: 'View Customers',
-      description: 'Manage customer relationships',
-      action: () => setActiveTab('customers'),
-      icon: Users,
+      title: 'View Analytics',
+      description: 'Sales & performance',
+      href: '/admin/analytics',
+      icon: BarChart3,
       color: 'bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600'
     },
     {
-      title: 'Support Tickets',
-      description: 'Handle customer support',
-      action: () => setActiveTab('support'),
-      icon: MessageSquare,
+      title: 'Manage Orders',
+      description: 'Process customer orders',
+      href: '/admin/orders',
+      icon: ShoppingCart,
       color: 'bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600'
     },
     {
@@ -271,26 +249,8 @@ export function AdminDashboard() {
           </div>
         </div>
 
-        {/* Tabs Navigation */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="dashboard">
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="customers">
-              <Users className="w-4 h-4 mr-2" />
-              Customers
-            </TabsTrigger>
-            <TabsTrigger value="support">
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Support
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="dashboard" className="space-y-6 mt-6">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {statCards.map((stat, index) => {
                 const Icon = stat.icon;
                 return (
@@ -303,7 +263,7 @@ export function AdminDashboard() {
                           </p>
                           <div className="flex items-baseline space-x-2">
                             <p className="text-3xl font-bold text-gray-900 dark:text-white">
-                              {loading || analyticsLoading ? (
+                              {loading ? (
                                 <Skeleton className="h-8 w-16" />
                               ) : (
                                 typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value
@@ -341,38 +301,6 @@ export function AdminDashboard() {
               })}
             </div>
 
-            {/* CRM Analytics Section */}
-            {analytics && (
-              <Card className="bg-white dark:bg-gray-800 border-0 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">
-                    Customer Analytics
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">
-                        {formatPercentage(analytics.communication_stats?.email_open_rate || 0)}
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Email Open Rate</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-600">
-                        {formatCurrency(analytics.average_customer_value || 0)}
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Avg Customer Value</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-purple-600">
-                        {formatPercentage(analytics.churn_rate || 0)}
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Churn Rate</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
 
             {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -622,26 +550,8 @@ export function AdminDashboard() {
                 </div>
               </CardContent>
             </Card>
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* CRM Customers Tab */}
-          <TabsContent value="customers">
-            <CustomerList
-              onSelectCustomer={handleSelectCustomer}
-              onEditCustomer={(customer) => {
-                setSelectedCustomer(customer);
-                setActiveTab('customers');
-              }}
-            />
-          </TabsContent>
-
-          {/* Support Tab */}
-          <TabsContent value="support">
-            <SupportTickets />
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </div>
     </AdminLayout>
   );
