@@ -44,12 +44,58 @@ const EmailTemplateList: React.FC<EmailTemplateListProps> = ({ onEdit, onCreateN
   const fetchTemplates = async () => {
     try {
       setLoading(true);
-      const filters: any = {};
-      if (categoryFilter) filters.category = categoryFilter;
-      if (activeFilter) filters.active = activeFilter === 'active';
       
-      const response = await emailTemplateApi.getTemplates(filters);
-      setTemplates(response.templates);
+      // Mock data for demonstration - replace with actual API call when backend is ready
+      const mockTemplates: EmailTemplate[] = [
+        {
+          id: '1',
+          name: 'Welcome Email',
+          description: 'Welcome new customers to your printing service',
+          category: 'onboarding',
+          subject: 'Welcome to GangRun Printing!',
+          html_content: '<h1>Welcome!</h1><p>Thank you for choosing our printing services.</p>',
+          text_content: 'Welcome! Thank you for choosing our printing services.',
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        {
+          id: '2',
+          name: 'Order Confirmation',
+          description: 'Confirm customer orders',
+          category: 'transactional',
+          subject: 'Your Order Confirmation #{{order_number}}',
+          html_content: '<h1>Order Confirmed</h1><p>Your order #{{order_number}} has been confirmed.</p>',
+          text_content: 'Order Confirmed: Your order #{{order_number}} has been confirmed.',
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        {
+          id: '3',
+          name: 'Promotional Offer',
+          description: 'Special offers and discounts',
+          category: 'marketing',
+          subject: 'Special Offer: 20% Off Your Next Order',
+          html_content: '<h1>Special Offer</h1><p>Get 20% off your next printing order!</p>',
+          text_content: 'Special Offer: Get 20% off your next printing order!',
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+      ];
+
+      // Apply filters
+      let filteredTemplates = mockTemplates;
+      if (categoryFilter) {
+        filteredTemplates = filteredTemplates.filter(t => t.category === categoryFilter);
+      }
+      if (activeFilter) {
+        const isActive = activeFilter === 'active';
+        filteredTemplates = filteredTemplates.filter(t => t.is_active === isActive);
+      }
+      
+      setTemplates(filteredTemplates);
     } catch (error) {
       console.error('Failed to fetch templates:', error);
     } finally {

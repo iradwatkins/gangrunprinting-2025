@@ -41,8 +41,76 @@ const SegmentManager: React.FC<SegmentManagerProps> = ({ onSegmentSelect, select
   const fetchSegments = async () => {
     try {
       setLoading(true);
-      const response = await emailSegmentApi.getSegments();
-      setSegments(response.segments);
+      
+      // Mock segments data
+      const mockSegments: CustomerSegment[] = [
+        {
+          id: '1',
+          name: 'New Customers',
+          description: 'Customers who joined in the last 30 days',
+          conditions: [
+            {
+              field: 'created_at',
+              operator: 'is_after',
+              value: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+            }
+          ],
+          customer_count: 150,
+          is_dynamic: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        {
+          id: '2',
+          name: 'High Value Customers',
+          description: 'Customers with total orders over $500',
+          conditions: [
+            {
+              field: 'total_spent',
+              operator: 'greater_than',
+              value: '500',
+            }
+          ],
+          customer_count: 85,
+          is_dynamic: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        {
+          id: '3',
+          name: 'Business Customers',
+          description: 'Customers with company information',
+          conditions: [
+            {
+              field: 'company',
+              operator: 'is_not_empty',
+              value: '',
+            }
+          ],
+          customer_count: 320,
+          is_dynamic: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        {
+          id: '4',
+          name: 'Inactive Customers',
+          description: 'Customers with no orders in the last 90 days',
+          conditions: [
+            {
+              field: 'last_order_date',
+              operator: 'is_before',
+              value: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
+            }
+          ],
+          customer_count: 45,
+          is_dynamic: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+      ];
+      
+      setSegments(mockSegments);
     } catch (error) {
       console.error('Failed to fetch segments:', error);
     } finally {

@@ -63,15 +63,102 @@ const CampaignManager: React.FC<CampaignManagerProps> = ({ onCreateCampaign, onE
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [campaignsResponse, templatesResponse, segmentsResponse] = await Promise.all([
-        emailCampaignApi.getCampaigns({ status: statusFilter || undefined }),
-        emailTemplateApi.getTemplates({ active: true }),
-        emailSegmentApi.getSegments()
-      ]);
       
-      setCampaigns(campaignsResponse.campaigns);
-      setTemplates(templatesResponse.templates);
-      setSegments(segmentsResponse.segments);
+      // Mock campaigns data
+      const mockCampaigns: EmailCampaign[] = [
+        {
+          id: '1',
+          name: 'New Customer Welcome Series',
+          description: 'Welcome email sequence for new customers',
+          status: 'active',
+          template_id: '1',
+          segment_ids: ['1'],
+          send_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          time_zone: 'America/New_York',
+          created_by: 'admin',
+          personalization_rules: [],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        {
+          id: '2',
+          name: 'Monthly Newsletter',
+          description: 'Monthly updates and printing tips',
+          status: 'scheduled',
+          template_id: '3',
+          segment_ids: ['2'],
+          send_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          time_zone: 'America/New_York',
+          created_by: 'admin',
+          personalization_rules: [],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        {
+          id: '3',
+          name: 'Order Follow-up',
+          description: 'Follow up with customers after order completion',
+          status: 'draft',
+          template_id: '2',
+          segment_ids: ['3'],
+          send_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+          time_zone: 'America/New_York',
+          created_by: 'admin',
+          personalization_rules: [],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+      ];
+
+      // Mock templates data
+      const mockTemplates: EmailTemplate[] = [
+        {
+          id: '1',
+          name: 'Welcome Email',
+          description: 'Welcome new customers',
+          category: 'onboarding',
+          subject: 'Welcome to GangRun Printing!',
+          html_content: '<h1>Welcome!</h1>',
+          text_content: 'Welcome!',
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+      ];
+
+      // Mock segments data
+      const mockSegments: CustomerSegment[] = [
+        {
+          id: '1',
+          name: 'New Customers',
+          description: 'Customers who joined in the last 30 days',
+          conditions: [],
+          customer_count: 150,
+          is_dynamic: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        {
+          id: '2',
+          name: 'All Customers',
+          description: 'All active customers',
+          conditions: [],
+          customer_count: 1200,
+          is_dynamic: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+      ];
+
+      // Apply status filter
+      let filteredCampaigns = mockCampaigns;
+      if (statusFilter) {
+        filteredCampaigns = filteredCampaigns.filter(c => c.status === statusFilter);
+      }
+      
+      setCampaigns(filteredCampaigns);
+      setTemplates(mockTemplates);
+      setSegments(mockSegments);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     } finally {
