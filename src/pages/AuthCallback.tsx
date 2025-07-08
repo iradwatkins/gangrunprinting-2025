@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 export function AuthCallback() {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
+  const [attempts, setAttempts] = useState(0);
 
   useEffect(() => {
     const handleAuthCallback = async () => {
@@ -12,18 +13,21 @@ export function AuthCallback() {
         console.log('AuthCallback: Processing OAuth callback');
         console.log('Current URL:', window.location.href);
         
-        // Check for authorization code in URL (PKCE flow)
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
+        // Let Supabase automatically handle the OAuth callback with detectSessionInUrl
+        // We just need to wait for the session to be established and then redirect
         
-        if (code) {
-          console.log('AuthCallback: Found authorization code, exchanging for session');
+        let attemptCount = 0;
+        const maxAttempts = 30; // 15 seconds max wait time
+        
+        const pollForSession = async (): Promise<void> => {
+          attemptCount++;
+          setAttempts(attemptCount);
+          console.log(`AuthCallback: Checking for session (attempt ${attemptCount}/${maxAttempts})`);
           
-          // Exchange the code for a session
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          const { data, error } = await supabase.auth.getSession();
           
           if (error) {
-            console.error('AuthCallback: Error exchanging code for session:', error);
+            console.error('AuthCallback: Error getting session:', error);
             setError(error.message);
             setTimeout(() => navigate('/'), 2000);
             return;
@@ -41,38 +45,22 @@ export function AuthCallback() {
             } else {
               navigate('/');
             }
-          } else {
-            console.log('AuthCallback: No session returned from code exchange');
-            setError('Failed to establish session');
-            setTimeout(() => navigate('/'), 2000);
-          }
-        } else {
-          // Check for direct session (fallback for other flows)
-          console.log('AuthCallback: No code found, checking for existing session');
-          
-          const { data, error } = await supabase.auth.getSession();
-          
-          if (error) {
-            console.error('AuthCallback: Error getting session:', error);
-            setError(error.message);
-            setTimeout(() => navigate('/'), 2000);
             return;
           }
 
-          if (data.session) {
-            console.log('AuthCallback: Existing session found:', data.session.user.email);
-            
-            // Redirect based on user role
-            if (data.session.user.email === 'iradwatkins@gmail.com') {
-              navigate('/admin');
-            } else {
-              navigate('/');
-            }
+          // If no session yet and we haven't reached max attempts, try again
+          if (attemptCount < maxAttempts) {
+            setTimeout(pollForSession, 500); // Wait 500ms before next attempt
           } else {
-            console.log('AuthCallback: No session found, redirecting to home');
-            navigate('/');
+            console.log('AuthCallback: Timeout waiting for session, redirecting to home');
+            setError('Authentication timeout. Please try again.');
+            setTimeout(() => navigate('/'), 2000);
           }
-        }
+        };
+
+        // Start polling for session
+        await pollForSession();
+        
       } catch (error) {
         console.error('AuthCallback: Exception:', error);
         setError(error instanceof Error ? error.message : 'An unexpected error occurred');
@@ -96,6 +84,11 @@ export function AuthCallback() {
           <div>
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
             <p className="text-gray-600">Completing sign in...</p>
+            {attempts > 5 && (
+              <p className="text-sm text-gray-500 mt-2">
+                Establishing session... ({attempts}/30)
+              </p>
+            )}
           </div>
         )}
       </div>
