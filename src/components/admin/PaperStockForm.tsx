@@ -44,10 +44,13 @@ const paperStockSchema = z.object({
   single_sided_available: z.boolean(),
   double_sided_available: z.boolean(),
   second_side_markup_percent: z.coerce.number().min(0).max(100).optional(),
+  sides_tooltip_text: z.string().optional(),
+  available_coatings: z.array(z.string()).optional(),
+  coatings_tooltip_text: z.string().optional(),
+  default_coating_id: z.string().optional(),
   available_print_sizes: z.array(z.string()).optional(),
   available_turnaround_times: z.array(z.string()).optional(),
   available_add_ons: z.array(z.string()).optional(),
-  available_coatings: z.array(z.string()).optional(),
   is_active: z.boolean()
 });
 
@@ -96,10 +99,13 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
       single_sided_available: true,
       double_sided_available: true,
       second_side_markup_percent: 50, // 50% markup for double-sided
+      sides_tooltip_text: '',
+      available_coatings: [],
+      coatings_tooltip_text: '',
+      default_coating_id: '',
       available_print_sizes: [],
       available_turnaround_times: [],
       available_add_ons: [],
-      available_coatings: [],
       is_active: true
     }
   });
@@ -157,10 +163,13 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
         single_sided_available: paperStock.single_sided_available ?? true,
         double_sided_available: paperStock.double_sided_available ?? true,
         second_side_markup_percent: paperStock.second_side_markup_percent || 50,
+        sides_tooltip_text: paperStock.sides_tooltip_text || '',
+        available_coatings: additionalData.available_coatings || [],
+        coatings_tooltip_text: paperStock.coatings_tooltip_text || '',
+        default_coating_id: paperStock.default_coating_id || '',
         available_print_sizes: additionalData.available_print_sizes || [],
         available_turnaround_times: additionalData.available_turnaround_times || [],
         available_add_ons: additionalData.available_add_ons || [],
-        available_coatings: additionalData.available_coatings || [],
         is_active: paperStock.is_active ?? true
       });
     } else {
@@ -173,10 +182,13 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
         single_sided_available: true,
         double_sided_available: true,
         second_side_markup_percent: 50,
+        sides_tooltip_text: '',
+        available_coatings: [],
+        coatings_tooltip_text: '',
+        default_coating_id: '',
         available_print_sizes: [],
         available_turnaround_times: [],
         available_add_ons: [],
-        available_coatings: [],
         is_active: true
       });
     }
@@ -203,6 +215,9 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
         single_sided_available: data.single_sided_available,
         double_sided_available: data.double_sided_available,
         second_side_markup_percent: data.second_side_markup_percent,
+        sides_tooltip_text: data.sides_tooltip_text,
+        coatings_tooltip_text: data.coatings_tooltip_text,
+        default_coating_id: data.default_coating_id,
         tooltip_text: JSON.stringify(additionalData),
         is_active: data.is_active
       };
@@ -266,9 +281,10 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Basic Information */}
+            {/* Step 1: Paper Stock Information */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Basic Information</h3>
+              <h3 className="text-lg font-medium">Step 1: Paper Stock</h3>
+              <p className="text-sm text-muted-foreground">Create the main paper stock that customers will see as their first choice.</p>
               
               <FormField
                 control={form.control}
@@ -400,9 +416,10 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
               />
             </div>
 
-            {/* Sides Configuration */}
+            {/* Step 2: Sides Configuration */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Sides Configuration</h3>
+              <h3 className="text-lg font-medium">Step 2: Sides Options</h3>
+              <p className="text-sm text-muted-foreground">Configure the sides printing options that customers will see as their second choice.</p>
               
               <div className="grid grid-cols-2 gap-4">
                 <FormField
@@ -479,11 +496,129 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="sides_tooltip_text"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sides Tooltip Text</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Helpful text to explain sides options to customers..."
+                        className="min-h-[60px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Optional tooltip text to help customers understand sides options
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
-            {/* Available Options */}
+            {/* Step 3: Coating Options */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Available Options</h3>
+              <h3 className="text-lg font-medium">Step 3: Coating Options</h3>
+              <p className="text-sm text-muted-foreground">Configure the coating options that customers will see as their third choice.</p>
+              
+              {loadingOptions ? (
+                <div className="text-center py-4">Loading coating options...</div>
+              ) : (
+                <div className="space-y-6">
+                  <div>
+                    <FormLabel className="text-base font-medium">Available Coatings</FormLabel>
+                    <FormDescription className="mb-3">
+                      Select which coatings are available for this paper stock
+                    </FormDescription>
+                    <div className="grid grid-cols-2 gap-2">
+                      {coatings.map((coating) => (
+                        <FormField
+                          key={coating.id}
+                          control={form.control}
+                          name="available_coatings"
+                          render={({ field }) => {
+                            return (
+                              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(coating.id)}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...field.value, coating.id])
+                                        : field.onChange(field.value?.filter((value) => value !== coating.id))
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  {coating.name} {coating.price_modifier !== 0 && `(${coating.price_modifier > 0 ? '+' : ''}$${coating.price_modifier})`}
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="coatings_tooltip_text"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Coatings Tooltip Text</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Helpful text to explain coating options to customers..."
+                            className="min-h-[60px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Optional tooltip text to help customers understand coating options
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="default_coating_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Default Coating</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select default coating" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="">No Default</SelectItem>
+                            {coatings.map((coating) => (
+                              <SelectItem key={coating.id} value={coating.id}>
+                                {coating.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Default coating selection for customers
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Additional Options */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Additional Configuration</h3>
               
               {loadingOptions ? (
                 <div className="text-center py-4">Loading options...</div>
@@ -597,41 +732,6 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
                     </div>
                   </div>
 
-                  {/* Coatings */}
-                  <div>
-                    <FormLabel className="text-base font-medium">Available Coatings</FormLabel>
-                    <FormDescription className="mb-3">
-                      Select which coatings are available for this paper stock
-                    </FormDescription>
-                    <div className="grid grid-cols-2 gap-2">
-                      {coatings.map((coating) => (
-                        <FormField
-                          key={coating.id}
-                          control={form.control}
-                          name="available_coatings"
-                          render={({ field }) => {
-                            return (
-                              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(coating.id)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...field.value, coating.id])
-                                        : field.onChange(field.value?.filter((value) => value !== coating.id))
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                  {coating.name} {coating.price_modifier !== 0 && `(${coating.price_modifier > 0 ? '+' : ''}$${coating.price_modifier})`}
-                                </FormLabel>
-                              </FormItem>
-                            )
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
                 </div>
               )}
             </div>

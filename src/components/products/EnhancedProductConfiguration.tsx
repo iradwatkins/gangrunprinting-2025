@@ -383,9 +383,10 @@ export function EnhancedProductConfiguration({ product }: EnhancedProductConfigu
   };
 
   const configurationSteps = [
-    { title: 'Paper & Coating', icon: Package },
-    { title: 'Size & Sides', icon: Ruler },
-    { title: 'Quantity', icon: Calculator },
+    { title: 'Paper Stock', icon: Package },
+    { title: 'Sides', icon: Palette },
+    { title: 'Coating', icon: Palette },
+    { title: 'Size & Quantity', icon: Ruler },
     { title: 'Turnaround', icon: Clock },
     { title: 'Add-ons', icon: Plus },
     { title: 'Review', icon: ShoppingCart }
@@ -522,9 +523,408 @@ export function EnhancedProductConfiguration({ product }: EnhancedProductConfigu
 }
 
 // Helper components for guided and advanced configurations
-function GuidedConfiguration({ /* props */ }) {
-  // Implementation for guided step-by-step configuration
-  return <div>Guided Configuration Implementation</div>;
+function GuidedConfiguration({ 
+  product, 
+  configuration, 
+  setConfiguration, 
+  currentStep, 
+  setCurrentStep,
+  steps,
+  coatings,
+  quantities,
+  sides,
+  addOnSubOptions
+}: any) {
+  const handleStepChange = (step: number) => {
+    setCurrentStep(step);
+  };
+
+  const handleNext = () => {
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const canProceed = (step: number) => {
+    switch (step) {
+      case 0: // Paper Stock
+        return !!configuration.paper_stock_id;
+      case 1: // Sides
+        return !!configuration.sides;
+      case 2: // Coating
+        return !!configuration.coating_id;
+      case 3: // Size & Quantity
+        return !!configuration.print_size_id && !!configuration.quantity;
+      case 4: // Turnaround
+        return !!configuration.turnaround_time_id;
+      case 5: // Add-ons
+        return true; // Add-ons are optional
+      default:
+        return true;
+    }
+  };
+
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 0:
+        return <PaperStockStep product={product} configuration={configuration} setConfiguration={setConfiguration} />;
+      case 1:
+        return <SidesStep product={product} configuration={configuration} setConfiguration={setConfiguration} sides={sides} />;
+      case 2:
+        return <CoatingStep product={product} configuration={configuration} setConfiguration={setConfiguration} coatings={coatings} />;
+      case 3:
+        return <SizeQuantityStep product={product} configuration={configuration} setConfiguration={setConfiguration} quantities={quantities} />;
+      case 4:
+        return <TurnaroundStep product={product} configuration={configuration} setConfiguration={setConfiguration} />;
+      case 5:
+        return <AddOnsStep product={product} configuration={configuration} setConfiguration={setConfiguration} addOnSubOptions={addOnSubOptions} />;
+      case 6:
+        return <ReviewStep product={product} configuration={configuration} />;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Step Navigation */}
+      <div className="flex justify-between items-center">
+        <div className="flex space-x-2">
+          {steps.map((step: any, index: number) => {
+            const StepIcon = step.icon;
+            const isActive = index === currentStep;
+            const isCompleted = index < currentStep || canProceed(index);
+            const isAccessible = index <= currentStep || canProceed(index - 1);
+
+            return (
+              <button
+                key={index}
+                onClick={() => isAccessible && handleStepChange(index)}
+                disabled={!isAccessible}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                  isActive
+                    ? 'bg-primary text-primary-foreground'
+                    : isCompleted
+                    ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                    : isAccessible
+                    ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                <StepIcon className="h-4 w-4" />
+                <span className="text-sm">{step.title}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Step Content */}
+      <div className="bg-gray-50 rounded-lg p-6 min-h-[400px]">
+        {renderStepContent()}
+      </div>
+
+      {/* Navigation Buttons */}
+      <div className="flex justify-between">
+        <Button
+          onClick={handlePrevious}
+          disabled={currentStep === 0}
+          variant="outline"
+        >
+          Previous
+        </Button>
+        <Button
+          onClick={handleNext}
+          disabled={currentStep === steps.length - 1 || !canProceed(currentStep)}
+        >
+          Next
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// Individual step components
+function PaperStockStep({ product, configuration, setConfiguration }: any) {
+  const handlePaperStockChange = (paperStockId: string) => {
+    setConfiguration((prev: any) => ({
+      ...prev,
+      paper_stock_id: paperStockId,
+      // Reset dependent selections
+      coating_id: '',
+      sides: 'single'
+    }));
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Step 1: Choose Paper Stock</h3>
+        <p className="text-sm text-muted-foreground mb-6">Select the paper stock for your print job. This will determine available options for the next steps.</p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {product.product_paper_stocks?.map((pps: any) => (
+          <div
+            key={pps.paper_stocks.id}
+            className={`p-4 border rounded-lg cursor-pointer transition-all ${
+              configuration.paper_stock_id === pps.paper_stocks.id
+                ? 'border-primary bg-primary/5'
+                : 'border-gray-200 hover:border-gray-300'
+            }`}
+            onClick={() => handlePaperStockChange(pps.paper_stocks.id)}
+          >
+            <div className="flex items-center space-x-3">
+              <div className={`w-4 h-4 rounded-full border-2 ${
+                configuration.paper_stock_id === pps.paper_stocks.id
+                  ? 'border-primary bg-primary'
+                  : 'border-gray-300'
+              }`} />
+              <div>
+                <h4 className="font-medium">{pps.paper_stocks.name}</h4>
+                <p className="text-sm text-muted-foreground">
+                  {pps.paper_stocks.weight} GSM • {pps.paper_stocks.finish}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  ${pps.paper_stocks.price_per_square_inch}/sq in
+                </p>
+              </div>
+            </div>
+            {pps.paper_stocks.description && (
+              <p className="text-sm text-muted-foreground mt-2">
+                {pps.paper_stocks.description}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SidesStep({ product, configuration, setConfiguration }: any) {
+  const selectedPaperStock = product.product_paper_stocks?.find(
+    (pps: any) => pps.paper_stocks.id === configuration.paper_stock_id
+  );
+
+  const handleSidesChange = (sides: 'single' | 'double') => {
+    setConfiguration((prev: any) => ({
+      ...prev,
+      sides
+    }));
+  };
+
+  if (!selectedPaperStock) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">Please select a paper stock first.</p>
+      </div>
+    );
+  }
+
+  const sidesOptions = [
+    { 
+      value: 'single', 
+      label: 'Single-Sided', 
+      description: 'Print on one side only',
+      available: selectedPaperStock.paper_stocks.single_sided_available
+    },
+    { 
+      value: 'double', 
+      label: 'Double-Sided', 
+      description: `Print on both sides (${selectedPaperStock.paper_stocks.second_side_markup_percent}% markup)`,
+      available: selectedPaperStock.paper_stocks.double_sided_available
+    }
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Step 2: Choose Sides</h3>
+        <p className="text-sm text-muted-foreground mb-6">Select printing sides for your {selectedPaperStock.paper_stocks.name}.</p>
+        {selectedPaperStock.paper_stocks.sides_tooltip_text && (
+          <p className="text-sm text-blue-600 bg-blue-50 p-3 rounded-lg mb-6">
+            {selectedPaperStock.paper_stocks.sides_tooltip_text}
+          </p>
+        )}
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {sidesOptions.map((option) => (
+          <div
+            key={option.value}
+            className={`p-4 border rounded-lg cursor-pointer transition-all ${
+              !option.available
+                ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-50'
+                : configuration.sides === option.value
+                ? 'border-primary bg-primary/5'
+                : 'border-gray-200 hover:border-gray-300'
+            }`}
+            onClick={() => option.available && handleSidesChange(option.value as 'single' | 'double')}
+          >
+            <div className="flex items-center space-x-3">
+              <div className={`w-4 h-4 rounded-full border-2 ${
+                configuration.sides === option.value && option.available
+                  ? 'border-primary bg-primary'
+                  : 'border-gray-300'
+              }`} />
+              <div>
+                <h4 className="font-medium">{option.label}</h4>
+                <p className="text-sm text-muted-foreground">{option.description}</p>
+                {!option.available && (
+                  <p className="text-sm text-red-500">Not available for this paper stock</p>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CoatingStep({ product, configuration, setConfiguration, coatings }: any) {
+  const selectedPaperStock = product.product_paper_stocks?.find(
+    (pps: any) => pps.paper_stocks.id === configuration.paper_stock_id
+  );
+
+  const handleCoatingChange = (coatingId: string) => {
+    setConfiguration((prev: any) => ({
+      ...prev,
+      coating_id: coatingId
+    }));
+  };
+
+  if (!selectedPaperStock) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">Please select a paper stock first.</p>
+      </div>
+    );
+  }
+
+  // Get available coatings for this paper stock
+  const availableCoatings = coatings?.filter((coating: any) => {
+    const additionalData = selectedPaperStock.paper_stocks.tooltip_text 
+      ? JSON.parse(selectedPaperStock.paper_stocks.tooltip_text) 
+      : {};
+    return additionalData.available_coatings?.includes(coating.id);
+  }) || [];
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Step 3: Choose Coating</h3>
+        <p className="text-sm text-muted-foreground mb-6">Select coating for your {selectedPaperStock.paper_stocks.name}.</p>
+        {selectedPaperStock.paper_stocks.coatings_tooltip_text && (
+          <p className="text-sm text-blue-600 bg-blue-50 p-3 rounded-lg mb-6">
+            {selectedPaperStock.paper_stocks.coatings_tooltip_text}
+          </p>
+        )}
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {availableCoatings.map((coating: any) => (
+          <div
+            key={coating.id}
+            className={`p-4 border rounded-lg cursor-pointer transition-all ${
+              configuration.coating_id === coating.id
+                ? 'border-primary bg-primary/5'
+                : 'border-gray-200 hover:border-gray-300'
+            }`}
+            onClick={() => handleCoatingChange(coating.id)}
+          >
+            <div className="flex items-center space-x-3">
+              <div className={`w-4 h-4 rounded-full border-2 ${
+                configuration.coating_id === coating.id
+                  ? 'border-primary bg-primary'
+                  : 'border-gray-300'
+              }`} />
+              <div>
+                <h4 className="font-medium">{coating.name}</h4>
+                <p className="text-sm text-muted-foreground">{coating.description}</p>
+                {coating.price_modifier !== 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    {coating.price_modifier > 0 ? '+' : ''}${coating.price_modifier}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SizeQuantityStep({ product, configuration, setConfiguration, quantities }: any) {
+  // Implementation for size and quantity selection
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Step 4: Size & Quantity</h3>
+        <p className="text-sm text-muted-foreground mb-6">Choose your print size and quantity.</p>
+      </div>
+      {/* Add size and quantity selection UI */}
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">Size and quantity selection (to be implemented)</p>
+      </div>
+    </div>
+  );
+}
+
+function TurnaroundStep({ product, configuration, setConfiguration }: any) {
+  // Implementation for turnaround time selection
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Step 5: Turnaround Time</h3>
+        <p className="text-sm text-muted-foreground mb-6">Choose your delivery timeline.</p>
+      </div>
+      {/* Add turnaround time selection UI */}
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">Turnaround time selection (to be implemented)</p>
+      </div>
+    </div>
+  );
+}
+
+function AddOnsStep({ product, configuration, setConfiguration, addOnSubOptions }: any) {
+  // Implementation for add-ons selection
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Step 6: Add-ons</h3>
+        <p className="text-sm text-muted-foreground mb-6">Choose additional services for your order.</p>
+      </div>
+      {/* Add add-ons selection UI */}
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">Add-ons selection (to be implemented)</p>
+      </div>
+    </div>
+  );
+}
+
+function ReviewStep({ product, configuration }: any) {
+  // Implementation for review step
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Step 7: Review</h3>
+        <p className="text-sm text-muted-foreground mb-6">Review your configuration before adding to cart.</p>
+      </div>
+      {/* Add configuration review UI */}
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">Configuration review (to be implemented)</p>
+      </div>
+    </div>
+  );
 }
 
 function AdvancedConfiguration({ /* props */ }) {
