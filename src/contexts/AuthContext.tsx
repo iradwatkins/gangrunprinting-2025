@@ -8,17 +8,19 @@ import { toast } from 'sonner';
 export interface AuthUser extends User {
   profile?: {
     id: string;
+    user_id: string;
+    is_broker: boolean;
+    broker_category_discounts: Record<string, any>;
+    company_name: string | null;
+    phone: string | null;
+    created_at: string;
+    updated_at: string;
+    // Derived fields from auth.users
     email: string;
     full_name: string | null;
     avatar_url: string | null;
-    phone: string | null;
-    company: string | null;
     role: 'customer' | 'admin' | 'broker';
     broker_status: 'pending' | 'approved' | 'rejected' | null;
-    is_broker: boolean;
-    broker_category_discounts: Record<string, any>;
-    created_at: string;
-    updated_at: string;
   };
 }
 
@@ -116,13 +118,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (!profile) {
-        // Create profile if it doesn't exist
+        // Create profile if it doesn't exist - only use fields that exist in the schema
         const isHardcodedAdmin = authUser.email === 'iradwatkins@gmail.com';
         const newProfile = {
           user_id: authUser.id,
-          email: authUser.email || '',
-          full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
-          role: isHardcodedAdmin ? 'admin' as const : 'customer' as const,
+          is_broker: isHardcodedAdmin || false,
+          broker_category_discounts: {},
+          company_name: null,
+          phone: null
         };
 
         const { data: createdProfile } = await supabase
@@ -131,10 +134,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .select()
           .single();
 
-        return createdProfile;
+        if (createdProfile) {
+          // Add derived fields from auth.users
+          return {
+            ...createdProfile,
+            email: authUser.email || '',
+            full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
+            avatar_url: authUser.user_metadata?.avatar_url || null,
+            role: isHardcodedAdmin ? 'admin' as const : 'customer' as const,
+            broker_status: null
+          };
+        }
+
+        return null;
       }
 
-      return profile;
+      // Add derived fields from auth.users
+      const isHardcodedAdmin = authUser.email === 'iradwatkins@gmail.com';
+      return {
+        ...profile,
+        email: authUser.email || '',
+        full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
+        avatar_url: authUser.user_metadata?.avatar_url || null,
+        role: isHardcodedAdmin ? 'admin' as const : 'customer' as const,
+        broker_status: null
+      };
     } catch (error) {
       console.error('Error in getUserProfile:', error);
       return null;
@@ -155,11 +179,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const isHardcodedAdmin = authUser.email === 'iradwatkins@gmail.com';
         const newProfile = {
           user_id: authUser.id,
-          email: authUser.email || '',
-          full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
-          role: isHardcodedAdmin ? 'admin' as const : 'customer' as const,
-          is_broker: false,
-          broker_category_discounts: {}
+          is_broker: isHardcodedAdmin || false,
+          broker_category_discounts: {},
+          company_name: null,
+          phone: null
         };
 
         const { data: createdProfile, error: createError } = await supabase
@@ -176,7 +199,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             ...authUser, 
             profile: {
               ...createdProfile,
-              broker_category_discounts: createdProfile.broker_category_discounts || {}
+              broker_category_discounts: createdProfile.broker_category_discounts || {},
+              // Add derived fields from auth.users
+              email: authUser.email || '',
+              full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
+              avatar_url: authUser.user_metadata?.avatar_url || null,
+              role: isHardcodedAdmin ? 'admin' as const : 'customer' as const,
+              broker_status: null
             }
           });
         }
@@ -184,11 +213,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Error fetching user profile:', error);
         setUser({ ...authUser, profile: undefined });
       } else {
+        const isHardcodedAdmin = authUser.email === 'iradwatkins@gmail.com';
         setUser({ 
           ...authUser, 
           profile: {
             ...profile,
-            broker_category_discounts: profile.broker_category_discounts || {}
+            broker_category_discounts: profile.broker_category_discounts || {},
+            // Add derived fields from auth.users
+            email: authUser.email || '',
+            full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
+            avatar_url: authUser.user_metadata?.avatar_url || null,
+            role: isHardcodedAdmin ? 'admin' as const : 'customer' as const,
+            broker_status: null
           }
         });
       }
