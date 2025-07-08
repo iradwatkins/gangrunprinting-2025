@@ -37,7 +37,6 @@ import { TurnaroundTimesPage } from "./pages/admin/TurnaroundTimesPage";
 import { AddOnsPage } from "./pages/admin/AddOnsPage";
 import { QuantitiesPage } from "./pages/admin/QuantitiesPage";
 import { SidesPage } from "./pages/admin/SidesPage";
-import { DatabaseTest } from "./pages/admin/DatabaseTest";
 import { SimplePaperStockPage } from "./pages/admin/SimplePaperStockPage";
 import { BasicPaperStockPage } from "./pages/admin/BasicPaperStockPage";
 import { CompletePaperStockPage } from "./pages/admin/CompletePaperStockPage";
@@ -93,7 +92,6 @@ const App = () => (
               <Route path="/admin/add-ons" element={<AddOnsPage />} />
               <Route path="/admin/quantities" element={<QuantitiesPage />} />
               <Route path="/admin/sides" element={<SidesPage />} />
-              <Route path="/admin/database-test" element={<DatabaseTest />} />
               <Route path="/admin/paper-stocks/new" element={<CompletePaperStockPage />} />
               <Route path="/admin/paper-stocks/basic" element={<BasicPaperStockPage />} />
               <Route path="/admin/paper-stocks/advanced" element={<SimplePaperStockPage />} />

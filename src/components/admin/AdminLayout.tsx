@@ -18,7 +18,6 @@ import {
   ShoppingCart,
   Mail,
   FileText,
-  Database,
   Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -121,12 +120,6 @@ const navigation = [
     name: 'Settings',
     href: '/admin/checkout-settings',
     icon: Settings
-  },
-  {
-    name: 'Database Test',
-    href: '/admin/database-test',
-    icon: Database,
-    badge: 'Debug'
   },
 ];
 

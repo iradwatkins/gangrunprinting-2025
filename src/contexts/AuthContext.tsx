@@ -72,12 +72,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.email);
         setSession(session);
         
         if (session?.user) {
           await loadUserProfile(session.user);
           
           if (event === 'SIGNED_IN') {
+            console.log('User signed in:', session.user.email);
             toast.success('Successfully signed in!');
             // Redirect based on user role after successful login
             const profile = await getUserProfile(session.user);
@@ -253,38 +255,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithMagicLink = async (email: string) => {
     try {
-      const { error } = await supabase.auth.signInWithOtp({
+      console.log('Magic link sign-in initiated for:', email);
+      console.log('Redirect URL:', `${window.location.origin}/`);
+      
+      const { data, error } = await supabase.auth.signInWithOtp({
         email,
         options: {
           emailRedirectTo: `${window.location.origin}/`
         }
       });
 
+      console.log('Magic link response:', { data, error });
+
       if (error) {
+        console.error('Magic link error:', error);
         return { error: error.message };
       }
 
       return { error: null };
     } catch (error) {
+      console.error('Magic link exception:', error);
       return { error: 'An unexpected error occurred' };
     }
   };
 
   const signInWithGoogle = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      console.log('Google sign-in initiated');
+      const currentOrigin = window.location.origin;
+      console.log('Current origin:', currentOrigin);
+      
+      // Use different redirect URL for development vs production
+      const redirectUrl = currentOrigin.includes('localhost') 
+        ? `${currentOrigin}/` 
+        : `${currentOrigin}/`;
+      
+      console.log('Redirect URL:', redirectUrl);
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`
+          redirectTo: redirectUrl
         }
       });
 
+      console.log('Google OAuth response:', { data, error });
+
       if (error) {
+        console.error('Google OAuth error:', error);
         return { error: error.message };
       }
 
       return { error: null };
     } catch (error) {
+      console.error('Google sign-in exception:', error);
       return { error: 'An unexpected error occurred' };
     }
   };
