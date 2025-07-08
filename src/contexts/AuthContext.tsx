@@ -59,15 +59,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        loadUserProfile(session.user);
-      } else {
+    // Handle OAuth callback and get initial session
+    const initializeAuth = async () => {
+      try {
+        // Check if we have OAuth tokens in URL fragment
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        
+        if (accessToken) {
+          console.log('OAuth callback detected, processing tokens...');
+          // Use Supabase's built-in session handling for OAuth
+          const { data, error } = await supabase.auth.getSession();
+          console.log('Session after OAuth:', { data, error });
+          
+          if (data.session) {
+            console.log('OAuth session established for:', data.session.user.email);
+            setSession(data.session);
+            await loadUserProfile(data.session.user);
+            
+            // Clean up URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+          } else if (error) {
+            console.error('OAuth session error:', error);
+            setLoading(false);
+          }
+        } else {
+          // Regular session check
+          const { data: { session }, error } = await supabase.auth.getSession();
+          console.log('Regular session check:', { session, error });
+          
+          setSession(session);
+          if (session?.user) {
+            await loadUserProfile(session.user);
+          } else {
+            setLoading(false);
+          }
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
         setLoading(false);
       }
-    });
+    };
+
+    initializeAuth();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -261,7 +295,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/`
+          emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       });
 
@@ -287,8 +321,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Use different redirect URL for development vs production
       const redirectUrl = currentOrigin.includes('localhost') 
-        ? `${currentOrigin}/` 
-        : `${currentOrigin}/`;
+        ? `${currentOrigin}/auth/callback` 
+        : `${currentOrigin}/auth/callback`;
       
       console.log('Redirect URL:', redirectUrl);
       
