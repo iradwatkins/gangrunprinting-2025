@@ -246,10 +246,10 @@ export function PaperStockList() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name & Options</TableHead>
+                  <TableHead>Name & Sides Options</TableHead>
                   <TableHead>Weight</TableHead>
                   <TableHead>Pricing</TableHead>
-                  <TableHead>Coatings</TableHead>
+                  <TableHead>Available Coatings</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Products Using</TableHead>
                   <TableHead className="w-[70px]">Actions</TableHead>
@@ -273,15 +273,36 @@ export function PaperStockList() {
                               {stock.description}
                             </div>
                           )}
-                          <div className="flex gap-1 mt-1">
+                          <div className="flex flex-wrap gap-1 mt-1">
                             {stock.single_sided_available && (
-                              <span className="text-xs bg-blue-100 text-blue-800 px-1 rounded">1-Sided</span>
+                              <span className="text-xs bg-blue-100 text-blue-800 px-1 rounded">Single</span>
                             )}
                             {stock.double_sided_available && (
-                              <span className="text-xs bg-green-100 text-green-800 px-1 rounded">
-                                2-Sided {stock.second_side_markup_percent ? `+${stock.second_side_markup_percent}%` : ''}
+                              <span className="text-xs bg-green-100 text-green-800 px-1 rounded">Double</span>
+                            )}
+                            {stock.second_side_markup_percent && stock.second_side_markup_percent > 0 && (
+                              <span className="text-xs bg-orange-100 text-orange-800 px-1 rounded">
+                                +{stock.second_side_markup_percent}%
                               </span>
                             )}
+                            {/* Show enhanced options if stored in tooltip_text */}
+                            {(() => {
+                              try {
+                                const extraData = stock.tooltip_text ? JSON.parse(stock.tooltip_text) : null;
+                                if (extraData?.available_sides) {
+                                  return extraData.available_sides.map((side: string) => (
+                                    <span key={side} className="text-xs bg-purple-100 text-purple-800 px-1 rounded">
+                                      {side === 'single_sided' && 'Single'}
+                                      {side === 'double_sided_different' && 'Double (Diff)'}
+                                      {side === 'double_sided_same' && 'Double (Same)'}
+                                    </span>
+                                  ));
+                                }
+                                return null;
+                              } catch {
+                                return null;
+                              }
+                            })()}
                           </div>
                         </div>
                       </TableCell>
@@ -289,15 +310,38 @@ export function PaperStockList() {
                       <TableCell>
                         <div className="text-sm">
                           <div>${stock.price_per_sq_inch?.toFixed(4) || '0.0000'}/sq in</div>
-                          {stock.double_sided_available && stock.second_side_markup_percent && (
+                          {stock.second_side_markup_percent && stock.second_side_markup_percent > 0 && (
                             <div className="text-xs text-muted-foreground">
-                              2-sided: +{stock.second_side_markup_percent}%
+                              Double: +{stock.second_side_markup_percent}%
                             </div>
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm">Coatings Available</div>
+                        <div className="text-sm">
+                          {(() => {
+                            try {
+                              const extraData = stock.tooltip_text ? JSON.parse(stock.tooltip_text) : null;
+                              if (extraData?.available_coatings && Array.isArray(extraData.available_coatings)) {
+                                return (
+                                  <div className="flex flex-wrap gap-1">
+                                    {extraData.available_coatings.map((coating: string) => (
+                                      <span key={coating} className="text-xs bg-purple-100 text-purple-800 px-1 rounded">
+                                        {coating === 'high_gloss_uv' && 'UV'}
+                                        {coating === 'high_gloss_uv_one_side' && 'UV (1-Side)'}
+                                        {coating === 'gloss_aqueous' && 'Gloss'}
+                                        {coating === 'matte_aqueous' && 'Matte'}
+                                      </span>
+                                    ))}
+                                  </div>
+                                );
+                              }
+                              return <span className="text-muted-foreground">Basic coatings</span>;
+                            } catch {
+                              return <span className="text-muted-foreground">Basic coatings</span>;
+                            }
+                          })()}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Badge

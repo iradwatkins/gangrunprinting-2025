@@ -39,12 +39,12 @@ const paperStockSchema = z.object({
   base_price_per_sq_inch: z.coerce.number().min(0.001, 'Price must be greater than $0.001').max(1, 'Price must be under $1.00'),
   description: z.string().optional(),
   
-  // Sides configuration (paper-specific)
+  // Sides configuration (paper-specific) - mapped to existing DB fields
   available_sides: z.array(z.string()).min(1, 'At least one sides option must be selected'),
-  double_sided_different_markup_percent: z.coerce.number().min(0, 'Markup must be 0% or higher').max(300, 'Markup must be under 300%'),
+  double_sided_different_markup_percent: z.coerce.number().min(0, 'Markup must be 0% or higher').max(300, 'Markup must be under 300%').optional(),
   sides_tooltip_text: z.string().min(1, 'Sides tooltip is required for customers'),
   
-  // Coating configuration
+  // Coating configuration - store as JSON string in existing fields
   available_coatings: z.array(z.string()).min(1, 'At least one coating must be selected'),
   default_coating: z.string().min(1, 'Default coating is required'),
   coatings_tooltip_text: z.string().min(1, 'Coatings tooltip is required for customers'),
@@ -123,19 +123,29 @@ export function CompletePaperStockPage() {
   const onSubmit = async (data: PaperStockFormData) => {
     setLoading(true);
     try {
-      // Create the complete paper stock
+      // Map new UX options to existing database structure
+      const hasSingleSided = data.available_sides.includes('single_sided');
+      const hasDoubleSided = data.available_sides.includes('double_sided_different') || data.available_sides.includes('double_sided_same');
+      const doubleSidedMarkup = data.available_sides.includes('double_sided_different') ? data.double_sided_different_markup_percent || 0 : 0;
+
+      // Create the complete paper stock using existing schema
       const paperStockData: TablesInsert<'paper_stocks'> = {
         name: data.name,
         weight: data.weight,
         price_per_sq_inch: data.base_price_per_sq_inch,
         description: data.description || null,
-        // Store selected sides and coatings as JSON
-        available_sides: data.available_sides,
-        double_sided_different_markup_percent: data.double_sided_different_markup_percent,
+        // Map to existing fields
+        single_sided_available: hasSingleSided,
+        double_sided_available: hasDoubleSided,
+        second_side_markup_percent: doubleSidedMarkup,
         sides_tooltip_text: data.sides_tooltip_text,
-        available_coatings: data.available_coatings,
-        default_coating: data.default_coating,
         coatings_tooltip_text: data.coatings_tooltip_text,
+        // Store additional data in description for now
+        tooltip_text: JSON.stringify({
+          available_sides: data.available_sides,
+          available_coatings: data.available_coatings,
+          default_coating: data.default_coating
+        }),
         is_active: data.is_active
       };
 
