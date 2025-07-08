@@ -18,7 +18,8 @@ import {
   Package,
   Award,
   Building,
-  BarChart3
+  BarChart3,
+  Send
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,6 +54,7 @@ import { vendorsApi, type VendorFilters } from '@/api/vendors';
 import { VendorForm } from '@/components/admin/VendorForm';
 import { VendorPerformance } from '@/components/admin/VendorPerformance';
 import { VendorProductAssignment } from '@/components/admin/VendorProductAssignment';
+import { VendorEmailModal } from '@/components/admin/VendorEmailModal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -125,6 +127,8 @@ export function VendorList() {
   const [performanceVendor, setPerformanceVendor] = useState<Vendor | null>(null);
   const [showAssignment, setShowAssignment] = useState(false);
   const [assignmentVendor, setAssignmentVendor] = useState<Vendor | null>(null);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailVendor, setEmailVendor] = useState<Vendor | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -290,16 +294,7 @@ export function VendorList() {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Truck className="h-5 w-5" />
-            Vendor Management
-          </CardTitle>
-          <CardDescription>
-            Manage print vendors, their capabilities, and performance tracking
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {/* Search and Filters */}
           <div className="flex items-center gap-4 mb-6">
             <div className="relative flex-1">
@@ -439,6 +434,17 @@ export function VendorList() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                setEmailVendor(vendor);
+                                setShowEmailModal(true);
+                              }}
+                              disabled={!vendor.contact_email}
+                            >
+                              <Send className="h-4 w-4 mr-2" />
+                              Send Email
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => {
                               setPerformanceVendor(vendor);
                               setShowPerformance(true);
@@ -500,9 +506,11 @@ export function VendorList() {
       {/* Vendor Form Dialog */}
       <VendorForm
         open={showForm}
-        onClose={() => {
-          setShowForm(false);
-          setEditingVendor(null);
+        onOpenChange={(open) => {
+          setShowForm(open);
+          if (!open) {
+            setEditingVendor(null);
+          }
         }}
         vendor={editingVendor}
         onSuccess={loadData}
@@ -531,6 +539,13 @@ export function VendorList() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Vendor Email Modal */}
+      <VendorEmailModal
+        vendor={emailVendor}
+        open={showEmailModal}
+        onOpenChange={setShowEmailModal}
+      />
     </div>
   );
 }

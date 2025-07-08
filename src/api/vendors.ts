@@ -272,5 +272,51 @@ export const vendorsApi = {
     } catch (error) {
       return { error: 'Failed to remove products from vendor' };
     }
+  },
+
+  // Get vendor email history
+  async getVendorEmailHistory(vendorId: string): Promise<ApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('vendor_email_log')
+        .select('*')
+        .eq('vendor_id', vendorId)
+        .order('sent_at', { ascending: false });
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data: data || [] };
+    } catch (error) {
+      return { error: 'Failed to fetch vendor email history' };
+    }
+  },
+
+  // Log vendor email
+  async logVendorEmail(emailData: {
+    vendor_id: string;
+    sender_id: string;
+    subject: string;
+    body: string;
+    status: 'sent' | 'failed' | 'pending';
+    error_message?: string;
+  }): Promise<ApiResponse<void>> {
+    try {
+      const { error } = await supabase
+        .from('vendor_email_log')
+        .insert({
+          ...emailData,
+          sent_at: new Date().toISOString()
+        });
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data: undefined };
+    } catch (error) {
+      return { error: 'Failed to log vendor email' };
+    }
   }
 };

@@ -177,7 +177,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       {/* Mobile Sidebar */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <SheetTrigger asChild>
-          <Button variant="outline" size="icon" className="lg:hidden fixed top-4 left-4 z-50">
+          <Button variant="outline" size="icon" className="lg:hidden fixed top-4 left-4 z-40">
             <Menu className="h-4 w-4" />
           </Button>
         </SheetTrigger>
@@ -188,7 +188,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="border-b bg-card dark:bg-gray-800 px-6 py-4">
+        <header className="border-b bg-card dark:bg-gray-800 px-6 py-4 lg:px-6 pl-16 lg:pl-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <h2 className="text-2xl font-bold tracking-tight text-foreground dark:text-white">Business Management</h2>
