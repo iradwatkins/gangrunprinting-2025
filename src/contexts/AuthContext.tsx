@@ -77,8 +77,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           
           if (event === 'SIGNED_IN') {
             toast.success('Successfully signed in!');
-            // Just redirect to home for now - remove admin logic
-            navigate('/');
+            // Redirect based on user email
+            if (session.user.email === 'iradwatkins@gmail.com') {
+              navigate('/admin');
+            } else {
+              navigate('/');
+            }
           }
         } else {
           setUser(null);
