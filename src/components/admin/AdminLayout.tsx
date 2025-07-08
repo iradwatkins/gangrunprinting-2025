@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { UserButton } from '@/components/auth/UserButton';
 
 const navigation = [
   // Main Dashboard
@@ -189,8 +190,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       <div className="flex flex-1 flex-col overflow-hidden">
         <header className="border-b bg-card dark:bg-gray-800 px-6 py-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold tracking-tight text-foreground dark:text-white">Business Management</h2>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-4">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground dark:text-white">Business Management</h2>
+              <Badge variant="secondary" className="text-xs">
+                Admin Panel
+              </Badge>
+            </div>
+            <div className="flex items-center space-x-3">
               <Button variant="outline" size="sm" asChild>
                 <a href="/" target="_blank" rel="noopener noreferrer">
                   View Store
@@ -201,6 +207,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   Add Product
                 </a>
               </Button>
+              <UserButton />
             </div>
           </div>
         </header>
