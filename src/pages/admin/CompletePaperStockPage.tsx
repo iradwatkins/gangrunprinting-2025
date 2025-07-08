@@ -28,8 +28,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
-import { paperStocksApi, coatingsApi } from '@/api/global-options';
-import { supabase } from '@/integrations/supabase/client';
+import { paperStocksApi } from '@/api/global-options';
 import { createDemoPaperStocks } from '@/utils/demo-paper-stocks';
 import type { Tables, TablesInsert } from '@/integrations/supabase/types';
 
@@ -41,13 +40,12 @@ const paperStockSchema = z.object({
   description: z.string().optional(),
   
   // Sides configuration (paper-specific)
-  single_sided_available: z.boolean(),
-  double_sided_available: z.boolean(),
-  double_sided_markup_percent: z.coerce.number().min(0, 'Markup must be 0% or higher').max(300, 'Markup must be under 300%'),
+  available_sides: z.array(z.string()).min(1, 'At least one sides option must be selected'),
+  double_sided_different_markup_percent: z.coerce.number().min(0, 'Markup must be 0% or higher').max(300, 'Markup must be under 300%'),
   sides_tooltip_text: z.string().min(1, 'Sides tooltip is required for customers'),
   
   // Coating configuration
-  compatible_coatings: z.array(z.string()).min(1, 'At least one coating must be selected'),
+  available_coatings: z.array(z.string()).min(1, 'At least one coating must be selected'),
   default_coating: z.string().min(1, 'Default coating is required'),
   coatings_tooltip_text: z.string().min(1, 'Coatings tooltip is required for customers'),
   
@@ -56,14 +54,53 @@ const paperStockSchema = z.object({
 });
 
 type PaperStockFormData = z.infer<typeof paperStockSchema>;
-type Coating = Tables<'coatings'>;
+
+// Define the specific sides and coating options
+const SIDES_OPTIONS = [
+  {
+    id: 'single_sided',
+    label: 'Single Sided',
+    description: 'Image Front / Blank Back'
+  },
+  {
+    id: 'double_sided_different',
+    label: 'Double Sided (Two Different Images)',
+    description: 'Different images on front and back (may have price upgrade)'
+  },
+  {
+    id: 'double_sided_same',
+    label: 'Same Image Both Sides',
+    description: 'Identical image printed on both sides'
+  }
+];
+
+const COATING_OPTIONS = [
+  {
+    id: 'high_gloss_uv',
+    label: 'High Gloss UV',
+    description: 'High gloss UV coating on both sides'
+  },
+  {
+    id: 'high_gloss_uv_one_side',
+    label: 'High Gloss UV on ONE SIDE',
+    description: 'High gloss UV coating on front side only'
+  },
+  {
+    id: 'gloss_aqueous',
+    label: 'Gloss Aqueous',
+    description: 'Gloss aqueous coating'
+  },
+  {
+    id: 'matte_aqueous',
+    label: 'Matte Aqueous',
+    description: 'Matte aqueous coating'
+  }
+];
 
 export function CompletePaperStockPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
-  const [coatings, setCoatings] = useState<Coating[]>([]);
-  const [loadingCoatings, setLoadingCoatings] = useState(true);
 
   const form = useForm<PaperStockFormData>({
     resolver: zodResolver(paperStockSchema),
@@ -72,88 +109,16 @@ export function CompletePaperStockPage() {
       weight: 300,
       base_price_per_sq_inch: 0.008,
       description: '',
-      single_sided_available: true,
-      double_sided_available: true,
-      double_sided_markup_percent: 80,
-      sides_tooltip_text: '',
-      compatible_coatings: [],
-      default_coating: '',
-      coatings_tooltip_text: '',
+      available_sides: ['single_sided'],
+      double_sided_different_markup_percent: 80,
+      sides_tooltip_text: 'Choose how you want your item printed',
+      available_coatings: ['high_gloss_uv'],
+      default_coating: 'high_gloss_uv',
+      coatings_tooltip_text: 'Choose the coating finish for your print',
       is_active: true
     }
   });
 
-  useEffect(() => {
-    loadCoatings();
-  }, []);
-
-  const loadCoatings = async () => {
-    setLoadingCoatings(true);
-    try {
-      const response = await coatingsApi.getAll({ is_active: true });
-      if (response.data) {
-        setCoatings(response.data);
-        // If no coatings exist, create default ones
-        if (response.data.length === 0) {
-          await createDefaultCoatings();
-        }
-      }
-    } catch (error) {
-      console.error('Error loading coatings:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load coatings. Creating defaults...",
-        variant: "destructive",
-      });
-      await createDefaultCoatings();
-    }
-    setLoadingCoatings(false);
-  };
-
-  const createDefaultCoatings = async () => {
-    const defaultCoatings = [
-      {
-        name: 'No Coating',
-        price_modifier: 0.0000,
-        description: 'Natural paper finish without any coating',
-        is_active: true
-      },
-      {
-        name: 'High Gloss UV',
-        price_modifier: 0.0000,
-        description: 'High gloss UV coating for vibrant colors and protection',
-        is_active: true
-      },
-      {
-        name: 'Matte Finish',
-        price_modifier: 0.0000,
-        description: 'Smooth matte finish with subtle texture',
-        is_active: true
-      },
-      {
-        name: 'Satin Finish',
-        price_modifier: 0.0000,
-        description: 'Semi-gloss finish with elegant appearance',
-        is_active: true
-      }
-    ];
-
-    const createdCoatings: Coating[] = [];
-    for (const coating of defaultCoatings) {
-      const response = await coatingsApi.create(coating);
-      if (response.data) {
-        createdCoatings.push(response.data);
-      }
-    }
-    setCoatings(createdCoatings);
-    
-    if (createdCoatings.length > 0) {
-      toast({
-        title: "Default Coatings Created",
-        description: "Created basic coating options for you to use.",
-      });
-    }
-  };
 
   const onSubmit = async (data: PaperStockFormData) => {
     setLoading(true);
@@ -163,12 +128,14 @@ export function CompletePaperStockPage() {
         name: data.name,
         weight: data.weight,
         price_per_sq_inch: data.base_price_per_sq_inch,
-        second_side_markup_percent: data.double_sided_markup_percent,
-        single_sided_available: data.single_sided_available,
-        double_sided_available: data.double_sided_available,
-        sides_tooltip_text: data.sides_tooltip_text,
-        coatings_tooltip_text: data.coatings_tooltip_text,
         description: data.description || null,
+        // Store selected sides and coatings as JSON
+        available_sides: data.available_sides,
+        double_sided_different_markup_percent: data.double_sided_different_markup_percent,
+        sides_tooltip_text: data.sides_tooltip_text,
+        available_coatings: data.available_coatings,
+        default_coating: data.default_coating,
+        coatings_tooltip_text: data.coatings_tooltip_text,
         is_active: data.is_active
       };
 
@@ -179,26 +146,9 @@ export function CompletePaperStockPage() {
       }
 
       if (response.data) {
-        const paperStockId = response.data.id;
-
-        // Create paper stock coating relationships
-        for (const coatingId of data.compatible_coatings) {
-          const { error } = await supabase
-            .from('paper_stock_coatings')
-            .insert({
-              paper_stock_id: paperStockId,
-              coating_id: coatingId,
-              is_default: coatingId === data.default_coating
-            });
-          
-          if (error) {
-            console.warn('Failed to link coating:', error);
-          }
-        }
-
         toast({
           title: "Success",
-          description: `Complete paper stock "${data.name}" created with ${data.compatible_coatings.length} coatings and custom sides pricing.`,
+          description: `Complete paper stock "${data.name}" created with ${data.available_sides.length} sides options and ${data.available_coatings.length} coating options.`,
         });
 
         // Reset form
@@ -216,35 +166,6 @@ export function CompletePaperStockPage() {
     }
   };
 
-  const handleCreateQuickCoating = async () => {
-    const name = prompt('Enter coating name (e.g., "Spot UV"):');
-    if (!name) return;
-
-    const description = prompt('Enter coating description:') || '';
-
-    try {
-      const response = await coatingsApi.create({
-        name,
-        price_modifier: 0.0000,
-        description,
-        is_active: true
-      });
-
-      if (response.data) {
-        setCoatings(prev => [...prev, response.data!]);
-        toast({
-          title: "Coating Created",
-          description: `"${name}" coating created successfully.`,
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create coating",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleCreateDemo = async () => {
     setDemoLoading(true);
@@ -270,9 +191,9 @@ export function CompletePaperStockPage() {
     }
   };
 
-  const compatibleCoatings = form.watch('compatible_coatings');
+  const availableCoatings = form.watch('available_coatings');
+  const availableSides = form.watch('available_sides');
   const defaultCoating = form.watch('default_coating');
-  const doubleSidedAvailable = form.watch('double_sided_available');
 
   return (
     <AdminLayout>
@@ -397,64 +318,74 @@ export function CompletePaperStockPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Copy className="w-5 h-5" />
-                  Sides Configuration (Paper-Specific)
+                  Sides Options (Paper-Specific)
                 </CardTitle>
                 <CardDescription>
-                  Configure printing sides options and pricing for this specific paper
+                  Select which sides printing options are available for this paper type
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="single_sided_available"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
+                <FormField
+                  control={form.control}
+                  name="available_sides"
+                  render={() => (
+                    <FormItem>
+                      <FormLabel className="text-base">Available Sides Options</FormLabel>
+                      <FormDescription>
+                        Select all sides options that work with this paper. Selected options will be shown to customers.
+                      </FormDescription>
+                      <div className="grid gap-3 md:grid-cols-1">
+                        {SIDES_OPTIONS.map((option) => (
+                          <FormField
+                            key={option.id}
+                            control={form.control}
+                            name="available_sides"
+                            render={({ field }) => {
+                              return (
+                                <FormItem
+                                  key={option.id}
+                                  className="flex flex-row items-start space-x-3 space-y-0 border rounded-lg p-4"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(option.id)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([...field.value, option.id])
+                                          : field.onChange(
+                                              field.value?.filter(
+                                                (value) => value !== option.id
+                                              )
+                                            )
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <div className="space-y-1 leading-none">
+                                    <FormLabel className="text-sm font-medium">
+                                      {option.label}
+                                    </FormLabel>
+                                    <FormDescription className="text-xs">
+                                      {option.description}
+                                    </FormDescription>
+                                  </div>
+                                </FormItem>
+                              )
+                            }}
                           />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>Single-Sided Available</FormLabel>
-                          <FormDescription>
-                            Allow single-sided printing (uses base price)
-                          </FormDescription>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
+                {availableSides.includes('double_sided_different') && (
                   <FormField
                     control={form.control}
-                    name="double_sided_available"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>Double-Sided Available</FormLabel>
-                          <FormDescription>
-                            Allow double-sided printing on this paper
-                          </FormDescription>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {doubleSidedAvailable && (
-                  <FormField
-                    control={form.control}
-                    name="double_sided_markup_percent"
+                    name="double_sided_different_markup_percent"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Double-Sided Markup % (Paper-Specific)</FormLabel>
+                        <FormLabel>Double-Sided (Different Images) Markup %</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Input {...field} type="number" step="0.01" className="pr-7" placeholder="80" />
@@ -462,7 +393,7 @@ export function CompletePaperStockPage() {
                           </div>
                         </FormControl>
                         <FormDescription>
-                          Additional cost for double-sided printing on THIS paper type (0% = same price, 80% = 1.8x total)
+                          Additional cost for double-sided printing with different images (0% = same price, 80% = 1.8x total)
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -479,7 +410,7 @@ export function CompletePaperStockPage() {
                       <FormControl>
                         <Textarea 
                           {...field} 
-                          placeholder="Choose single-sided for front only, or double-sided for front and back printing"
+                          placeholder="Choose how you want your item printed"
                           rows={2}
                         />
                       </FormControl>
@@ -498,144 +429,119 @@ export function CompletePaperStockPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Hash className="w-5 h-5" />
-                  Compatible Coatings (Paper-Specific)
+                  Coating Options (Paper-Specific)
                 </CardTitle>
                 <CardDescription>
-                  Select which coatings work with this specific paper stock
+                  Select which coating options are available for this paper type
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {loadingCoatings ? (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Loading coatings...
-                  </div>
-                ) : coatings.length === 0 ? (
-                  <div className="text-center py-6">
-                    <p className="text-muted-foreground mb-4">No coatings available</p>
-                    <Button type="button" onClick={handleCreateQuickCoating}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Create First Coating
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm text-muted-foreground">
-                        Select coatings that are compatible with this paper type
-                      </p>
-                      <Button type="button" variant="outline" size="sm" onClick={handleCreateQuickCoating}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Coating
-                      </Button>
-                    </div>
+                <FormField
+                  control={form.control}
+                  name="available_coatings"
+                  render={() => (
+                    <FormItem>
+                      <FormLabel className="text-base">Available Coating Options</FormLabel>
+                      <FormDescription>
+                        Select all coating options that work with this paper. Selected options will be shown to customers.
+                      </FormDescription>
+                      <div className="grid gap-3 md:grid-cols-2">
+                        {COATING_OPTIONS.map((option) => (
+                          <FormField
+                            key={option.id}
+                            control={form.control}
+                            name="available_coatings"
+                            render={({ field }) => {
+                              return (
+                                <FormItem
+                                  key={option.id}
+                                  className="flex flex-row items-start space-x-3 space-y-0 border rounded-lg p-3"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(option.id)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([...field.value, option.id])
+                                          : field.onChange(
+                                              field.value?.filter(
+                                                (value) => value !== option.id
+                                              )
+                                            )
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <div className="space-y-1 leading-none">
+                                    <FormLabel className="text-sm font-medium">
+                                      {option.label}
+                                    </FormLabel>
+                                    <FormDescription className="text-xs">
+                                      {option.description}
+                                    </FormDescription>
+                                  </div>
+                                </FormItem>
+                              )
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={form.control}
-                      name="compatible_coatings"
-                      render={() => (
-                        <FormItem>
-                          <div className="grid gap-3 md:grid-cols-2">
-                            {coatings.map((coating) => (
-                              <FormField
-                                key={coating.id}
-                                control={form.control}
-                                name="compatible_coatings"
-                                render={({ field }) => {
-                                  return (
-                                    <FormItem
-                                      key={coating.id}
-                                      className="flex flex-row items-start space-x-3 space-y-0 border rounded-lg p-3"
-                                    >
-                                      <FormControl>
-                                        <Checkbox
-                                          checked={field.value?.includes(coating.id)}
-                                          onCheckedChange={(checked) => {
-                                            return checked
-                                              ? field.onChange([...field.value, coating.id])
-                                              : field.onChange(
-                                                  field.value?.filter(
-                                                    (value) => value !== coating.id
-                                                  )
-                                                )
-                                          }}
-                                        />
-                                      </FormControl>
-                                      <div className="space-y-1 leading-none">
-                                        <FormLabel className="text-sm font-normal">
-                                          {coating.name}
-                                        </FormLabel>
-                                        {coating.description && (
-                                          <p className="text-xs text-muted-foreground">
-                                            {coating.description}
-                                          </p>
-                                        )}
-                                      </div>
-                                    </FormItem>
-                                  )
-                                }}
-                              />
-                            ))}
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {compatibleCoatings.length > 0 && (
-                      <FormField
-                        control={form.control}
-                        name="default_coating"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Default Coating</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select default coating for this paper" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {coatings
-                                  .filter(coating => compatibleCoatings.includes(coating.id))
-                                  .map((coating) => (
-                                    <SelectItem key={coating.id} value={coating.id}>
-                                      {coating.name}
-                                    </SelectItem>
-                                  ))}
-                              </SelectContent>
-                            </Select>
-                            <FormDescription>
-                              Pre-selected coating option for customers choosing this paper
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
-
-                    <FormField
-                      control={form.control}
-                      name="coatings_tooltip_text"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Customer Coatings Tooltip</FormLabel>
+                {availableCoatings.length > 0 && (
+                  <FormField
+                    control={form.control}
+                    name="default_coating"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Default Coating</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <Textarea 
-                              {...field} 
-                              placeholder="This paper works well with UV coatings for extra durability and vibrant colors"
-                              rows={2}
-                            />
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select default coating for this paper" />
+                            </SelectTrigger>
                           </FormControl>
-                          <FormDescription>
-                            Help text shown to customers about coating options for this paper
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </>
+                          <SelectContent>
+                            {COATING_OPTIONS
+                              .filter(option => availableCoatings.includes(option.id))
+                              .map((option) => (
+                                <SelectItem key={option.id} value={option.id}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Pre-selected coating option for customers choosing this paper
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 )}
+
+                <FormField
+                  control={form.control}
+                  name="coatings_tooltip_text"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Customer Coatings Tooltip</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          {...field} 
+                          placeholder="Choose the coating finish for your print"
+                          rows={2}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Help text shown to customers about coating options for this paper
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </CardContent>
             </Card>
 

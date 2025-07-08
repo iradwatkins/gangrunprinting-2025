@@ -31,12 +31,10 @@ import { AdminFilesPage } from "./pages/admin/AdminFilesPage";
 import { PaperStocksPage } from "./pages/admin/PaperStocksPage";
 import { CategoriesPage } from "./pages/admin/CategoriesPage";
 import { VendorsPage } from "./pages/admin/VendorsPage";
-import { CoatingsPage } from "./pages/admin/CoatingsPage";
 import { PrintSizesPage } from "./pages/admin/PrintSizesPage";
 import { TurnaroundTimesPage } from "./pages/admin/TurnaroundTimesPage";
 import { AddOnsPage } from "./pages/admin/AddOnsPage";
 import { QuantitiesPage } from "./pages/admin/QuantitiesPage";
-import { SidesPage } from "./pages/admin/SidesPage";
 import { SimplePaperStockPage } from "./pages/admin/SimplePaperStockPage";
 import { BasicPaperStockPage } from "./pages/admin/BasicPaperStockPage";
 import { CompletePaperStockPage } from "./pages/admin/CompletePaperStockPage";
@@ -86,12 +84,10 @@ const App = () => (
               <Route path="/admin/email" element={<AdminEmailPage />} />
               <Route path="/admin/files" element={<AdminFilesPage />} />
               <Route path="/admin/paper-stocks" element={<PaperStocksPage />} />
-              <Route path="/admin/coatings" element={<CoatingsPage />} />
               <Route path="/admin/print-sizes" element={<PrintSizesPage />} />
               <Route path="/admin/turnaround-times" element={<TurnaroundTimesPage />} />
               <Route path="/admin/add-ons" element={<AddOnsPage />} />
               <Route path="/admin/quantities" element={<QuantitiesPage />} />
-              <Route path="/admin/sides" element={<SidesPage />} />
               <Route path="/admin/paper-stocks/new" element={<CompletePaperStockPage />} />
               <Route path="/admin/paper-stocks/basic" element={<BasicPaperStockPage />} />
               <Route path="/admin/paper-stocks/advanced" element={<SimplePaperStockPage />} />

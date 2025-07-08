@@ -66,11 +66,6 @@ const navigation = [
     badge: 'Global'
   },
   {
-    name: 'Coatings',
-    href: '/admin/coatings',
-    icon: Palette
-  },
-  {
     name: 'Print Sizes',
     href: '/admin/print-sizes',
     icon: Ruler
@@ -89,11 +84,6 @@ const navigation = [
     name: 'Quantities',
     href: '/admin/quantities',
     icon: Hash
-  },
-  {
-    name: 'Print Sides',
-    href: '/admin/sides',
-    icon: Copy
   },
   
   // Operations
