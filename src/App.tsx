@@ -29,6 +29,7 @@ import { AdminOrdersPage } from "./pages/admin/AdminOrdersPage";
 import { AdminEmailPage } from "./pages/admin/AdminEmailPage";
 import { AdminFilesPage } from "./pages/admin/AdminFilesPage";
 import { PaperStocksPage } from "./pages/admin/PaperStocksPage";
+import { NewPaperStockPage } from "./pages/admin/NewPaperStockPage";
 import { CategoriesPage } from "./pages/admin/CategoriesPage";
 import { VendorsPage } from "./pages/admin/VendorsPage";
 import { PrintSizesPage } from "./pages/admin/PrintSizesPage";
@@ -78,6 +79,7 @@ const App = () => (
               <Route path="/admin/email" element={<AdminEmailPage />} />
               <Route path="/admin/files" element={<AdminFilesPage />} />
               <Route path="/admin/paper-stocks" element={<PaperStocksPage />} />
+              <Route path="/admin/paper-stocks/new" element={<NewPaperStockPage />} />
               <Route path="/admin/print-sizes" element={<PrintSizesPage />} />
               <Route path="/admin/turnaround-times" element={<TurnaroundTimesPage />} />
               <Route path="/admin/add-ons" element={<AddOnsPage />} />

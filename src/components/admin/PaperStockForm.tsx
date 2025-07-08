@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
@@ -31,7 +32,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { paperStocksApi } from '@/api/global-options';
+import { paperStocksApi, printSizesApi, turnaroundTimesApi, addOnsApi, coatingsApi } from '@/api/global-options';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 
 const paperStockSchema = z.object({
@@ -40,6 +41,13 @@ const paperStockSchema = z.object({
   weight: z.coerce.number().min(1, 'Weight must be at least 1 GSM').max(1000, 'Weight cannot exceed 1000 GSM'),
   finish: z.string().min(1, 'Finish is required'),
   price_per_square_inch: z.coerce.number().min(0.0001, 'Price must be greater than 0').max(99.9999, 'Price too high'),
+  single_sided_available: z.boolean(),
+  double_sided_available: z.boolean(),
+  second_side_markup_percent: z.coerce.number().min(0).max(100).optional(),
+  available_print_sizes: z.array(z.string()).optional(),
+  available_turnaround_times: z.array(z.string()).optional(),
+  available_add_ons: z.array(z.string()).optional(),
+  available_coatings: z.array(z.string()).optional(),
   is_active: z.boolean()
 });
 
@@ -69,6 +77,13 @@ const finishOptions = [
 export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperStockFormProps) {
   const { toast } = useToast();
   const isEditing = !!paperStock;
+  
+  // State for loaded options
+  const [printSizes, setPrintSizes] = useState<Tables<'print_sizes'>[]>([]);
+  const [turnaroundTimes, setTurnaroundTimes] = useState<Tables<'turnaround_times'>[]>([]);
+  const [addOns, setAddOns] = useState<Tables<'add_ons'>[]>([]);
+  const [coatings, setCoatings] = useState<Tables<'coatings'>[]>([]);
+  const [loadingOptions, setLoadingOptions] = useState(false);
 
   const form = useForm<PaperStockFormData>({
     resolver: zodResolver(paperStockSchema),
@@ -78,18 +93,74 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
       weight: 120, // Common default weight for business cards
       finish: '',
       price_per_square_inch: 0.0100, // $0.01 per square inch default
+      single_sided_available: true,
+      double_sided_available: true,
+      second_side_markup_percent: 50, // 50% markup for double-sided
+      available_print_sizes: [],
+      available_turnaround_times: [],
+      available_add_ons: [],
+      available_coatings: [],
       is_active: true
     }
   });
 
+  // Load all available options
+  const loadOptions = async () => {
+    setLoadingOptions(true);
+    try {
+      const [printSizesResult, turnaroundTimesResult, addOnsResult, coatingsResult] = await Promise.all([
+        printSizesApi.getAll({ is_active: true }),
+        turnaroundTimesApi.getAll({ is_active: true }),
+        addOnsApi.getAll({ is_active: true }),
+        coatingsApi.getAll({ is_active: true })
+      ]);
+
+      setPrintSizes(printSizesResult.data || []);
+      setTurnaroundTimes(turnaroundTimesResult.data || []);
+      setAddOns(addOnsResult.data || []);
+      setCoatings(coatingsResult.data || []);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load options",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingOptions(false);
+    }
+  };
+
+  useEffect(() => {
+    if (open) {
+      loadOptions();
+    }
+  }, [open]);
+
   useEffect(() => {
     if (paperStock) {
+      // Parse additional data from tooltip_text if available
+      let additionalData = {};
+      try {
+        if (paperStock.tooltip_text) {
+          additionalData = JSON.parse(paperStock.tooltip_text);
+        }
+      } catch (e) {
+        // Ignore parsing errors
+      }
+
       form.reset({
         name: paperStock.name || '',
         description: paperStock.description || '',
         weight: paperStock.weight || 120,
         finish: paperStock.finish || '',
         price_per_square_inch: paperStock.price_per_square_inch || 0.0100,
+        single_sided_available: paperStock.single_sided_available ?? true,
+        double_sided_available: paperStock.double_sided_available ?? true,
+        second_side_markup_percent: paperStock.second_side_markup_percent || 50,
+        available_print_sizes: additionalData.available_print_sizes || [],
+        available_turnaround_times: additionalData.available_turnaround_times || [],
+        available_add_ons: additionalData.available_add_ons || [],
+        available_coatings: additionalData.available_coatings || [],
         is_active: paperStock.is_active ?? true
       });
     } else {
@@ -99,6 +170,13 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
         weight: 120,
         finish: '',
         price_per_square_inch: 0.0100,
+        single_sided_available: true,
+        double_sided_available: true,
+        second_side_markup_percent: 50,
+        available_print_sizes: [],
+        available_turnaround_times: [],
+        available_add_ons: [],
+        available_coatings: [],
         is_active: true
       });
     }
@@ -108,10 +186,31 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
     try {
       let response;
 
+      // Prepare the data with additional fields stored in tooltip_text
+      const additionalData = {
+        available_print_sizes: data.available_print_sizes || [],
+        available_turnaround_times: data.available_turnaround_times || [],
+        available_add_ons: data.available_add_ons || [],
+        available_coatings: data.available_coatings || []
+      };
+
+      const paperStockData = {
+        name: data.name,
+        description: data.description,
+        weight: data.weight,
+        finish: data.finish,
+        price_per_square_inch: data.price_per_square_inch,
+        single_sided_available: data.single_sided_available,
+        double_sided_available: data.double_sided_available,
+        second_side_markup_percent: data.second_side_markup_percent,
+        tooltip_text: JSON.stringify(additionalData),
+        is_active: data.is_active
+      };
+
       if (isEditing && paperStock) {
-        response = await paperStocksApi.updatePaperStock(paperStock.id, data as TablesUpdate<'paper_stocks'>);
+        response = await paperStocksApi.updatePaperStock(paperStock.id, paperStockData as TablesUpdate<'paper_stocks'>);
       } else {
-        response = await paperStocksApi.createPaperStock(data as TablesInsert<'paper_stocks'>);
+        response = await paperStocksApi.createPaperStock(paperStockData as TablesInsert<'paper_stocks'>);
       }
 
       if (response.error) {
@@ -299,6 +398,242 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
                   </FormItem>
                 )}
               />
+            </div>
+
+            {/* Sides Configuration */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Sides Configuration</h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="single_sided_available"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">
+                          Single Sided Available
+                        </FormLabel>
+                        <FormDescription>
+                          Allow single-sided printing
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="double_sided_available"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">
+                          Double Sided Available
+                        </FormLabel>
+                        <FormDescription>
+                          Allow double-sided printing
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="second_side_markup_percent"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Second Side Markup Percentage</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input 
+                          type="number" 
+                          step="1"
+                          min="0"
+                          max="100"
+                          placeholder="50"
+                          className="pr-8"
+                          {...field}
+                        />
+                        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">%</span>
+                      </div>
+                    </FormControl>
+                    <FormDescription>
+                      Additional markup percentage for double-sided printing
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Available Options */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Available Options</h3>
+              
+              {loadingOptions ? (
+                <div className="text-center py-4">Loading options...</div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Print Sizes */}
+                  <div>
+                    <FormLabel className="text-base font-medium">Available Print Sizes</FormLabel>
+                    <FormDescription className="mb-3">
+                      Select which print sizes are available for this paper stock
+                    </FormDescription>
+                    <div className="grid grid-cols-2 gap-2">
+                      {printSizes.map((size) => (
+                        <FormField
+                          key={size.id}
+                          control={form.control}
+                          name="available_print_sizes"
+                          render={({ field }) => {
+                            return (
+                              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(size.id)}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...field.value, size.id])
+                                        : field.onChange(field.value?.filter((value) => value !== size.id))
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  {size.name} ({size.width}" × {size.height}")
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Turnaround Times */}
+                  <div>
+                    <FormLabel className="text-base font-medium">Available Turnaround Times</FormLabel>
+                    <FormDescription className="mb-3">
+                      Select which turnaround times are available for this paper stock
+                    </FormDescription>
+                    <div className="grid grid-cols-2 gap-2">
+                      {turnaroundTimes.map((time) => (
+                        <FormField
+                          key={time.id}
+                          control={form.control}
+                          name="available_turnaround_times"
+                          render={({ field }) => {
+                            return (
+                              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(time.id)}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...field.value, time.id])
+                                        : field.onChange(field.value?.filter((value) => value !== time.id))
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  {time.name} ({time.business_days} days)
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Add-ons */}
+                  <div>
+                    <FormLabel className="text-base font-medium">Available Add-ons</FormLabel>
+                    <FormDescription className="mb-3">
+                      Select which add-ons are available for this paper stock
+                    </FormDescription>
+                    <div className="grid grid-cols-1 gap-2">
+                      {addOns.map((addon) => (
+                        <FormField
+                          key={addon.id}
+                          control={form.control}
+                          name="available_add_ons"
+                          render={({ field }) => {
+                            return (
+                              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(addon.id)}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...field.value, addon.id])
+                                        : field.onChange(field.value?.filter((value) => value !== addon.id))
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  {addon.name} {addon.price_modifier !== 0 && `(${addon.price_modifier > 0 ? '+' : ''}${addon.price_modifier})`}
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Coatings */}
+                  <div>
+                    <FormLabel className="text-base font-medium">Available Coatings</FormLabel>
+                    <FormDescription className="mb-3">
+                      Select which coatings are available for this paper stock
+                    </FormDescription>
+                    <div className="grid grid-cols-2 gap-2">
+                      {coatings.map((coating) => (
+                        <FormField
+                          key={coating.id}
+                          control={form.control}
+                          name="available_coatings"
+                          render={({ field }) => {
+                            return (
+                              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(coating.id)}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...field.value, coating.id])
+                                        : field.onChange(field.value?.filter((value) => value !== coating.id))
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  {coating.name} {coating.price_modifier !== 0 && `(${coating.price_modifier > 0 ? '+' : ''}$${coating.price_modifier})`}
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Status */}

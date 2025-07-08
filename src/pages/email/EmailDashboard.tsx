@@ -90,7 +90,7 @@ const EmailDashboard: React.FC = () => {
             Campaigns
           </TabsTrigger>
           <TabsTrigger value="templates" className="flex items-center gap-2">
-            <Template size={16} />
+            <FileText size={16} />
             Templates
           </TabsTrigger>
           <TabsTrigger value="segments" className="flex items-center gap-2">
