@@ -1,331 +1,424 @@
-import { useState } from 'react';
-import { Plus, Save, Loader2, Palette, Copy, Hash } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { 
+  Plus, 
+  Save, 
+  Loader2, 
+  Palette, 
+  Copy, 
+  Hash, 
+  Ruler, 
+  Clock, 
+  Package,
+  Settings,
+  Eye,
+  Edit,
+  Trash2
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
-import { coatingsApi, sidesApi } from '@/api/global-options';
+import { 
+  coatingsApi, 
+  sidesApi, 
+  printSizesApi, 
+  turnaroundTimesApi, 
+  addOnsApi, 
+  quantitiesApi 
+} from '@/api/global-options';
 
 export function QuickGlobalOptionsPage() {
   const { toast } = useToast();
-  const [loadingCoating, setLoadingCoating] = useState(false);
-  const [loadingSides, setLoadingSides] = useState(false);
+  
+  // Loading states
+  const [loading, setLoading] = useState({
+    coatings: false,
+    sides: false,
+    printSizes: false,
+    turnaroundTimes: false,
+    addOns: false,
+    quantities: false
+  });
 
-  // Coating Form State
-  const [coatingName, setCoatingName] = useState('');
-  const [coatingDescription, setCoatingDescription] = useState('');
-  const [coatingPriceModifier, setCoatingPriceModifier] = useState('0.0000');
-  const [coatingActive, setCoatingActive] = useState(true);
+  // Data states
+  const [coatings, setCoatings] = useState([]);
+  const [sides, setSides] = useState([]);
+  const [printSizes, setPrintSizes] = useState([]);
+  const [turnaroundTimes, setTurnaroundTimes] = useState([]);
+  const [addOns, setAddOns] = useState([]);
+  const [quantities, setQuantities] = useState([]);
 
-  // Sides Form State
-  const [sidesName, setSidesName] = useState('');
-  const [sidesDescription, setSidesDescription] = useState('');
-  const [sidesPriceModifier, setSidesPriceModifier] = useState('0.0000');
-  const [sidesActive, setSidesActive] = useState(true);
+  // Form states for quick creation
+  const [newItem, setNewItem] = useState({
+    name: '',
+    description: '',
+    price_modifier: '0.0000',
+    is_active: true
+  });
 
-  const handleCreateCoating = async () => {
-    if (!coatingName.trim()) {
+  const [activeTab, setActiveTab] = useState('coatings');
+
+  // Load data on component mount
+  useEffect(() => {
+    loadAllData();
+  }, []);
+
+  const loadAllData = async () => {
+    try {
+      const [
+        coatingsData,
+        sidesData,
+        printSizesData,
+        turnaroundTimesData,
+        addOnsData,
+        quantitiesData
+      ] = await Promise.all([
+        coatingsApi.getCoatings().catch(() => ({ coatings: [] })),
+        sidesApi.getSides().catch(() => ({ sides: [] })),
+        printSizesApi.getPrintSizes().catch(() => ({ printSizes: [] })),
+        turnaroundTimesApi.getTurnaroundTimes().catch(() => ({ turnaroundTimes: [] })),
+        addOnsApi.getAddOns().catch(() => ({ addOns: [] })),
+        quantitiesApi.getQuantities().catch(() => ({ quantities: [] }))
+      ]);
+
+      setCoatings(coatingsData.coatings || []);
+      setSides(sidesData.sides || []);
+      setPrintSizes(printSizesData.printSizes || []);
+      setTurnaroundTimes(turnaroundTimesData.turnaroundTimes || []);
+      setAddOns(addOnsData.addOns || []);
+      setQuantities(quantitiesData.quantities || []);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    }
+  };
+
+  const resetForm = () => {
+    setNewItem({
+      name: '',
+      description: '',
+      price_modifier: '0.0000',
+      is_active: true
+    });
+  };
+
+  const handleCreate = async (type: string) => {
+    if (!newItem.name.trim()) {
       toast({
         title: "Error",
-        description: "Coating name is required",
+        description: `${type.slice(0, -1)} name is required`,
         variant: "destructive",
       });
       return;
     }
 
-    setLoadingCoating(true);
+    setLoading(prev => ({ ...prev, [type]: true }));
+    
     try {
-      const response = await coatingsApi.createCoating({
-        name: coatingName,
-        description: coatingDescription || null,
-        price_modifier: parseFloat(coatingPriceModifier),
-        is_active: coatingActive
-      });
+      let response;
+      const itemData = {
+        name: newItem.name,
+        description: newItem.description || null,
+        price_modifier: parseFloat(newItem.price_modifier),
+        is_active: newItem.is_active
+      };
 
-      if (response.error) {
+      switch (type) {
+        case 'coatings':
+          response = await coatingsApi.createCoating(itemData);
+          break;
+        case 'sides':
+          response = await sidesApi.createSides(itemData);
+          break;
+        case 'printSizes':
+          response = await printSizesApi.createPrintSize(itemData);
+          break;
+        case 'turnaroundTimes':
+          response = await turnaroundTimesApi.createTurnaroundTime(itemData);
+          break;
+        case 'addOns':
+          response = await addOnsApi.createAddOn(itemData);
+          break;
+        case 'quantities':
+          response = await quantitiesApi.createQuantity(itemData);
+          break;
+        default:
+          throw new Error('Invalid type');
+      }
+
+      if (response?.error) {
         throw new Error(response.error);
       }
 
       toast({
         title: "Success",
-        description: `Coating "${coatingName}" created successfully`,
+        description: `${newItem.name} created successfully`,
       });
 
-      // Reset form
-      setCoatingName('');
-      setCoatingDescription('');
-      setCoatingPriceModifier('0.0000');
-      setCoatingActive(true);
+      resetForm();
+      loadAllData(); // Refresh data
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create coating",
+        description: error instanceof Error ? error.message : `Failed to create ${type.slice(0, -1)}`,
         variant: "destructive",
       });
     } finally {
-      setLoadingCoating(false);
+      setLoading(prev => ({ ...prev, [type]: false }));
     }
   };
 
-  const handleCreateSides = async () => {
-    if (!sidesName.trim()) {
-      toast({
-        title: "Error",
-        description: "Print sides name is required",
-        variant: "destructive",
-      });
-      return;
+  const getTabConfig = () => [
+    {
+      id: 'coatings',
+      label: 'Coatings',
+      icon: Palette,
+      data: coatings,
+      description: 'UV, matte, gloss finishes'
+    },
+    {
+      id: 'sides',
+      label: 'Print Sides',
+      icon: Copy,
+      data: sides,
+      description: 'Single/double sided options'
+    },
+    {
+      id: 'printSizes',
+      label: 'Print Sizes',
+      icon: Ruler,
+      data: printSizes,
+      description: 'Available paper dimensions'
+    },
+    {
+      id: 'turnaroundTimes',
+      label: 'Turnaround Times',
+      icon: Clock,
+      data: turnaroundTimes,
+      description: 'Delivery timeframes'
+    },
+    {
+      id: 'addOns',
+      label: 'Add-ons',
+      icon: Plus,
+      data: addOns,
+      description: 'Extra services & options'
+    },
+    {
+      id: 'quantities',
+      label: 'Quantities',
+      icon: Hash,
+      data: quantities,
+      description: 'Available order quantities'
     }
+  ];
 
-    setLoadingSides(true);
-    try {
-      const response = await sidesApi.createSides({
-        name: sidesName,
-        description: sidesDescription || null,
-        price_modifier: parseFloat(sidesPriceModifier),
-        is_active: sidesActive
-      });
+  const renderItemsList = (items: any[], type: string) => (
+    <div className="space-y-2">
+      <h3 className="font-medium text-sm text-gray-600">Existing {type}</h3>
+      {items.length === 0 ? (
+        <p className="text-sm text-gray-500 italic">No {type.toLowerCase()} created yet</p>
+      ) : (
+        <div className="grid gap-2">
+          {items.slice(0, 5).map((item: any) => (
+            <div key={item.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+              <div className="flex-1">
+                <span className="font-medium text-sm">{item.name}</span>
+                {item.price_modifier > 0 && (
+                  <span className="ml-2 text-xs text-green-600">+${item.price_modifier}</span>
+                )}
+              </div>
+              <div className="flex items-center gap-1">
+                <Badge variant={item.is_active ? "default" : "secondary"} className="text-xs">
+                  {item.is_active ? 'Active' : 'Inactive'}
+                </Badge>
+              </div>
+            </div>
+          ))}
+          {items.length > 5 && (
+            <p className="text-xs text-gray-500">+{items.length - 5} more...</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
 
-      if (response.error) {
-        throw new Error(response.error);
-      }
-
-      toast({
-        title: "Success",
-        description: `Print sides "${sidesName}" created successfully`,
-      });
-
-      // Reset form
-      setSidesName('');
-      setSidesDescription('');
-      setSidesPriceModifier('0.0000');
-      setSidesActive(true);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create print sides",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingSides(false);
-    }
-  };
+  const tabConfig = getTabConfig();
 
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Quick Global Options Setup</h1>
-          <p className="text-muted-foreground">
-            Quickly create basic global options for your printing products
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Global Options Manager</h1>
+            <p className="text-gray-600">
+              Manage all printing configuration options in one place
+            </p>
+          </div>
+          <Button asChild variant="outline">
+            <a href="/admin/paper-stocks/new">
+              <Package className="mr-2 h-4 w-4" />
+              Create Paper Stock
+            </a>
+          </Button>
         </div>
 
-        <Tabs defaultValue="coatings" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="coatings">Coatings</TabsTrigger>
-            <TabsTrigger value="sides">Print Sides</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid grid-cols-6 w-full">
+            {tabConfig.map((tab) => (
+              <TabsTrigger key={tab.id} value={tab.id} className="text-xs">
+                <tab.icon className="w-3 h-3 mr-1" />
+                {tab.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
-          <TabsContent value="coatings" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Palette className="w-5 h-5" />
-                  Create New Coating
-                </CardTitle>
-                <CardDescription>
-                  Add coating options like UV, matte, or no coating
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <label htmlFor="coating-name" className="text-sm font-medium">
-                      Coating Name
-                    </label>
-                    <Input
-                      id="coating-name"
-                      placeholder="e.g., High Gloss UV"
-                      value={coatingName}
-                      onChange={(e) => setCoatingName(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="coating-price" className="text-sm font-medium">
-                      Price Modifier
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+          {tabConfig.map((tab) => (
+            <TabsContent key={tab.id} value={tab.id} className="space-y-4">
+              <div className="grid gap-6 lg:grid-cols-2">
+                {/* Creation Form */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <tab.icon className="w-5 h-5" />
+                      Create New {tab.label.slice(0, -1)}
+                    </CardTitle>
+                    <CardDescription>
+                      {tab.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Name</label>
                       <Input
-                        id="coating-price"
-                        type="number"
-                        step="0.0001"
-                        className="pl-7"
-                        placeholder="0.0000"
-                        value={coatingPriceModifier}
-                        onChange={(e) => setCoatingPriceModifier(e.target.value)}
+                        placeholder={`e.g., ${tab.id === 'coatings' ? 'High Gloss UV' : 
+                                              tab.id === 'sides' ? 'Single Sided' :
+                                              tab.id === 'printSizes' ? '8.5" x 11"' :
+                                              tab.id === 'turnaroundTimes' ? '3-5 Business Days' :
+                                              tab.id === 'addOns' ? 'Digital Proof' :
+                                              '250 pieces'}`}
+                        value={newItem.name}
+                        onChange={(e) => setNewItem(prev => ({ ...prev, name: e.target.value }))}
                       />
                     </div>
-                  </div>
-                </div>
 
-                <div className="space-y-2">
-                  <label htmlFor="coating-description" className="text-sm font-medium">
-                    Description
-                  </label>
-                  <Textarea
-                    id="coating-description"
-                    placeholder="Premium high-gloss UV coating for vibrant colors"
-                    value={coatingDescription}
-                    onChange={(e) => setCoatingDescription(e.target.value)}
-                    rows={2}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <label className="text-base font-medium">Active</label>
-                    <p className="text-sm text-muted-foreground">
-                      Make this coating available to customers
-                    </p>
-                  </div>
-                  <Switch
-                    checked={coatingActive}
-                    onCheckedChange={setCoatingActive}
-                  />
-                </div>
-
-                <Button onClick={handleCreateCoating} disabled={loadingCoating}>
-                  {loadingCoating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  <Save className="mr-2 h-4 w-4" />
-                  Create Coating
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="sides" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Copy className="w-5 h-5" />
-                  Create Print Sides Option
-                </CardTitle>
-                <CardDescription>
-                  Add print sides options like single-sided or double-sided
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <label htmlFor="sides-name" className="text-sm font-medium">
-                      Print Sides Name
-                    </label>
-                    <Input
-                      id="sides-name"
-                      placeholder="e.g., Single Sided"
-                      value={sidesName}
-                      onChange={(e) => setSidesName(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="sides-price" className="text-sm font-medium">
-                      Price Modifier
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                      <Input
-                        id="sides-price"
-                        type="number"
-                        step="0.0001"
-                        className="pl-7"
-                        placeholder="0.0000"
-                        value={sidesPriceModifier}
-                        onChange={(e) => setSidesPriceModifier(e.target.value)}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Description</label>
+                      <Textarea
+                        placeholder="Optional description"
+                        value={newItem.description}
+                        onChange={(e) => setNewItem(prev => ({ ...prev, description: e.target.value }))}
+                        rows={2}
                       />
                     </div>
-                  </div>
-                </div>
 
-                <div className="space-y-2">
-                  <label htmlFor="sides-description" className="text-sm font-medium">
-                    Description
-                  </label>
-                  <Textarea
-                    id="sides-description"
-                    placeholder="Single-sided printing on front of paper"
-                    value={sidesDescription}
-                    onChange={(e) => setSidesDescription(e.target.value)}
-                    rows={2}
-                  />
-                </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Price Modifier</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                        <Input
+                          type="number"
+                          step="0.0001"
+                          className="pl-7"
+                          placeholder="0.0000"
+                          value={newItem.price_modifier}
+                          onChange={(e) => setNewItem(prev => ({ ...prev, price_modifier: e.target.value }))}
+                        />
+                      </div>
+                    </div>
 
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <label className="text-base font-medium">Active</label>
-                    <p className="text-sm text-muted-foreground">
-                      Make this print sides option available to customers
-                    </p>
-                  </div>
-                  <Switch
-                    checked={sidesActive}
-                    onCheckedChange={setSidesActive}
-                  />
-                </div>
+                    <div className="flex items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <label className="text-base font-medium">Active</label>
+                        <p className="text-sm text-muted-foreground">
+                          Make this option available to customers
+                        </p>
+                      </div>
+                      <Switch
+                        checked={newItem.is_active}
+                        onCheckedChange={(checked) => setNewItem(prev => ({ ...prev, is_active: checked }))}
+                      />
+                    </div>
 
-                <Button onClick={handleCreateSides} disabled={loadingSides}>
-                  {loadingSides && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  <Save className="mr-2 h-4 w-4" />
-                  Create Print Sides
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                    <Button 
+                      onClick={() => handleCreate(tab.id)} 
+                      disabled={loading[tab.id as keyof typeof loading]}
+                      className="w-full"
+                    >
+                      {loading[tab.id as keyof typeof loading] && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
+                      <Save className="mr-2 h-4 w-4" />
+                      Create {tab.label.slice(0, -1)}
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Existing Items List */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>Existing {tab.label}</span>
+                      <Badge variant="outline">{tab.data.length}</Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {renderItemsList(tab.data, tab.label)}
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          ))}
         </Tabs>
 
+        {/* Quick Setup Guide */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Hash className="w-5 h-5" />
-              Quick Setup Guide
+              <Settings className="w-5 h-5" />
+              Quick Setup Workflow
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-2">
-                  <h3 className="font-semibold">Suggested Coatings</h3>
-                  <ul className="text-sm space-y-1 text-muted-foreground">
-                    <li>• No Coating (Base option)</li>
-                    <li>• High Gloss UV</li>
-                    <li>• Matte Finish</li>
-                    <li>• Satin Finish</li>
-                  </ul>
+                  <h3 className="font-semibold">1. Configure Options</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Set up all your printing options (coatings, sizes, turnaround times, etc.)
+                  </p>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="font-semibold">Suggested Print Sides</h3>
-                  <ul className="text-sm space-y-1 text-muted-foreground">
-                    <li>• Single Sided (Front Only)</li>
-                    <li>• Double Sided (Front & Back)</li>
-                  </ul>
+                  <h3 className="font-semibold">2. Create Paper Stocks</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Combine options into paper stock configurations
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="font-semibold">3. Build Products</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Create products using your configured options
+                  </p>
                 </div>
               </div>
               
-              <div className="pt-4 border-t">
-                <p className="text-sm text-muted-foreground">
-                  💡 <strong>Next Step:</strong> After creating coatings and print sides, visit{' '}
-                  <a href="/admin/paper-stocks/new" className="text-blue-600 hover:underline">
-                    Create Paper Stock
-                  </a>{' '}
-                  to create your first paper stock with these options.
-                </p>
+              <div className="pt-4 border-t flex gap-2">
+                <Button asChild variant="outline" size="sm">
+                  <a href="/admin/paper-stocks">
+                    <Package className="mr-2 h-4 w-4" />
+                    Manage Paper Stocks
+                  </a>
+                </Button>
+                <Button asChild variant="outline" size="sm">
+                  <a href="/admin/products">
+                    <Eye className="mr-2 h-4 w-4" />
+                    View Products
+                  </a>
+                </Button>
               </div>
             </div>
           </CardContent>
