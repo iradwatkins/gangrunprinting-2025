@@ -233,6 +233,12 @@ export function PaperStockList() {
               <Upload className="h-4 w-4 mr-2" />
               Bulk Import
             </Button>
+
+            <Button variant="outline" asChild>
+              <a href="/admin/paper-stocks/pricing-test">
+                Test Pricing
+              </a>
+            </Button>
           </div>
 
           {/* Paper Stocks Table */}
@@ -240,10 +246,10 @@ export function PaperStockList() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Weight (GSM)</TableHead>
-                  <TableHead>Finish</TableHead>
-                  <TableHead>Price/sq inch</TableHead>
+                  <TableHead>Name & Options</TableHead>
+                  <TableHead>Weight</TableHead>
+                  <TableHead>Pricing</TableHead>
+                  <TableHead>Coatings</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Products Using</TableHead>
                   <TableHead className="w-[70px]">Actions</TableHead>
@@ -267,11 +273,32 @@ export function PaperStockList() {
                               {stock.description}
                             </div>
                           )}
+                          <div className="flex gap-1 mt-1">
+                            {stock.single_sided_available && (
+                              <span className="text-xs bg-blue-100 text-blue-800 px-1 rounded">1-Sided</span>
+                            )}
+                            {stock.double_sided_available && (
+                              <span className="text-xs bg-green-100 text-green-800 px-1 rounded">
+                                2-Sided {stock.second_side_markup_percent ? `+${stock.second_side_markup_percent}%` : ''}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </TableCell>
-                      <TableCell>{stock.weight}</TableCell>
-                      <TableCell>{stock.finish}</TableCell>
-                      <TableCell>${stock.price_per_square_inch?.toFixed(4) || '0.0000'}</TableCell>
+                      <TableCell>{stock.weight} GSM</TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div>${stock.price_per_sq_inch?.toFixed(4) || '0.0000'}/sq in</div>
+                          {stock.double_sided_available && stock.second_side_markup_percent && (
+                            <div className="text-xs text-muted-foreground">
+                              2-sided: +{stock.second_side_markup_percent}%
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">Coatings Available</div>
+                      </TableCell>
                       <TableCell>
                         <Badge
                           variant={stock.is_active ? "default" : "secondary"}

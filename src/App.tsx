@@ -40,6 +40,9 @@ import { SidesPage } from "./pages/admin/SidesPage";
 import { DatabaseTest } from "./pages/admin/DatabaseTest";
 import { SimplePaperStockPage } from "./pages/admin/SimplePaperStockPage";
 import { BasicPaperStockPage } from "./pages/admin/BasicPaperStockPage";
+import { CompletePaperStockPage } from "./pages/admin/CompletePaperStockPage";
+import { PaperStockPricingTest } from "./pages/admin/PaperStockPricingTest";
+import { WorkflowProductPage } from "./pages/admin/WorkflowProductPage";
 import { QuickGlobalOptionsPage } from "./pages/admin/QuickGlobalOptionsPage";
 import CheckoutSettingsPage from "./pages/admin/CheckoutSettingsPage";
 import FilesPage from "./pages/files/FilesPage";
@@ -76,6 +79,7 @@ const App = () => (
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/products" element={<ProductsPage />} />
               <Route path="/admin/products/new" element={<NewProductPage />} />
+              <Route path="/admin/products/workflow" element={<WorkflowProductPage />} />
               <Route path="/admin/products/:id/edit" element={<EditProductPage />} />
               <Route path="/admin/analytics" element={<AnalyticsPage />} />
               <Route path="/admin/checkout-settings" element={<CheckoutSettingsPage />} />
@@ -90,8 +94,10 @@ const App = () => (
               <Route path="/admin/quantities" element={<QuantitiesPage />} />
               <Route path="/admin/sides" element={<SidesPage />} />
               <Route path="/admin/database-test" element={<DatabaseTest />} />
-              <Route path="/admin/paper-stocks/new" element={<BasicPaperStockPage />} />
+              <Route path="/admin/paper-stocks/new" element={<CompletePaperStockPage />} />
+              <Route path="/admin/paper-stocks/basic" element={<BasicPaperStockPage />} />
               <Route path="/admin/paper-stocks/advanced" element={<SimplePaperStockPage />} />
+              <Route path="/admin/paper-stocks/pricing-test" element={<PaperStockPricingTest />} />
               <Route path="/admin/global-options/quick" element={<QuickGlobalOptionsPage />} />
               <Route path="/admin/categories" element={<CategoriesPage />} />
               <Route path="/admin/vendors" element={<VendorsPage />} />

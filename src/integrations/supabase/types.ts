@@ -747,6 +747,10 @@ export type Database = {
           name: string
           price_per_sq_inch: number
           second_side_markup_percent: number | null
+          single_sided_available: boolean | null
+          double_sided_available: boolean | null
+          sides_tooltip_text: string | null
+          coatings_tooltip_text: string | null
           sort_order: number | null
           tooltip_text: string | null
           updated_at: string
@@ -760,6 +764,10 @@ export type Database = {
           name: string
           price_per_sq_inch?: number
           second_side_markup_percent?: number | null
+          single_sided_available?: boolean | null
+          double_sided_available?: boolean | null
+          sides_tooltip_text?: string | null
+          coatings_tooltip_text?: string | null
           sort_order?: number | null
           tooltip_text?: string | null
           updated_at?: string
@@ -773,6 +781,10 @@ export type Database = {
           name?: string
           price_per_sq_inch?: number
           second_side_markup_percent?: number | null
+          single_sided_available?: boolean | null
+          double_sided_available?: boolean | null
+          sides_tooltip_text?: string | null
+          coatings_tooltip_text?: string | null
           sort_order?: number | null
           tooltip_text?: string | null
           updated_at?: string
