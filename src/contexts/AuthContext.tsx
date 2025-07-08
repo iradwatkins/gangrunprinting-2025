@@ -59,44 +59,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Handle OAuth callback and get initial session
+    // Get initial session
     const initializeAuth = async () => {
       try {
-        // Check if we have OAuth tokens in URL fragment
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = hashParams.get('access_token');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log('AuthContext: Initial session check:', { session, error });
         
-        if (accessToken) {
-          console.log('OAuth callback detected, processing tokens...');
-          // Use Supabase's built-in session handling for OAuth
-          const { data, error } = await supabase.auth.getSession();
-          console.log('Session after OAuth:', { data, error });
-          
-          if (data.session) {
-            console.log('OAuth session established for:', data.session.user.email);
-            setSession(data.session);
-            await loadUserProfile(data.session.user);
-            
-            // Clean up URL
-            window.history.replaceState({}, document.title, window.location.pathname);
-          } else if (error) {
-            console.error('OAuth session error:', error);
-            setLoading(false);
-          }
+        setSession(session);
+        if (session?.user) {
+          await loadUserProfile(session.user);
         } else {
-          // Regular session check
-          const { data: { session }, error } = await supabase.auth.getSession();
-          console.log('Regular session check:', { session, error });
-          
-          setSession(session);
-          if (session?.user) {
-            await loadUserProfile(session.user);
-          } else {
-            setLoading(false);
-          }
+          setLoading(false);
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        console.error('AuthContext: Auth initialization error:', error);
         setLoading(false);
       }
     };
@@ -106,21 +82,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change:', event, session?.user?.email);
+        console.log('AuthContext: Auth state change:', event, session?.user?.email);
         setSession(session);
         
         if (session?.user) {
           await loadUserProfile(session.user);
           
           if (event === 'SIGNED_IN') {
-            console.log('User signed in:', session.user.email);
+            console.log('AuthContext: User signed in:', session.user.email);
             toast.success('Successfully signed in!');
-            // Redirect based on user role after successful login
-            const profile = await getUserProfile(session.user);
-            if (profile?.role === 'admin') {
-              navigate('/admin');
-            } else {
-              navigate('/');
+            // Note: Navigation is handled by AuthCallback component for OAuth flows
+            // Only handle navigation for non-OAuth sign-ins (like magic links)
+            if (!window.location.pathname.includes('/auth/callback')) {
+              const profile = await getUserProfile(session.user);
+              if (profile?.role === 'admin') {
+                navigate('/admin');
+              } else {
+                navigate('/');
+              }
             }
           }
         } else {
@@ -290,7 +269,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithMagicLink = async (email: string) => {
     try {
       console.log('Magic link sign-in initiated for:', email);
-      console.log('Redirect URL:', `${window.location.origin}/`);
+      console.log('Redirect URL:', `${window.location.origin}/auth/callback`);
       
       const { data, error } = await supabase.auth.signInWithOtp({
         email,
