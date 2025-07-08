@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Package, 
@@ -18,16 +18,18 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateOrderForCustomer } from '@/components/admin/CreateOrderForCustomer';
+import { supabase } from '@/integrations/supabase/client';
 
 export function AdminDashboard() {
-  const stats = [
+  const [stats, setStats] = useState([
     {
       title: 'Total Products',
       value: '0',
       change: '+0 this month',
       icon: Package,
       color: 'text-blue-600',
-      href: '/admin/products'
+      href: '/admin/products',
+      loading: true
     },
     {
       title: 'Active Orders',
@@ -35,7 +37,8 @@ export function AdminDashboard() {
       change: '+0 today',
       icon: ShoppingCart,
       color: 'text-green-600',
-      href: '/admin/orders'
+      href: '/admin/orders',
+      loading: true
     },
     {
       title: 'Revenue',
@@ -43,7 +46,8 @@ export function AdminDashboard() {
       change: '+$0 this month',
       icon: DollarSign,
       color: 'text-purple-600',
-      href: '/admin/analytics'
+      href: '/admin/analytics',
+      loading: true
     },
     {
       title: 'Customers',
@@ -51,9 +55,105 @@ export function AdminDashboard() {
       change: '+0 this month',
       icon: Users,
       color: 'text-orange-600',
-      href: '/admin/analytics'
+      href: '/admin/analytics',
+      loading: true
     }
-  ];
+  ]);
+
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      // Load product count
+      const { count: productCount } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true });
+
+      // Load customer count
+      const { count: customerCount } = await supabase
+        .from('user_profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('role', 'customer');
+
+      // Load orders count (active orders - not completed)
+      const { count: activeOrdersCount } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .neq('status', 'completed');
+
+      // Load total revenue from completed orders
+      const { data: revenueData } = await supabase
+        .from('orders')
+        .select('total_amount')
+        .eq('status', 'completed');
+
+      const totalRevenue = revenueData?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
+
+      // Load recent orders for activity
+      const { data: recentOrders } = await supabase
+        .from('orders')
+        .select(`
+          id,
+          total_amount,
+          status,
+          created_at,
+          user_profiles (full_name, email)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      // Update stats
+      setStats([
+        {
+          title: 'Total Products',
+          value: productCount?.toString() || '0',
+          change: '+0 this month',
+          icon: Package,
+          color: 'text-blue-600',
+          href: '/admin/products',
+          loading: false
+        },
+        {
+          title: 'Active Orders',
+          value: activeOrdersCount?.toString() || '0',
+          change: '+0 today',
+          icon: ShoppingCart,
+          color: 'text-green-600',
+          href: '/admin/orders',
+          loading: false
+        },
+        {
+          title: 'Revenue',
+          value: `$${totalRevenue.toFixed(2)}`,
+          change: '+$0 this month',
+          icon: DollarSign,
+          color: 'text-purple-600',
+          href: '/admin/analytics',
+          loading: false
+        },
+        {
+          title: 'Customers',
+          value: customerCount?.toString() || '0',
+          change: '+0 this month',
+          icon: Users,
+          color: 'text-orange-600',
+          href: '/admin/analytics',
+          loading: false
+        }
+      ]);
+
+      setRecentActivity(recentOrders || []);
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const quickActions = [
     {
@@ -117,11 +217,13 @@ export function AdminDashboard() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-500">{stat.title}</p>
-                        <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                        <p className={`text-2xl font-bold text-gray-900 ${stat.loading ? 'animate-pulse' : ''}`}>
+                          {stat.loading ? '...' : stat.value}
+                        </p>
                         <p className="text-xs text-gray-500 mt-1">{stat.change}</p>
                       </div>
                       <div className={`p-3 rounded-full bg-gray-50 ${stat.color}`}>
-                        <Icon className="h-6 w-6" />
+                        <Icon className={`h-6 w-6 ${stat.loading ? 'animate-pulse' : ''}`} />
                       </div>
                     </div>
                   </CardContent>
@@ -174,10 +276,33 @@ export function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="text-center py-8 text-gray-500">
-                  <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Recent business activity will appear here</p>
-                </div>
+                {loading ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Activity className="h-8 w-8 mx-auto mb-2 opacity-50 animate-pulse" />
+                    <p className="text-sm">Loading recent activity...</p>
+                  </div>
+                ) : recentActivity.length > 0 ? (
+                  recentActivity.map((order: any, index) => (
+                    <div key={index} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">
+                          Order #{order.id?.slice(-8)} - {order.user_profiles?.full_name || order.user_profiles?.email || 'Unknown Customer'}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(order.created_at).toLocaleDateString()} • {order.status}
+                        </p>
+                      </div>
+                      <div className="text-sm font-medium">
+                        ${order.total_amount?.toFixed(2) || '0.00'}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No recent orders yet</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

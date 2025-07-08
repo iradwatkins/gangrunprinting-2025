@@ -73,16 +73,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session);
         
         if (session?.user) {
-          await loadUserProfile(session.user);
+          const shouldRedirect = event === 'SIGNED_IN';
+          await loadUserProfile(session.user, shouldRedirect);
           
           if (event === 'SIGNED_IN') {
             toast.success('Successfully signed in!');
-            // Redirect based on user email
-            if (session.user.email === 'iradwatkins@gmail.com') {
-              navigate('/admin');
-            } else {
-              navigate('/');
-            }
           }
         } else {
           setUser(null);
@@ -138,7 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const loadUserProfile = async (authUser: User) => {
+  const loadUserProfile = async (authUser: User, shouldRedirect = false) => {
     try {
       // Get or create user profile
       const { data: profile, error } = await supabase
@@ -147,13 +142,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('user_id', authUser.id)
         .single();
 
+      let finalProfile = null;
+
       if (error && error.code === 'PGRST116') {
         // Profile doesn't exist, create it
         const newProfile = {
           user_id: authUser.id,
           email: authUser.email || '',
           full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
-          role: 'customer' as const,
+          role: (authUser.email === 'iradwatkins@gmail.com' ? 'admin' : 'customer') as const,
           is_broker: false,
           broker_category_discounts: {}
         };
@@ -168,25 +165,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error('Error creating user profile:', createError);
           setUser({ ...authUser, profile: undefined });
         } else {
+          finalProfile = {
+            ...createdProfile,
+            broker_category_discounts: createdProfile.broker_category_discounts || {}
+          };
           setUser({ 
             ...authUser, 
-            profile: {
-              ...createdProfile,
-              broker_category_discounts: createdProfile.broker_category_discounts || {}
-            }
+            profile: finalProfile
           });
         }
       } else if (error) {
         console.error('Error fetching user profile:', error);
         setUser({ ...authUser, profile: undefined });
       } else {
+        finalProfile = {
+          ...profile,
+          broker_category_discounts: profile.broker_category_discounts || {}
+        };
         setUser({ 
           ...authUser, 
-          profile: {
-            ...profile,
-            broker_category_discounts: profile.broker_category_discounts || {}
-          }
+          profile: finalProfile
         });
+      }
+
+      // Handle redirect after profile is loaded
+      if (shouldRedirect && finalProfile) {
+        if (finalProfile.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/');
+        }
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
