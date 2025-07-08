@@ -148,10 +148,12 @@ export const handleApiError = <T>(error: unknown, defaultMessage: string = 'An e
   };
 };
 
-// Success response utility
+// Success response utility - matches API response format
 export const createSuccessResponse = <T>(data: T, meta?: any) => {
   return {
     data,
+    error: undefined,
     ...(meta && { meta })
   };
 };
+
