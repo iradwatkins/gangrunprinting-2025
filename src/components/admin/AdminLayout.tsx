@@ -55,12 +55,6 @@ const navigation = [
   
   // Global Options
   {
-    name: 'Quick Setup',
-    href: '/admin/global-options/quick',
-    icon: Zap,
-    badge: 'Start Here'
-  },
-  {
     name: 'Paper Stocks',
     href: '/admin/paper-stocks',
     icon: Palette,

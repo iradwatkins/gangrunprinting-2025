@@ -36,7 +36,6 @@ import { PrintSizesPage } from "./pages/admin/PrintSizesPage";
 import { TurnaroundTimesPage } from "./pages/admin/TurnaroundTimesPage";
 import { AddOnsPage } from "./pages/admin/AddOnsPage";
 import { QuantitiesPage } from "./pages/admin/QuantitiesPage";
-import { QuickGlobalOptionsPage } from "./pages/admin/QuickGlobalOptionsPage";
 import CheckoutSettingsPage from "./pages/admin/CheckoutSettingsPage";
 import FilesPage from "./pages/files/FilesPage";
 import UploadArtworkPage from "./pages/UploadArtworkPage";
@@ -84,7 +83,6 @@ const App = () => (
               <Route path="/admin/turnaround-times" element={<TurnaroundTimesPage />} />
               <Route path="/admin/add-ons" element={<AddOnsPage />} />
               <Route path="/admin/quantities" element={<QuantitiesPage />} />
-              <Route path="/admin/global-options/quick" element={<QuickGlobalOptionsPage />} />
               <Route path="/admin/categories" element={<CategoriesPage />} />
               <Route path="/admin/vendors" element={<VendorsPage />} />
               <Route path="/files" element={<FilesPage />} />

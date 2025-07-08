@@ -227,11 +227,6 @@ export function PaperStockList() {
               Bulk Import
             </Button>
 
-            <Button variant="outline" asChild>
-              <a href="/admin/paper-stocks/pricing-test">
-                Test Pricing
-              </a>
-            </Button>
           </div>
 
           {/* Paper Stocks Table */}
