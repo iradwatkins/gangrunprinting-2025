@@ -260,7 +260,7 @@ export function QuickGlobalOptionsPage() {
             </p>
           </div>
           <Button asChild variant="outline">
-            <a href="/admin/paper-stocks/new">
+            <a href="/admin/paper-stocks">
               <Package className="mr-2 h-4 w-4" />
               Create Paper Stock
             </a>
