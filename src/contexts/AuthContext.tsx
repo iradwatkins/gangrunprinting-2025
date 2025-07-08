@@ -8,19 +8,17 @@ import { toast } from 'sonner';
 export interface AuthUser extends User {
   profile?: {
     id: string;
-    user_id: string;
-    is_broker: boolean;
-    broker_category_discounts: Record<string, any>;
-    company_name: string | null;
-    phone: string | null;
-    created_at: string;
-    updated_at: string;
-    // Derived fields from auth.users
     email: string;
     full_name: string | null;
     avatar_url: string | null;
+    phone: string | null;
+    company: string | null;
     role: 'customer' | 'admin' | 'broker';
     broker_status: 'pending' | 'approved' | 'rejected' | null;
+    is_broker: boolean;
+    broker_category_discounts: Record<string, any>;
+    created_at: string;
+    updated_at: string;
   };
 }
 
@@ -60,47 +58,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Get initial session
-    const initializeAuth = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        console.log('AuthContext: Initial session check:', { session, error });
-        
-        setSession(session);
-        if (session?.user) {
-          await loadUserProfile(session.user);
-        } else {
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('AuthContext: Auth initialization error:', error);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        loadUserProfile(session.user);
+      } else {
         setLoading(false);
       }
-    };
-
-    initializeAuth();
+    });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('AuthContext: Auth state change:', event, session?.user?.email);
         setSession(session);
         
         if (session?.user) {
           await loadUserProfile(session.user);
           
           if (event === 'SIGNED_IN') {
-            console.log('AuthContext: User signed in:', session.user.email);
             toast.success('Successfully signed in!');
-            // Note: Navigation is handled by AuthCallback component for OAuth flows
-            // Only handle navigation for non-OAuth sign-ins (like magic links)
-            if (!window.location.pathname.includes('/auth/callback')) {
-              const profile = await getUserProfile(session.user);
-              if (profile?.role === 'admin') {
-                navigate('/admin');
-              } else {
-                navigate('/');
-              }
-            }
+            // Just redirect to home for now - remove admin logic
+            navigate('/');
           }
         } else {
           setUser(null);
@@ -108,7 +86,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           
           if (event === 'SIGNED_OUT') {
             toast.success('Successfully signed out!');
-            // Redirect to home page after logout
             navigate('/');
           }
         }
@@ -133,14 +110,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (!profile) {
-        // Create profile if it doesn't exist - only use fields that exist in the schema
-        const isHardcodedAdmin = authUser.email === 'iradwatkins@gmail.com';
+        // Create profile if it doesn't exist
         const newProfile = {
           user_id: authUser.id,
-          is_broker: isHardcodedAdmin || false,
-          broker_category_discounts: {},
-          company_name: null,
-          phone: null
+          email: authUser.email || '',
+          full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
+          role: 'customer' as const,
         };
 
         const { data: createdProfile } = await supabase
@@ -149,31 +124,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .select()
           .single();
 
-        if (createdProfile) {
-          // Add derived fields from auth.users
-          return {
-            ...createdProfile,
-            email: authUser.email || '',
-            full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
-            avatar_url: authUser.user_metadata?.avatar_url || null,
-            role: isHardcodedAdmin ? 'admin' as const : 'customer' as const,
-            broker_status: null
-          };
-        }
-
-        return null;
+        return createdProfile;
       }
 
-      // Add derived fields from auth.users
-      const isHardcodedAdmin = authUser.email === 'iradwatkins@gmail.com';
-      return {
-        ...profile,
-        email: authUser.email || '',
-        full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
-        avatar_url: authUser.user_metadata?.avatar_url || null,
-        role: isHardcodedAdmin ? 'admin' as const : 'customer' as const,
-        broker_status: null
-      };
+      return profile;
     } catch (error) {
       console.error('Error in getUserProfile:', error);
       return null;
@@ -191,13 +145,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error && error.code === 'PGRST116') {
         // Profile doesn't exist, create it
-        const isHardcodedAdmin = authUser.email === 'iradwatkins@gmail.com';
         const newProfile = {
           user_id: authUser.id,
-          is_broker: isHardcodedAdmin || false,
-          broker_category_discounts: {},
-          company_name: null,
-          phone: null
+          email: authUser.email || '',
+          full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
+          role: 'customer' as const,
+          is_broker: false,
+          broker_category_discounts: {}
         };
 
         const { data: createdProfile, error: createError } = await supabase
@@ -214,13 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             ...authUser, 
             profile: {
               ...createdProfile,
-              broker_category_discounts: createdProfile.broker_category_discounts || {},
-              // Add derived fields from auth.users
-              email: authUser.email || '',
-              full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
-              avatar_url: authUser.user_metadata?.avatar_url || null,
-              role: isHardcodedAdmin ? 'admin' as const : 'customer' as const,
-              broker_status: null
+              broker_category_discounts: createdProfile.broker_category_discounts || {}
             }
           });
         }
@@ -228,18 +176,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Error fetching user profile:', error);
         setUser({ ...authUser, profile: undefined });
       } else {
-        const isHardcodedAdmin = authUser.email === 'iradwatkins@gmail.com';
         setUser({ 
           ...authUser, 
           profile: {
             ...profile,
-            broker_category_discounts: profile.broker_category_discounts || {},
-            // Add derived fields from auth.users
-            email: authUser.email || '',
-            full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
-            avatar_url: authUser.user_metadata?.avatar_url || null,
-            role: isHardcodedAdmin ? 'admin' as const : 'customer' as const,
-            broker_status: null
+            broker_category_discounts: profile.broker_category_discounts || {}
           }
         });
       }
@@ -268,60 +209,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithMagicLink = async (email: string) => {
     try {
-      console.log('Magic link sign-in initiated for:', email);
-      console.log('Redirect URL:', `${window.location.origin}/auth/callback`);
-      
-      const { data, error } = await supabase.auth.signInWithOtp({
+      const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`
+          emailRedirectTo: `${window.location.origin}/`
         }
       });
 
-      console.log('Magic link response:', { data, error });
-
       if (error) {
-        console.error('Magic link error:', error);
         return { error: error.message };
       }
 
       return { error: null };
     } catch (error) {
-      console.error('Magic link exception:', error);
       return { error: 'An unexpected error occurred' };
     }
   };
 
   const signInWithGoogle = async () => {
     try {
-      console.log('Google sign-in initiated');
-      const currentOrigin = window.location.origin;
-      console.log('Current origin:', currentOrigin);
-      
-      // Use different redirect URL for development vs production
-      const redirectUrl = currentOrigin.includes('localhost') 
-        ? `${currentOrigin}/auth/callback` 
-        : `${currentOrigin}/auth/callback`;
-      
-      console.log('Redirect URL:', redirectUrl);
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: redirectUrl
+          redirectTo: `${window.location.origin}/`
         }
       });
 
-      console.log('Google OAuth response:', { data, error });
-
       if (error) {
-        console.error('Google OAuth error:', error);
         return { error: error.message };
       }
 
       return { error: null };
     } catch (error) {
-      console.error('Google sign-in exception:', error);
       return { error: 'An unexpected error occurred' };
     }
   };

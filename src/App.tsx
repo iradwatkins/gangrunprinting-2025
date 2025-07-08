@@ -49,7 +49,6 @@ import UploadArtworkPage from "./pages/UploadArtworkPage";
 import EmailDashboard from "./pages/email/EmailDashboard";
 import { OrdersPage } from "./pages/orders/OrdersPage";
 import InvoicePaymentPage from "./pages/InvoicePaymentPage";
-import { AuthCallback } from "./pages/AuthCallback";
 
 const queryClient = new QueryClient();
 
@@ -65,7 +64,6 @@ const App = () => (
               <div className="relative">
                 <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/products" element={<ProductCatalog />} />
               <Route path="/products/:slug" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
