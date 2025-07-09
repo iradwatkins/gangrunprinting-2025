@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Plus, 
   Search, 
   Edit, 
   Trash2, 
-  Tags,
+  Tag,
   ToggleLeft,
   ToggleRight,
   RefreshCw
@@ -21,24 +22,20 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { categoriesApi, type CategoryFilters } from '@/api/categories';
-import type { Tables } from '@/integrations/supabase/types';
+import { newCategoriesApi, type Category, type CategoryFilters } from '@/api/categories-new';
 
-type Category = Tables<'product_categories'>;
-
-export function CategoryTree() {
+export function CategoryList() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
-  console.log('CategoryTree component mounted');
+  console.log('CategoryList component mounted');
 
-  const loadData = async () => {
-    console.log('CategoryTree: Loading categories...');
+  const loadCategories = async () => {
+    console.log('CategoryList: Loading categories...');
     setLoading(true);
     setError(null);
 
@@ -48,59 +45,46 @@ export function CategoryTree() {
         filters.search = searchTerm.trim();
       }
 
-      const response = await categoriesApi.getCategories(filters);
-      console.log('CategoryTree: API response received');
-
-      if (response.error) {
-        const errorMsg = response.error;
-        console.error('CategoryTree: API error:', errorMsg);
-        setError(errorMsg);
-        toast({
-          title: "Error Loading Categories",
-          description: errorMsg,
-          variant: "destructive",
-        });
+      const result = await newCategoriesApi.getCategories(filters);
+      
+      if (result.success) {
+        setCategories(result.data || []);
+        console.log('CategoryList: Loaded', result.data?.length || 0, 'categories');
       } else {
-        const categories = response.data || [];
-        console.log('CategoryTree: Categories loaded successfully:', categories.length, 'items');
-        setCategories(categories);
+        setError(result.error || 'Failed to load categories');
+        console.error('CategoryList: API error:', result.error);
       }
-    } catch (error) {
-      console.error('CategoryTree: Load error (catch block):', error);
-      const errorMsg = error instanceof Error ? error.message : 'Failed to load categories';
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Unexpected error occurred';
       setError(errorMsg);
-      toast({
-        title: "Error Loading Categories",
-        description: errorMsg,
-        variant: "destructive",
-      });
+      console.error('CategoryList: Unexpected error:', err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
+    loadCategories();
   }, [searchTerm]);
 
   const handleToggleActive = async (category: Category) => {
     try {
-      const response = await categoriesApi.updateCategory(category.id, {
+      const result = await newCategoriesApi.updateCategory(category.id, {
         is_active: !category.is_active
       });
 
-      if (response.error) {
-        toast({
-          title: 'Error',
-          description: response.error,
-          variant: 'destructive'
-        });
-      } else {
+      if (result.success) {
         toast({
           title: 'Success',
           description: `Category ${category.is_active ? 'deactivated' : 'activated'} successfully`
         });
-        loadData(); // Refresh the list
+        loadCategories(); // Refresh the list
+      } else {
+        toast({
+          title: 'Error',
+          description: result.error || 'Failed to update category',
+          variant: 'destructive'
+        });
       }
     } catch (err) {
       toast({
@@ -117,20 +101,20 @@ export function CategoryTree() {
     }
 
     try {
-      const response = await categoriesApi.deleteCategory(category.id);
+      const result = await newCategoriesApi.deleteCategory(category.id);
 
-      if (response.error) {
-        toast({
-          title: 'Error',
-          description: response.error,
-          variant: 'destructive'
-        });
-      } else {
+      if (result.success) {
         toast({
           title: 'Success',
           description: 'Category deleted successfully'
         });
-        loadData(); // Refresh the list
+        loadCategories(); // Refresh the list
+      } else {
+        toast({
+          title: 'Error',
+          description: result.error || 'Failed to delete category',
+          variant: 'destructive'
+        });
       }
     } catch (err) {
       toast({
@@ -144,71 +128,57 @@ export function CategoryTree() {
   // Show error state
   if (error && !loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Tags className="h-5 w-5" />
-            Category Management
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <Tags className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Failed to Load Categories</h3>
-            <p className="text-muted-foreground mb-4">{error}</p>
-            <div className="space-x-2">
-              <Button onClick={loadData} variant="outline">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Retry
-              </Button>
-              <Button onClick={() => window.location.reload()}>
-                Refresh Page
-              </Button>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Categories</h1>
+            <p className="text-muted-foreground">Manage product categories</p>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center py-8">
+              <Tag className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Failed to Load Categories</h3>
+              <p className="text-muted-foreground mb-4">{error}</p>
+              <div className="space-x-2">
+                <Button onClick={loadCategories} variant="outline">
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry
+                </Button>
+                <Button onClick={() => window.location.reload()}>
+                  Refresh Page
+                </Button>
+              </div>
             </div>
-            <div className="mt-4 text-sm text-muted-foreground">
-              <p>Check the browser console for more details.</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-[250px]" />
-            <Skeleton className="h-4 w-[200px]" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full" />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Tags className="h-5 w-5" />
-            Category Management
-          </CardTitle>
-          <CardDescription>
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Categories</h1>
+          <p className="text-muted-foreground">
             Manage product categories ({categories.length} total)
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {/* Search and Controls */}
-          <div className="flex items-center gap-4 mb-6">
+          </p>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Category
+          </Button>
+        </div>
+      </div>
+
+      {/* Search */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center space-x-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
@@ -218,21 +188,40 @@ export function CategoryTree() {
                 className="pl-10"
               />
             </div>
-            
-            <Button onClick={loadData} variant="outline" disabled={loading}>
+            <Button 
+              variant="outline" 
+              onClick={loadCategories}
+              disabled={loading}
+            >
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
-            
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Category
-            </Button>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Categories List */}
-          {categories.length === 0 ? (
+      {/* Categories Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>All Categories</CardTitle>
+          <CardDescription>
+            {loading ? 'Loading categories...' : `${categories.length} categories found`}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center space-x-4 p-4 border rounded">
+                  <div className="h-4 w-4 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+          ) : categories.length === 0 ? (
             <div className="text-center py-8">
-              <Tags className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <Tag className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">No Categories Found</h3>
               <p className="text-muted-foreground mb-4">
                 {searchTerm ? 'No categories match your search.' : 'Get started by creating your first category.'}

@@ -19,48 +19,27 @@ export interface CategoryFilters {
   limit?: number;
 }
 
-// Product Categories API
+// Product Categories API - Rebuilt for reliability
 export const categoriesApi = {
-  // Get all categories with hierarchical structure
+  // Get all categories - simplified and reliable
   async getCategories(filters: CategoryFilters = {}): Promise<ApiResponse<Tables<'product_categories'>[]>> {
-    console.log('Categories API: Starting request with filters:', filters);
+    console.log('Categories API: Starting request');
     
     try {
-      console.log('Categories API: About to check authentication...');
-      // Check authentication first
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      console.log('Categories API: Auth check completed');
-      console.log('Categories API: Auth check - User:', user?.id, 'Error:', authError);
-      
-      if (authError) {
-        console.error('Categories API: Authentication error:', authError);
-        return { error: `Authentication error: ${authError.message}` };
-      }
-
-      if (!user) {
-        console.error('Categories API: No authenticated user');
-        return { error: 'Authentication required' };
-      }
-
-      // Start with simplest possible query
-      console.log('Categories API: Building query...');
+      // Simple query without complex joins
       let query = supabase
         .from('product_categories')
-        .select('*'); // Simplified - no joins initially
+        .select('*');
 
-      console.log('Categories API: Applying filters...');
       // Apply filters
       if (filters.parent_category_id) {
-        console.log('Categories API: Adding parent_category_id filter:', filters.parent_category_id);
         query = query.eq('parent_category_id', filters.parent_category_id);
       }
       if (filters.is_active !== undefined) {
-        console.log('Categories API: Adding is_active filter:', filters.is_active);
         query = query.eq('is_active', filters.is_active);
       }
       if (filters.search) {
-        console.log('Categories API: Adding search filter:', filters.search);
-        query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
+        query = query.ilike('name', `%${filters.search}%`);
       }
 
       // Apply pagination
@@ -69,26 +48,18 @@ export const categoriesApi = {
       const from = (page - 1) * limit;
       const to = from + limit - 1;
 
-      console.log('Categories API: Adding pagination:', { page, limit, from, to });
       query = query.range(from, to).order('sort_order', { ascending: true });
 
-      console.log('Categories API: Executing query...');
-      
-      // Execute the query with simpler timeout
-      const startTime = Date.now();
+      console.log('Categories API: Executing query');
       const { data, error, count } = await query;
-      const endTime = Date.now();
-      
-      console.log('Categories API: Query took', endTime - startTime, 'ms');
-
-      console.log('Categories API: Query completed. Data:', data?.length, 'Error:', error, 'Count:', count);
+      console.log('Categories API: Query completed', { dataCount: data?.length, error });
 
       if (error) {
-        console.error('Categories API: Supabase error:', error);
-        return { error: `Database error: ${error.message}` };
+        console.error('Categories API: Database error:', error);
+        return { error: error.message };
       }
 
-      console.log('Categories API: Success! Returning', data?.length || 0, 'categories');
+      console.log('Categories API: Success!', data?.length || 0, 'categories');
       return {
         data: data || [],
         meta: {
@@ -99,90 +70,7 @@ export const categoriesApi = {
       };
     } catch (error) {
       console.error('Categories API: Unexpected error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch categories';
-      
-      // Return mock data for testing if there's an error
-      console.log('Categories API: Returning mock data due to error');
-      return {
-        data: [
-          {
-            id: 'mock-1',
-            name: 'Test Category 1',
-            slug: 'test-category-1',
-            description: 'Mock category for testing',
-            is_active: true,
-            parent_category_id: null,
-            sort_order: 1,
-            default_broker_discount: null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          },
-          {
-            id: 'mock-2', 
-            name: 'Test Category 2',
-            slug: 'test-category-2',
-            description: 'Another mock category',
-            is_active: true,
-            parent_category_id: null,
-            sort_order: 2,
-            default_broker_discount: null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }
-        ],
-        meta: {
-          total: 2,
-          page: 1,
-          limit: 50
-        }
-      };
-    }
-  },
-
-  // Get category hierarchy (parent categories with children)
-  async getCategoryHierarchy(): Promise<ApiResponse<Tables<'product_categories'>[]>> {
-    try {
-      const { data, error } = await supabase
-        .from('product_categories')
-        .select(`
-          *,
-          children:product_categories!parent_category_id(*)
-        `)
-        .is('parent_category_id', null)
-        .eq('is_active', true)
-        .order('sort_order');
-
-      if (error) {
-        return { error: error.message };
-      }
-
-      return { data: data || [] };
-    } catch (error) {
-      return { error: 'Failed to fetch category hierarchy' };
-    }
-  },
-
-  // Get single category by ID
-  async getCategory(id: string): Promise<ApiResponse<Tables<'product_categories'>>> {
-    try {
-      const { data, error } = await supabase
-        .from('product_categories')
-        .select(`
-          *,
-          parent_category:parent_category_id(id, name, slug),
-          children:product_categories!parent_category_id(*),
-          _count:products(count)
-        `)
-        .eq('id', id)
-        .single();
-
-      if (error) {
-        return { error: error.message };
-      }
-
-      return { data };
-    } catch (error) {
-      return { error: 'Failed to fetch category' };
+      return { error: 'Failed to fetch categories' };
     }
   },
 
@@ -228,25 +116,6 @@ export const categoriesApi = {
   // Delete category
   async deleteCategory(id: string): Promise<ApiResponse<void>> {
     try {
-      // Check if category has children or products
-      const { data: children } = await supabase
-        .from('product_categories')
-        .select('id')
-        .eq('parent_category_id', id);
-
-      const { data: products } = await supabase
-        .from('products')
-        .select('id')
-        .eq('category_id', id);
-
-      if (children && children.length > 0) {
-        return { error: 'Cannot delete category with subcategories' };
-      }
-
-      if (products && products.length > 0) {
-        return { error: 'Cannot delete category with products' };
-      }
-
       const { error } = await supabase
         .from('product_categories')
         .delete()
