@@ -90,14 +90,8 @@ export function PaperStockList() {
     try {
       console.log('📊 Step 1: Starting auth check...');
       
-      // Check authentication status with timeout
-      const authPromise = supabase.auth.getSession();
-      const authResult = await Promise.race([
-        authPromise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 5000))
-      ]);
-      
-      const { data: { session }, error: authError } = authResult as any;
+      // Check authentication status
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
       console.log('🔐 Step 2: Auth status:', session ? 'Authenticated' : 'Not authenticated');
       
       if (authError) {
@@ -106,18 +100,11 @@ export function PaperStockList() {
       
       console.log('📊 Step 3: Starting database query...');
       
-      // Direct Supabase query with timeout
-      const queryPromise = supabase
+      // Direct Supabase query
+      const { data: directData, error: directError } = await supabase
         .from('paper_stocks')
         .select('*')
         .order('name');
-        
-      const queryResult = await Promise.race([
-        queryPromise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Query timeout')), 5000))
-      ]);
-      
-      const { data: directData, error: directError } = queryResult as any;
       
       console.log('📊 Step 4: Query completed');
       
