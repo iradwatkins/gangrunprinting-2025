@@ -43,12 +43,18 @@ export function CategoryTree() {
     setError(null);
 
     try {
+      // Add 10-second timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timed out after 10 seconds')), 10000)
+      );
+
       const filters: CategoryFilters = {};
       if (searchTerm.trim()) {
         filters.search = searchTerm.trim();
       }
 
-      const response = await categoriesApi.getCategories(filters);
+      const apiPromise = categoriesApi.getCategories(filters);
+      const response = await Promise.race([apiPromise, timeoutPromise]) as any;
       console.log('CategoryTree: API response received');
 
       if (response.error) {
@@ -178,10 +184,13 @@ export function CategoryTree() {
     return (
       <Card>
         <CardHeader>
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-[250px]" />
-            <Skeleton className="h-4 w-[200px]" />
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <Tags className="h-5 w-5" />
+            Loading Categories...
+          </CardTitle>
+          <CardDescription>
+            Please wait while we load your categories (timeout: 10s)
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
