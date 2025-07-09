@@ -138,28 +138,21 @@ export function VendorList() {
   const loadData = async () => {
     setLoading(true);
     try {
-      console.log('🔍 Loading vendors...');
       const response = await vendorsApi.getVendors(filters);
       
-      console.log('📋 Vendors API response:', response);
-      
       if (response.error) {
-        console.error('❌ Vendors API error:', response.error);
         toast({
           title: "Error",
           description: response.error,
           variant: "destructive",
         });
       } else {
-        const vendors = response.data || [];
-        console.log('✅ Vendors loaded:', vendors.length);
-        setVendors(vendors);
+        setVendors(response.data || []);
       }
     } catch (error) {
-      console.error('💥 Failed to load vendors:', error);
       toast({
         title: "Error",
-        description: "Failed to load vendors. Check console for details.",
+        description: "Failed to load vendors",
         variant: "destructive",
       });
     }

@@ -64,81 +64,31 @@ export function PaperStockList() {
   useEffect(() => {
     loadData();
   }, [filters]);
-  
-  // Separate effect for timeout to avoid dependency issues
-  useEffect(() => {
-    if (loading) {
-      const timeout = setTimeout(() => {
-        console.error('⏰ Loading timeout - forcing stop');
-        setLoading(false);
-        setPaperStocks([]);
-        toast({
-          title: "Loading Timeout", 
-          description: "Data loading took too long. Click 'Retry' or refresh the page.",
-          variant: "destructive",
-        });
-      }, 10000);
-      
-      return () => clearTimeout(timeout);
-    }
-  }, [loading]);
 
   const loadData = async () => {
-    console.log('🔍 Loading paper stocks...');
     setLoading(true);
     
     try {
-      console.log('📊 Step 1: Starting auth check...');
-      
-      // Check authentication status
-      const { data: { session }, error: authError } = await supabase.auth.getSession();
-      console.log('🔐 Step 2: Auth status:', session ? 'Authenticated' : 'Not authenticated');
-      
-      if (authError) {
-        console.error('❌ Auth error:', authError);
-      }
-      
-      console.log('📊 Step 3: Starting database query...');
-      
-      // Direct Supabase query
-      const { data: directData, error: directError } = await supabase
+      // Direct Supabase query - no auth check needed
+      const { data, error } = await supabase
         .from('paper_stocks')
         .select('*')
         .order('name');
       
-      console.log('📊 Step 4: Query completed');
-      
-      if (directError) {
-        console.error('🚫 Direct Supabase error:', directError);
-        console.error('Error details:', {
-          code: directError.code,
-          message: directError.message,
-          details: directError.details,
-          hint: directError.hint
-        });
-        throw new Error(`Database error (${directError.code}): ${directError.message}`);
+      if (error) {
+        throw new Error(`Database error: ${error.message}`);
       }
       
-      console.log('✅ Step 5: Query successful, found:', directData?.length || 0, 'items');
-      
-      if (directData) {
-        setPaperStocks(directData);
-        console.log('📋 Step 6: Paper stocks set in state');
-      } else {
-        console.log('⚠️ Step 6: No paper stocks found, setting empty array');
-        setPaperStocks([]);
-      }
+      setPaperStocks(data || []);
       
     } catch (error) {
-      console.error('💥 Error in loadData:', error);
       toast({
-        title: "Loading Error",
-        description: `Failed to load data: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Failed to load paper stocks',
         variant: "destructive",
       });
       setPaperStocks([]);
     } finally {
-      console.log('🏁 Step 7: Setting loading to false');
       setLoading(false);
     }
   };
@@ -326,13 +276,26 @@ export function PaperStockList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paperStocks.length === 0 ? (
+                {loading ? (
+                  // Loading skeleton
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <TableRow key={index}>
+                      <TableCell><Skeleton className="h-12 w-48" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                      <TableCell><Skeleton className="h-8 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-6 w-32" /></TableCell>
+                      <TableCell><Skeleton className="h-6 w-16" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                      <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : paperStocks.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-12">
                       <div className="flex flex-col items-center gap-4">
                         <Palette className="h-12 w-12 text-muted-foreground" />
                         <div>
-                          <h3 className="text-lg font-semibold text-foreground">No paper stocks yet</h3>
+                          <h3 className="text-lg font-semibold text-foreground">No information at this time</h3>
                           <p className="text-muted-foreground">Create your first paper stock to get started with product configuration.</p>
                         </div>
                         <Button onClick={() => setShowForm(true)} className="bg-primary hover:bg-primary/90">
