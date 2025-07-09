@@ -137,7 +137,7 @@ export function VendorList() {
 
   useEffect(() => {
     loadData();
-  }, [filters]);
+  }, [filters.search, filters.page, filters.limit, filters.is_active]);
 
   const loadData = async () => {
     console.log('Loading vendors with filters:', filters);

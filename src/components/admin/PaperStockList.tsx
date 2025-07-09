@@ -63,17 +63,24 @@ export function PaperStockList() {
 
   useEffect(() => {
     loadData();
-  }, [filters]);
+  }, [filters.search, filters.page, filters.limit, filters.is_active]);
 
   const loadData = async () => {
     setLoading(true);
     
     try {
+      // Add 10-second timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timed out after 10 seconds')), 10000)
+      );
+
       // Direct Supabase query - no auth check needed
-      const { data, error } = await supabase
+      const queryPromise = supabase
         .from('paper_stocks')
         .select('*')
         .order('name');
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
       
       if (error) {
         throw new Error(`Database error: ${error.message}`);
@@ -168,20 +175,8 @@ export function PaperStockList() {
             <Palette className="h-5 w-5" />
             Loading Paper Stocks...
           </CardTitle>
-          <CardDescription className="flex items-center gap-2">
-            Please wait while we load your paper stock data
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={loadData} disabled={loading}>
-                Retry
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => {
-                console.log('🔄 Manual override - stopping loading');
-                setLoading(false);
-                setPaperStocks([]);
-              }}>
-                Stop Loading
-              </Button>
-            </div>
+          <CardDescription>
+            Please wait while we load your paper stock data (timeout: 10s)
           </CardDescription>
         </CardHeader>
         <CardContent>

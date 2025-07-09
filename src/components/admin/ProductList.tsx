@@ -69,7 +69,7 @@ export function ProductList() {
 
   useEffect(() => {
     loadData();
-  }, [filters]);
+  }, [filters.search, filters.page, filters.limit, filters.category_id, filters.is_active]);
 
   useEffect(() => {
     loadCategories();
