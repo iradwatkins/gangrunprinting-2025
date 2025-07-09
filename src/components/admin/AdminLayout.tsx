@@ -35,6 +35,15 @@ const navigation = [
     icon: Home,
     exact: true
   },
+  
+  // Operations
+  {
+    name: 'Orders',
+    href: '/admin/orders',
+    icon: ShoppingCart
+  },
+  
+  // Analytics
   {
     name: 'Analytics',
     href: '/admin/analytics',
@@ -43,15 +52,14 @@ const navigation = [
   
   // Core Product Management
   {
-    name: 'Products',
-    href: '/admin/products',
-    icon: Package,
-    badge: 'Core'
-  },
-  {
     name: 'Categories',
     href: '/admin/categories',
     icon: Tags
+  },
+  {
+    name: 'Products',
+    href: '/admin/products',
+    icon: Package
   },
   
   // Global Options
@@ -81,19 +89,14 @@ const navigation = [
     icon: Hash
   },
   
-  // Operations
-  {
-    name: 'Orders',
-    href: '/admin/orders',
-    icon: ShoppingCart
-  },
+  // Vendors
   {
     name: 'Vendors',
     href: '/admin/vendors',
     icon: Truck
   },
   
-  // Marketing & Content
+  // Marketing
   {
     name: 'Email Marketing',
     href: '/admin/email',
@@ -149,11 +152,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <Icon className={`mr-3 h-4 w-4 shrink-0 ${active ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
                 {item.name}
               </div>
-              {item.badge && (
-                <Badge variant={item.badge === 'Core' ? 'default' : 'secondary'} className="ml-2 text-xs">
-                  {item.badge}
-                </Badge>
-              )}
             </Link>
           );
         })}

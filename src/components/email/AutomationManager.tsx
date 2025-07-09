@@ -87,11 +87,7 @@ const AutomationManager: React.FC = () => {
 
   const handleToggleAutomation = async (automationId: string, isActive: boolean) => {
     try {
-      if (isActive) {
-        await emailAutomationApi.activateAutomation(automationId);
-      } else {
-        await emailAutomationApi.deactivateAutomation(automationId);
-      }
+      await emailAutomationApi.toggleAutomation(automationId, isActive);
       await fetchAutomations(); // Refresh data
     } catch (error) {
       console.error('Failed to toggle automation:', error);
@@ -100,7 +96,7 @@ const AutomationManager: React.FC = () => {
 
   const handleCloneAutomation = async (automation: EmailAutomation) => {
     try {
-      const clonedAutomation = await emailAutomationApi.cloneAutomation(
+      const clonedAutomation = await emailAutomationApi.duplicateAutomation(
         automation.id,
         `${automation.name} (Copy)`
       );
