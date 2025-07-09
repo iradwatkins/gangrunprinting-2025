@@ -23,7 +23,10 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { newCategoriesApi, type Category, type CategoryFilters } from '@/api/categories-new';
+import { categoriesApi, type CategoryFilters } from '@/api/categories';
+import type { Tables } from '@/integrations/supabase/types';
+
+type Category = Tables<'product_categories'>;
 
 export function CategoryList() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -45,14 +48,14 @@ export function CategoryList() {
         filters.search = searchTerm.trim();
       }
 
-      const result = await newCategoriesApi.getCategories(filters);
+      const response = await categoriesApi.getCategories(filters);
       
-      if (result.success) {
-        setCategories(result.data || []);
-        console.log('CategoryList: Loaded', result.data?.length || 0, 'categories');
+      if (response.error) {
+        setError(response.error);
+        console.error('CategoryList: API error:', response.error);
       } else {
-        setError(result.error || 'Failed to load categories');
-        console.error('CategoryList: API error:', result.error);
+        setCategories(response.data || []);
+        console.log('CategoryList: Loaded', response.data?.length || 0, 'categories');
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Unexpected error occurred';
@@ -69,22 +72,22 @@ export function CategoryList() {
 
   const handleToggleActive = async (category: Category) => {
     try {
-      const result = await newCategoriesApi.updateCategory(category.id, {
+      const response = await categoriesApi.updateCategory(category.id, {
         is_active: !category.is_active
       });
 
-      if (result.success) {
+      if (response.error) {
+        toast({
+          title: 'Error',
+          description: response.error,
+          variant: 'destructive'
+        });
+      } else {
         toast({
           title: 'Success',
           description: `Category ${category.is_active ? 'deactivated' : 'activated'} successfully`
         });
         loadCategories(); // Refresh the list
-      } else {
-        toast({
-          title: 'Error',
-          description: result.error || 'Failed to update category',
-          variant: 'destructive'
-        });
       }
     } catch (err) {
       toast({
@@ -101,20 +104,20 @@ export function CategoryList() {
     }
 
     try {
-      const result = await newCategoriesApi.deleteCategory(category.id);
+      const response = await categoriesApi.deleteCategory(category.id);
 
-      if (result.success) {
+      if (response.error) {
+        toast({
+          title: 'Error',
+          description: response.error,
+          variant: 'destructive'
+        });
+      } else {
         toast({
           title: 'Success',
           description: 'Category deleted successfully'
         });
         loadCategories(); // Refresh the list
-      } else {
-        toast({
-          title: 'Error',
-          description: result.error || 'Failed to delete category',
-          variant: 'destructive'
-        });
       }
     } catch (err) {
       toast({
