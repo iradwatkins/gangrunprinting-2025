@@ -35,6 +35,7 @@ import { useToast } from '@/hooks/use-toast';
 import { paperStocksApi, printSizesApi, turnaroundTimesApi, addOnsApi, coatingsApi } from '@/api/global-options';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 import { ensureSidesColumns } from '@/utils/apply-migration';
+import { seedCoatingOptions, getCoatingsDirectly } from '@/utils/seed-coatings';
 
 const paperStockSchema = z.object({
   name: z.string().min(1, 'Paper stock name is required'),
@@ -126,7 +127,12 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
       console.log('Add-ons result:', addOnsResult);
       
       console.log('📥 Loading coatings...');
-      const coatingsResult = await coatingsApi.getAll({ is_active: true });
+      // Try direct fetch first, then fallback to API
+      let coatingsResult = await getCoatingsDirectly();
+      if (!coatingsResult.success) {
+        console.log('🔄 Direct fetch failed, trying API...');
+        coatingsResult = await coatingsApi.getAll({ is_active: true });
+      }
       console.log('Coatings result:', coatingsResult);
 
       // Check for errors in any of the results
@@ -146,7 +152,7 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
       setPrintSizes(printSizesResult.data || []);
       setTurnaroundTimes(turnaroundTimesResult.data || []);
       setAddOns(addOnsResult.data || []);
-      setCoatings(coatingsResult.data || []);
+      setCoatings(coatingsResult.success ? coatingsResult.data || [] : []);
       
       console.log('✅ Options loaded successfully:', {
         printSizes: printSizesResult.data?.length || 0,
@@ -352,12 +358,39 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
         </CardDescription>
         
         {/* Debug Info */}
-        <div className="text-xs text-gray-400 mt-2">
-          Loading: {loadingOptions ? 'Yes' : 'No'} | 
-          Coatings: {coatings.length} | 
-          Print Sizes: {printSizes.length} | 
-          Turnaround Times: {turnaroundTimes.length} | 
-          Add-ons: {addOns.length}
+        <div className="text-xs text-gray-400 mt-2 flex items-center gap-2">
+          <span>
+            Loading: {loadingOptions ? 'Yes' : 'No'} | 
+            Coatings: {coatings.length} | 
+            Print Sizes: {printSizes.length} | 
+            Turnaround Times: {turnaroundTimes.length} | 
+            Add-ons: {addOns.length}
+          </span>
+          {coatings.length === 0 && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-xs h-6"
+              onClick={async () => {
+                const result = await seedCoatingOptions();
+                if (result.success) {
+                  toast({
+                    title: "Success",
+                    description: result.message || "Coating options created successfully",
+                  });
+                  loadOptions();
+                } else {
+                  toast({
+                    title: "Error",
+                    description: result.error || "Failed to create coating options",
+                    variant: "destructive",
+                  });
+                }
+              }}
+            >
+              Quick Fix Coatings
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent>
@@ -715,13 +748,37 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
                 <div className="space-y-4">
                   <div className="text-center py-4">
                     <p className="text-gray-500 mb-2">No coating options loaded from database</p>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={loadOptions}
-                    >
-                      Retry Loading
-                    </Button>
+                    <div className="flex gap-2 justify-center">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={loadOptions}
+                      >
+                        Retry Loading
+                      </Button>
+                      <Button 
+                        variant="default" 
+                        size="sm" 
+                        onClick={async () => {
+                          const result = await seedCoatingOptions();
+                          if (result.success) {
+                            toast({
+                              title: "Success",
+                              description: result.message || "Coating options created successfully",
+                            });
+                            loadOptions(); // Reload after seeding
+                          } else {
+                            toast({
+                              title: "Error",
+                              description: result.error || "Failed to create coating options",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                      >
+                        Create Coating Options
+                      </Button>
+                    </div>
                   </div>
                   
                   {/* Fallback: Show expected coating options */}
