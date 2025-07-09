@@ -443,7 +443,7 @@ export function CategoryTree() {
             {totalCategories === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Tags className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <h3 className="text-lg font-medium mb-2">No categories found</h3>
+                <h3 className="text-lg font-medium mb-2">No information at this time</h3>
                 <p className="text-sm">Add your first category to get started organizing products.</p>
                 <Button onClick={handleAddRoot} className="mt-4">
                   <Plus className="h-4 w-4 mr-2" />

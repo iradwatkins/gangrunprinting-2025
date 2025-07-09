@@ -347,10 +347,24 @@ export function VendorList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {vendors.length === 0 ? (
+                {loading ? (
+                  // Loading skeleton
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <TableRow key={index}>
+                      <TableCell><Skeleton className="h-12 w-48" /></TableCell>
+                      <TableCell><Skeleton className="h-8 w-32" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+                      <TableCell><Skeleton className="h-8 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-6 w-16" /></TableCell>
+                      <TableCell><Skeleton className="h-6 w-12" /></TableCell>
+                      <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : vendors.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                      No vendors found. Add your first vendor to get started.
+                      No information at this time. Add your first vendor to get started.
                     </TableCell>
                   </TableRow>
                 ) : (

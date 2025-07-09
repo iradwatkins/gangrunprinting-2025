@@ -286,12 +286,24 @@ export function ProductList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {products.length === 0 ? (
+              {loading ? (
+                // Loading skeleton
+                Array.from({ length: 3 }).map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell><Skeleton className="h-8 w-48" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                  </TableRow>
+                ))
+              ) : products.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8">
                     <div className="flex flex-col items-center space-y-2">
                       <Package className="h-8 w-8 text-muted-foreground" />
-                      <p className="text-muted-foreground">No products found</p>
+                      <p className="text-muted-foreground">No information at this time</p>
                       <Button asChild variant="outline" size="sm">
                         <Link to="/admin/products/new">Add your first product</Link>
                       </Button>

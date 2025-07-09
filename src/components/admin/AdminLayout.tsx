@@ -57,6 +57,11 @@ const navigation = [
     icon: Tags
   },
   {
+    name: 'Quantities',
+    href: '/admin/quantities',
+    icon: Hash
+  },
+  {
     name: 'Products',
     href: '/admin/products',
     icon: Package
@@ -82,11 +87,6 @@ const navigation = [
     name: 'Add-on Services',
     href: '/admin/add-ons',
     icon: Plus
-  },
-  {
-    name: 'Quantities',
-    href: '/admin/quantities',
-    icon: Hash
   },
   
   // Vendors

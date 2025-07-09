@@ -480,7 +480,7 @@ export function AddOnsPage() {
         ) : filteredAddOns.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
-              <p className="text-gray-500">No add-on services found</p>
+              <p className="text-gray-500">No information at this time</p>
               {searchTerm && <p className="text-sm text-gray-400 mt-2">Try adjusting your search</p>}
             </CardContent>
           </Card>

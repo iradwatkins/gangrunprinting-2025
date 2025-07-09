@@ -6,6 +6,7 @@ import { Badge } from '../ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Switch } from '../ui/switch';
+import { useToast } from '@/hooks/use-toast';
 import { EmailAutomation } from '../../types/email';
 import { emailAutomationApi } from '../../api/email';
 import AutomationBuilder from './AutomationBuilder';
@@ -34,6 +35,7 @@ const AutomationManager: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<string>('');
   const [builderOpen, setBuilderOpen] = useState(false);
   const [selectedAutomation, setSelectedAutomation] = useState<EmailAutomation | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchAutomations();
@@ -118,15 +120,22 @@ const AutomationManager: React.FC = () => {
   };
 
   const handleTestAutomation = async (automation: EmailAutomation) => {
-    const customerId = prompt('Enter customer ID to test with:');
-    if (!customerId) return;
+    const testEmail = prompt('Enter email address to test with:');
+    if (!testEmail) return;
 
     try {
-      const result = await emailAutomationApi.testAutomation(automation.id, { customer_id: customerId });
-      alert(result.success ? 'Test successful!' : `Test failed: ${result.message}`);
+      await emailAutomationApi.testAutomation(automation.id, testEmail);
+      toast({
+        title: "Success",
+        description: "Test automation sent successfully",
+      });
     } catch (error) {
       console.error('Failed to test automation:', error);
-      alert('Test failed');
+      toast({
+        title: "Error",
+        description: "Failed to test automation",
+        variant: "destructive",
+      });
     }
   };
 

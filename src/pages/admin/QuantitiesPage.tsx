@@ -258,6 +258,13 @@ export function QuantitiesPage() {
               </Card>
             ))}
           </div>
+        ) : filteredQuantities.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <p className="text-gray-500">No information at this time</p>
+              {searchTerm && <p className="text-sm text-gray-400 mt-2">Try adjusting your search</p>}
+            </CardContent>
+          </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {filteredQuantities.map((quantity) => (
