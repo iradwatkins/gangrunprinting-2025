@@ -749,6 +749,15 @@ export type Database = {
           second_side_markup_percent: number | null
           single_sided_available: boolean | null
           double_sided_available: boolean | null
+          // Enhanced sides options
+          different_image_both_sides_available: boolean | null
+          different_image_both_sides_markup: number | null
+          same_image_both_sides_available: boolean | null
+          same_image_both_sides_markup: number | null
+          image_front_only_available: boolean | null
+          image_front_only_markup: number | null
+          your_design_front_our_back_available: boolean | null
+          your_design_front_our_back_markup: number | null
           sides_tooltip_text: string | null
           coatings_tooltip_text: string | null
           sort_order: number | null
@@ -766,6 +775,15 @@ export type Database = {
           second_side_markup_percent?: number | null
           single_sided_available?: boolean | null
           double_sided_available?: boolean | null
+          // Enhanced sides options
+          different_image_both_sides_available?: boolean | null
+          different_image_both_sides_markup?: number | null
+          same_image_both_sides_available?: boolean | null
+          same_image_both_sides_markup?: number | null
+          image_front_only_available?: boolean | null
+          image_front_only_markup?: number | null
+          your_design_front_our_back_available?: boolean | null
+          your_design_front_our_back_markup?: number | null
           sides_tooltip_text?: string | null
           coatings_tooltip_text?: string | null
           sort_order?: number | null
@@ -783,6 +801,15 @@ export type Database = {
           second_side_markup_percent?: number | null
           single_sided_available?: boolean | null
           double_sided_available?: boolean | null
+          // Enhanced sides options
+          different_image_both_sides_available?: boolean | null
+          different_image_both_sides_markup?: number | null
+          same_image_both_sides_available?: boolean | null
+          same_image_both_sides_markup?: number | null
+          image_front_only_available?: boolean | null
+          image_front_only_markup?: number | null
+          your_design_front_our_back_available?: boolean | null
+          your_design_front_our_back_markup?: number | null
           sides_tooltip_text?: string | null
           coatings_tooltip_text?: string | null
           sort_order?: number | null

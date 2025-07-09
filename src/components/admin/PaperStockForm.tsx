@@ -38,11 +38,17 @@ import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase
 const paperStockSchema = z.object({
   name: z.string().min(1, 'Paper stock name is required'),
   description: z.string().optional(),
-  weight: z.coerce.number().min(0.1, 'Weight must be at least 0.1 GSI').max(100, 'Weight cannot exceed 100 GSI'),
-  price_per_sq_inch: z.coerce.number().min(0.10, 'Price must be at least $0.10').max(99.99, 'Price cannot exceed $99.99'),
-  single_sided_available: z.boolean(),
-  double_sided_available: z.boolean(),
-  second_side_markup_percent: z.coerce.number().min(0).max(100).optional(),
+  weight: z.coerce.number().min(0.1, 'Weight must be at least 0.1 per square inch').max(100, 'Weight cannot exceed 100 per square inch'),
+  price_per_sq_inch: z.coerce.number().min(0.000001, 'Price must be at least $0.000001').max(99.999999, 'Price cannot exceed $99.999999'),
+  // Enhanced sides options with individual markups
+  different_image_both_sides_available: z.boolean(),
+  different_image_both_sides_markup: z.coerce.number().min(0).max(100).optional(),
+  same_image_both_sides_available: z.boolean(),
+  same_image_both_sides_markup: z.coerce.number().min(0).max(100).optional(),
+  image_front_only_available: z.boolean(),
+  image_front_only_markup: z.coerce.number().min(0).max(100).optional(),
+  your_design_front_our_back_available: z.boolean(),
+  your_design_front_our_back_markup: z.coerce.number().min(0).max(100).optional(),
   sides_tooltip_text: z.string().optional(),
   available_coatings: z.array(z.string()).optional(),
   coatings_tooltip_text: z.string().optional(),
@@ -78,11 +84,17 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
     defaultValues: {
       name: '',
       description: '',
-      weight: 12.0, // Common default weight for business cards (GSI)
-      price_per_sq_inch: 0.10, // $0.10 per square inch default
-      single_sided_available: true,
-      double_sided_available: true,
-      second_side_markup_percent: 50, // 50% markup for double-sided
+      weight: 12.0, // Common default weight for business cards (per square inch)
+      price_per_sq_inch: 0.000001, // $0.000001 per square inch default
+      // Enhanced sides options with 1% default markup
+      different_image_both_sides_available: true,
+      different_image_both_sides_markup: 1,
+      same_image_both_sides_available: true,
+      same_image_both_sides_markup: 1,
+      image_front_only_available: true,
+      image_front_only_markup: 1,
+      your_design_front_our_back_available: true,
+      your_design_front_our_back_markup: 1,
       sides_tooltip_text: '',
       available_coatings: [],
       coatings_tooltip_text: '',
@@ -139,10 +151,16 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
         name: paperStock.name || '',
         description: paperStock.description || '',
         weight: paperStock.weight || 12.0,
-        price_per_sq_inch: paperStock.price_per_sq_inch || 0.10,
-        single_sided_available: paperStock.single_sided_available ?? true,
-        double_sided_available: paperStock.double_sided_available ?? true,
-        second_side_markup_percent: paperStock.second_side_markup_percent || 50,
+        price_per_sq_inch: paperStock.price_per_sq_inch || 0.000001,
+        // Enhanced sides options - fallback to defaults if not set
+        different_image_both_sides_available: paperStock.different_image_both_sides_available ?? true,
+        different_image_both_sides_markup: paperStock.different_image_both_sides_markup ?? 1,
+        same_image_both_sides_available: paperStock.same_image_both_sides_available ?? true,
+        same_image_both_sides_markup: paperStock.same_image_both_sides_markup ?? 1,
+        image_front_only_available: paperStock.image_front_only_available ?? true,
+        image_front_only_markup: paperStock.image_front_only_markup ?? 1,
+        your_design_front_our_back_available: paperStock.your_design_front_our_back_available ?? true,
+        your_design_front_our_back_markup: paperStock.your_design_front_our_back_markup ?? 1,
         sides_tooltip_text: paperStock.sides_tooltip_text || '',
         available_coatings: additionalData.available_coatings || [],
         coatings_tooltip_text: paperStock.coatings_tooltip_text || '',
@@ -156,10 +174,16 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
         name: '',
         description: '',
         weight: 12.0,
-          price_per_sq_inch: 0.10,
-        single_sided_available: true,
-        double_sided_available: true,
-        second_side_markup_percent: 50,
+        price_per_sq_inch: 0.000001,
+        // Enhanced sides options with 1% default markup
+        different_image_both_sides_available: true,
+        different_image_both_sides_markup: 1,
+        same_image_both_sides_available: true,
+        same_image_both_sides_markup: 1,
+        image_front_only_available: true,
+        image_front_only_markup: 1,
+        your_design_front_our_back_available: true,
+        your_design_front_our_back_markup: 1,
         sides_tooltip_text: '',
         available_coatings: [],
         coatings_tooltip_text: '',
@@ -188,9 +212,15 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
         description: data.description,
         weight: data.weight,
         price_per_sq_inch: data.price_per_sq_inch,
-        single_sided_available: data.single_sided_available,
-        double_sided_available: data.double_sided_available,
-        second_side_markup_percent: data.second_side_markup_percent,
+        // Enhanced sides options
+        different_image_both_sides_available: data.different_image_both_sides_available,
+        different_image_both_sides_markup: data.different_image_both_sides_markup,
+        same_image_both_sides_available: data.same_image_both_sides_available,
+        same_image_both_sides_markup: data.same_image_both_sides_markup,
+        image_front_only_available: data.image_front_only_available,
+        image_front_only_markup: data.image_front_only_markup,
+        your_design_front_our_back_available: data.your_design_front_our_back_available,
+        your_design_front_our_back_markup: data.your_design_front_our_back_markup,
         sides_tooltip_text: data.sides_tooltip_text,
         coatings_tooltip_text: data.coatings_tooltip_text,
         tooltip_text: JSON.stringify(additionalData),
@@ -309,7 +339,7 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
                 name="weight"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Weight (GSI) *</FormLabel>
+                    <FormLabel>Weight (per square inch) *</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
@@ -321,7 +351,7 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
                       />
                     </FormControl>
                     <FormDescription>
-                      Paper weight in grams per square inch (GSI)
+                      Paper weight per square inch
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -344,17 +374,17 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
                         <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
                         <Input 
                           type="number" 
-                          step="0.10"
-                          min="0.10"
-                          max="99.99"
-                          placeholder="0.10"
+                          step="0.000001"
+                          min="0.000001"
+                          max="99.999999"
+                          placeholder="0.000001"
                           className="pl-8"
                           {...field}
                         />
                       </div>
                     </FormControl>
                     <FormDescription>
-                      Base pricing per square inch for calculations (e.g., $0.10)
+                      Base pricing per square inch for calculations (e.g., $0.000001)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -362,86 +392,204 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
               />
             </div>
 
-            {/* Step 2: Sides Configuration */}
+            {/* Step 2: Enhanced Sides Configuration */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Step 2: Sides Options</h3>
-              <p className="text-sm text-muted-foreground">Configure the sides printing options that customers will see as their second choice.</p>
+              <p className="text-sm text-muted-foreground">Configure the specific sides printing options that customers will see as their second choice. Each option can have its own markup percentage.</p>
               
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="single_sided_available"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">
-                          Single Sided Available
-                        </FormLabel>
-                        <FormDescription>
-                          Allow single-sided printing
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+              <div className="grid grid-cols-1 gap-4">
+                {/* Different Image Both Sides */}
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="flex items-center space-x-4 flex-1">
+                    <FormField
+                      control={form.control}
+                      name="different_image_both_sides_available"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormLabel className="text-base font-medium">
+                            Different Image Both Sides (2 Sided)
+                          </FormLabel>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2 min-w-[120px]">
+                    <FormField
+                      control={form.control}
+                      name="different_image_both_sides_markup"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <div className="relative">
+                              <Input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                max="100"
+                                placeholder="1"
+                                className="pr-8 w-20"
+                                {...field}
+                              />
+                              <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">%</span>
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <span className="text-sm text-muted-foreground">markup</span>
+                  </div>
+                </div>
 
-                <FormField
-                  control={form.control}
-                  name="double_sided_available"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">
-                          Double Sided Available
-                        </FormLabel>
-                        <FormDescription>
-                          Allow double-sided printing
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+                {/* Same Image Both Sides */}
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="flex items-center space-x-4 flex-1">
+                    <FormField
+                      control={form.control}
+                      name="same_image_both_sides_available"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormLabel className="text-base font-medium">
+                            Same Image Both Sides (2 Sided)
+                          </FormLabel>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2 min-w-[120px]">
+                    <FormField
+                      control={form.control}
+                      name="same_image_both_sides_markup"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <div className="relative">
+                              <Input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                max="100"
+                                placeholder="1"
+                                className="pr-8 w-20"
+                                {...field}
+                              />
+                              <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">%</span>
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <span className="text-sm text-muted-foreground">markup</span>
+                  </div>
+                </div>
+
+                {/* Image Front Only */}
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="flex items-center space-x-4 flex-1">
+                    <FormField
+                      control={form.control}
+                      name="image_front_only_available"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormLabel className="text-base font-medium">
+                            Image Front Side Only (1 Sided)
+                          </FormLabel>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2 min-w-[120px]">
+                    <FormField
+                      control={form.control}
+                      name="image_front_only_markup"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <div className="relative">
+                              <Input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                max="100"
+                                placeholder="1"
+                                className="pr-8 w-20"
+                                {...field}
+                              />
+                              <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">%</span>
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <span className="text-sm text-muted-foreground">markup</span>
+                  </div>
+                </div>
+
+                {/* Your Design Front / Our Design Back */}
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="flex items-center space-x-4 flex-1">
+                    <FormField
+                      control={form.control}
+                      name="your_design_front_our_back_available"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormLabel className="text-base font-medium">
+                            Your Design Front / Our Design Back
+                          </FormLabel>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2 min-w-[120px]">
+                    <FormField
+                      control={form.control}
+                      name="your_design_front_our_back_markup"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <div className="relative">
+                              <Input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                max="100"
+                                placeholder="1"
+                                className="pr-8 w-20"
+                                {...field}
+                              />
+                              <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">%</span>
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <span className="text-sm text-muted-foreground">markup</span>
+                  </div>
+                </div>
               </div>
-
-              <FormField
-                control={form.control}
-                name="second_side_markup_percent"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Second Side Markup Percentage</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input 
-                          type="number" 
-                          step="1"
-                          min="0"
-                          max="100"
-                          placeholder="50"
-                          className="pr-8"
-                          {...field}
-                        />
-                        <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">%</span>
-                      </div>
-                    </FormControl>
-                    <FormDescription>
-                      Additional markup percentage for double-sided printing
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               <FormField
                 control={form.control}

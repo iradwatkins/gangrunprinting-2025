@@ -678,3 +678,167 @@ export const sidesApi = {
     return this.deleteSide(id);
   }
 };
+
+// Product-Paper Stock Relationships API
+export const productPaperStocksApi = {
+  // Get paper stocks for a specific product
+  async getProductPaperStocks(productId: string): Promise<ApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('product_paper_stocks')
+        .select(`
+          *,
+          paper_stocks(
+            id, 
+            name, 
+            description, 
+            weight, 
+            price_per_sq_inch, 
+            different_image_both_sides_available,
+            different_image_both_sides_markup,
+            same_image_both_sides_available,
+            same_image_both_sides_markup,
+            image_front_only_available,
+            image_front_only_markup,
+            your_design_front_our_back_available,
+            your_design_front_our_back_markup,
+            sides_tooltip_text,
+            coatings_tooltip_text,
+            tooltip_text,
+            is_active
+          )
+        `)
+        .eq('product_id', productId)
+        .order('is_default', { ascending: false }); // Default paper stock first
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data: data || [] };
+    } catch (error) {
+      return { error: 'Failed to fetch product paper stocks' };
+    }
+  },
+
+  // Assign paper stock to product
+  async assignPaperStock(productId: string, paperStockId: string, isDefault: boolean = false, priceOverride?: number): Promise<ApiResponse<Tables<'product_paper_stocks'>>> {
+    try {
+      // If setting as default, first unset any existing defaults
+      if (isDefault) {
+        await supabase
+          .from('product_paper_stocks')
+          .update({ is_default: false })
+          .eq('product_id', productId);
+      }
+
+      const { data, error } = await supabase
+        .from('product_paper_stocks')
+        .insert({
+          product_id: productId,
+          paper_stock_id: paperStockId,
+          is_default: isDefault,
+          price_override: priceOverride
+        })
+        .select()
+        .single();
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data };
+    } catch (error) {
+      return { error: 'Failed to assign paper stock to product' };
+    }
+  },
+
+  // Update product-paper stock relationship
+  async updateProductPaperStock(id: string, updates: { is_default?: boolean; price_override?: number }): Promise<ApiResponse<Tables<'product_paper_stocks'>>> {
+    try {
+      const { data, error } = await supabase
+        .from('product_paper_stocks')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data };
+    } catch (error) {
+      return { error: 'Failed to update product paper stock relationship' };
+    }
+  },
+
+  // Set default paper stock for product
+  async setDefaultPaperStock(productId: string, paperStockId: string): Promise<ApiResponse<void>> {
+    try {
+      // First, unset all defaults for this product
+      await supabase
+        .from('product_paper_stocks')
+        .update({ is_default: false })
+        .eq('product_id', productId);
+
+      // Then set the new default
+      const { error } = await supabase
+        .from('product_paper_stocks')
+        .update({ is_default: true })
+        .eq('product_id', productId)
+        .eq('paper_stock_id', paperStockId);
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data: undefined };
+    } catch (error) {
+      return { error: 'Failed to set default paper stock' };
+    }
+  },
+
+  // Remove paper stock from product
+  async removePaperStock(productId: string, paperStockId: string): Promise<ApiResponse<void>> {
+    try {
+      const { error } = await supabase
+        .from('product_paper_stocks')
+        .delete()
+        .eq('product_id', productId)
+        .eq('paper_stock_id', paperStockId);
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data: undefined };
+    } catch (error) {
+      return { error: 'Failed to remove paper stock from product' };
+    }
+  },
+
+  // Get all available paper stocks not assigned to a product
+  async getAvailablePaperStocks(productId: string): Promise<ApiResponse<Tables<'paper_stocks'>[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('paper_stocks')
+        .select('*')
+        .eq('is_active', true)
+        .not('id', 'in', `(
+          SELECT paper_stock_id 
+          FROM product_paper_stocks 
+          WHERE product_id = '${productId}'
+        )`)
+        .order('name');
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data: data || [] };
+    } catch (error) {
+      return { error: 'Failed to fetch available paper stocks' };
+    }
+  }
+};
