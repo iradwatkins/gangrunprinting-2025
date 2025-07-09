@@ -64,43 +64,73 @@ export function PaperStockList() {
   useEffect(() => {
     loadData();
   }, [filters]);
+  
+  // Separate effect for timeout to avoid dependency issues
+  useEffect(() => {
+    if (loading) {
+      const timeout = setTimeout(() => {
+        console.error('⏰ Loading timeout - forcing stop');
+        setLoading(false);
+        setPaperStocks([]);
+        toast({
+          title: "Loading Timeout", 
+          description: "Data loading took too long. Click 'Retry' or refresh the page.",
+          variant: "destructive",
+        });
+      }, 10000);
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [loading]);
 
   const loadData = async () => {
     setLoading(true);
     try {
       console.log('🔍 Loading paper stocks...');
       
-      // Test Supabase connection first
-      const { data: testData, error: testError } = await supabase.from('paper_stocks').select('count').limit(1);
-      if (testError) {
-        console.error('🚫 Supabase connection error:', testError);
-        throw new Error(`Database connection failed: ${testError.message}`);
+      // Check authentication status
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      console.log('🔐 Auth status:', session ? 'Authenticated' : 'Not authenticated');
+      if (authError) {
+        console.error('Auth error:', authError);
       }
-      console.log('✅ Supabase connection successful');
       
-      const response = await paperStocksApi.getPaperStocks(filters);
+      // Direct Supabase query as fallback
+      const { data: directData, error: directError } = await supabase
+        .from('paper_stocks')
+        .select('*')
+        .order('name');
       
-      console.log('📋 Paper stocks API response:', response);
-      
-      if (response.error) {
-        console.error('❌ Paper stocks API error:', response.error);
-        toast({
-          title: "API Error",
-          description: response.error,
-          variant: "destructive",
+      if (directError) {
+        console.error('🚫 Direct Supabase error:', directError);
+        console.error('Error details:', {
+          code: directError.code,
+          message: directError.message,
+          details: directError.details,
+          hint: directError.hint
         });
-      } else {
-        const stocks = response.data || [];
-        console.log('✅ Paper stocks loaded:', stocks.length);
-        setPaperStocks(stocks);
+        throw new Error(`Database error (${directError.code}): ${directError.message}`);
       }
+      
+      console.log('✅ Direct query successful, found:', directData?.length || 0, 'items');
+      
+      if (directData) {
+        setPaperStocks(directData);
+        console.log('📋 Paper stocks loaded directly from Supabase');
+      } else {
+        console.log('⚠️ No paper stocks found');
+        setPaperStocks([]);
+      }
+      
     } catch (error) {
       console.error('💥 Failed to load paper stocks:', error);
       toast({
-        title: "Connection Error",
-        description: `Failed to load paper stocks: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        title: "Database Error",
+        description: `Failed to load paper stocks: ${error instanceof Error ? error.message : 'Unknown error'}. Check console for details.`,
         variant: "destructive",
       });
+      // Set empty array so loading stops
+      setPaperStocks([]);
     }
     setLoading(false);
   };
@@ -176,10 +206,16 @@ export function PaperStockList() {
     return (
       <Card>
         <CardHeader>
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-[250px]" />
-            <Skeleton className="h-4 w-[200px]" />
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <Palette className="h-5 w-5" />
+            Loading Paper Stocks...
+          </CardTitle>
+          <CardDescription className="flex items-center gap-2">
+            Please wait while we load your paper stock data
+            <Button variant="outline" size="sm" onClick={loadData} disabled={loading}>
+              Retry
+            </Button>
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">

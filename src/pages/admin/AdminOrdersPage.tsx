@@ -1,6 +1,6 @@
 import React from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
-import { OrdersPage } from '../orders/OrdersPage';
+import { AdminOrdersList } from '@/components/admin/AdminOrdersList';
 import { CreateOrderForCustomer } from '@/components/admin/CreateOrderForCustomer';
 
 export function AdminOrdersPage() {
@@ -17,7 +17,7 @@ export function AdminOrdersPage() {
         </div>
         
         {/* Orders List */}
-        <OrdersPage />
+        <AdminOrdersList />
       </div>
     </AdminLayout>
   );
