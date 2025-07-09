@@ -66,7 +66,7 @@ const CampaignManager: React.FC<CampaignManagerProps> = ({ onCreateCampaign, onE
       
       // Fetch campaigns from API
       const campaignResponse = await emailCampaignApi.getCampaigns({ 
-        status: statusFilter || undefined
+        status: statusFilter && statusFilter !== 'all' ? statusFilter : undefined
       });
       
       if (campaignResponse.error) {
@@ -305,7 +305,7 @@ const CampaignManager: React.FC<CampaignManagerProps> = ({ onCreateCampaign, onE
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Status</SelectItem>
+            <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="draft">Draft</SelectItem>
             <SelectItem value="scheduled">Scheduled</SelectItem>
             <SelectItem value="sending">Sending</SelectItem>

@@ -47,8 +47,8 @@ const EmailTemplateList: React.FC<EmailTemplateListProps> = ({ onEdit, onCreateN
       
       // Get templates from API
       const response = await emailTemplateApi.getTemplates({ 
-        category: categoryFilter || undefined,
-        is_active: activeFilter ? activeFilter === 'active' : undefined
+        category: categoryFilter && categoryFilter !== 'all' ? categoryFilter : undefined,
+        is_active: activeFilter && activeFilter !== 'all' ? activeFilter === 'active' : undefined
       });
       
       if (response.error) {
@@ -169,7 +169,7 @@ const EmailTemplateList: React.FC<EmailTemplateListProps> = ({ onEdit, onCreateN
             <SelectValue placeholder="All Categories" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Categories</SelectItem>
+            <SelectItem value="all">All Categories</SelectItem>
             <SelectItem value="marketing">Marketing</SelectItem>
             <SelectItem value="transactional">Transactional</SelectItem>
             <SelectItem value="promotional">Promotional</SelectItem>
@@ -180,7 +180,7 @@ const EmailTemplateList: React.FC<EmailTemplateListProps> = ({ onEdit, onCreateN
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Status</SelectItem>
+            <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="active">Active</SelectItem>
             <SelectItem value="inactive">Inactive</SelectItem>
           </SelectContent>

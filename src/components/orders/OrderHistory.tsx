@@ -146,12 +146,12 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ onOrderSelect }) => 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
                 <div>
                   <label className="block text-sm font-medium mb-1">Status</label>
-                  <Select onValueChange={(value) => handleFilterChange({ status: value ? [value as any] : undefined })}>
+                  <Select onValueChange={(value) => handleFilterChange({ status: value && value !== 'all' ? [value as any] : undefined })}>
                     <SelectTrigger>
                       <SelectValue placeholder="All statuses" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All statuses</SelectItem>
+                      <SelectItem value="all">All statuses</SelectItem>
                       <SelectItem value="draft">Draft</SelectItem>
                       <SelectItem value="pending_payment">Pending Payment</SelectItem>
                       <SelectItem value="payment_confirmed">Payment Confirmed</SelectItem>

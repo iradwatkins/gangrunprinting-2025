@@ -232,7 +232,7 @@ export function VendorEmailModal({ vendor, open, onOpenChange }: VendorEmailModa
                     <SelectValue placeholder="Select a template (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Custom Message</SelectItem>
+                    <SelectItem value="custom">Custom Message</SelectItem>
                     {templates.map((template) => (
                       <SelectItem key={template.id} value={template.id}>
                         <div className="flex flex-col">

@@ -597,7 +597,7 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">No Default</SelectItem>
+                            <SelectItem value="none">No Default</SelectItem>
                             {coatings.map((coating) => (
                               <SelectItem key={coating.id} value={coating.id}>
                                 {coating.name}
