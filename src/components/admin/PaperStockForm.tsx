@@ -126,95 +126,22 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
     }
   });
 
-  // Load all available options
-  const loadOptions = async () => {
-    setLoadingOptions(true);
-    try {
-      console.log('🔄 Loading options...');
-      
-      // Load each API separately to identify which one is failing
-      console.log('📥 Loading print sizes...');
-      const printSizesResult = await printSizesApi.getAll({ is_active: true });
-      console.log('Print sizes result:', printSizesResult);
-      
-      console.log('📥 Loading turnaround times...');
-      const turnaroundTimesResult = await turnaroundTimesApi.getAll({ is_active: true });
-      console.log('Turnaround times result:', turnaroundTimesResult);
-      
-      console.log('📥 Loading add-ons...');
-      const addOnsResult = await addOnsApi.getAll({ is_active: true });
-      console.log('Add-ons result:', addOnsResult);
-
-      // Check for errors in any of the results
-      if (printSizesResult.error) {
-        console.error('❌ Print Sizes Error:', printSizesResult.error);
-      }
-      if (turnaroundTimesResult.error) {
-        console.error('❌ Turnaround Times Error:', turnaroundTimesResult.error);
-      }
-      if (addOnsResult.error) {
-        console.error('❌ Add-ons Error:', addOnsResult.error);
-      }
-
-      setPrintSizes(printSizesResult.data || []);
-      setTurnaroundTimes(turnaroundTimesResult.data || []);
-      setAddOns(addOnsResult.data || []);
-      // Note: Coatings are now handled directly in the form, not via API loading
-      
-      console.log('✅ Options loaded successfully:', {
-        printSizes: printSizesResult.data?.length || 0,
-        turnaroundTimes: turnaroundTimesResult.data?.length || 0,
-        addOns: addOnsResult.data?.length || 0
-      });
-    } catch (error) {
-      console.error('💥 Load options error:', error);
-      toast({
-        title: "Error",
-        description: `Failed to load options: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingOptions(false);
-    }
+  // Add custom option functions
+  const addCustomSidesOption = () => {
+    setCustomSidesOptions([...customSidesOptions, { name: '', available: true, markup: 1 }]);
   };
 
-  useEffect(() => {
-    // Check database schema first, then load options
-    const initializeForm = async () => {
-      console.log('🔄 Initializing form...');
-      
-      // Check if enhanced sides columns exist
-      const schemaCheck = await ensureSidesColumns();
-      if (!schemaCheck.success) {
-        console.warn('⚠️ Database schema issue:', schemaCheck.error);
-        toast({
-          title: "Database Schema Issue",
-          description: "Some enhanced features may not be available. Please contact support.",
-          variant: "destructive",
-        });
-      }
-      
-      // Load options regardless of schema check
-      loadOptions();
-    };
-    
-    initializeForm();
-    
-    // Add timeout to prevent infinite loading
-    const timeout = setTimeout(() => {
-      if (loadingOptions) {
-        console.warn('⏰ Options loading timeout - forcing completion');
-        setLoadingOptions(false);
-        toast({
-          title: "Loading Timeout",
-          description: "Options loading took too long. Some features may not be available.",
-          variant: "destructive",
-        });
-      }
-    }, 10000); // 10 second timeout
-    
-    return () => clearTimeout(timeout);
-  }, []);
+  const addCustomCoatingOption = () => {
+    setCustomCoatingOptions([...customCoatingOptions, { name: '', available: true, markup: 1 }]);
+  };
+
+  const removeCustomSidesOption = (index: number) => {
+    setCustomSidesOptions(customSidesOptions.filter((_, i) => i !== index));
+  };
+
+  const removeCustomCoatingOption = (index: number) => {
+    setCustomCoatingOptions(customCoatingOptions.filter((_, i) => i !== index));
+  };
 
   useEffect(() => {
     if (paperStock) {
@@ -253,11 +180,15 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
         matte_aqueous_available: paperStock.matte_aqueous_available ?? true,
         matte_aqueous_markup: paperStock.matte_aqueous_markup ?? 1,
         coatings_tooltip_text: paperStock.coatings_tooltip_text || '',
-        available_print_sizes: additionalData.available_print_sizes || [],
-        available_turnaround_times: additionalData.available_turnaround_times || [],
-        available_add_ons: additionalData.available_add_ons || [],
+        // Custom options from additional data
+        custom_sides_options: additionalData.custom_sides_options || [],
+        custom_coating_options: additionalData.custom_coating_options || [],
         is_active: paperStock.is_active ?? true
       });
+      
+      // Load custom options into state
+      setCustomSidesOptions(additionalData.custom_sides_options || []);
+      setCustomCoatingOptions(additionalData.custom_coating_options || []);
     } else {
       form.reset({
         name: '',
@@ -296,12 +227,10 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
     try {
       let response;
 
-      // Prepare the data with additional fields stored in tooltip_text
+      // Prepare the data with custom options stored in tooltip_text
       const additionalData = {
-        available_print_sizes: data.available_print_sizes || [],
-        available_turnaround_times: data.available_turnaround_times || [],
-        available_add_ons: data.available_add_ons || [],
-        available_coatings: data.available_coatings || []
+        custom_sides_options: customSidesOptions,
+        custom_coating_options: customCoatingOptions
       };
 
       const paperStockData = {
@@ -391,10 +320,8 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
         {/* Debug Info */}
         <div className="text-xs text-gray-400 mt-2 flex items-center gap-2">
           <span>
-            Loading: {loadingOptions ? 'Yes' : 'No'} | 
-            Print Sizes: {printSizes.length} | 
-            Turnaround Times: {turnaroundTimes.length} | 
-            Add-ons: {addOns.length}
+            Custom Sides Options: {customSidesOptions.length} | 
+            Custom Coating Options: {customCoatingOptions.length}
           </span>
         </div>
       </CardHeader>
@@ -950,148 +877,146 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
               />
             </div>
 
-            {/* Additional Options */}
+            {/* Custom Sides Options */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Additional Configuration</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">Custom Sides Options</h3>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addCustomSidesOption}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Custom Option
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground">Add custom sides printing options beyond the standard 4 options above.</p>
               
-              {loadingOptions ? (
-                <div className="text-center py-4">
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
-                    Loading additional options...
+              {customSidesOptions.map((option, index) => (
+                <div key={index} className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="flex items-center space-x-4 flex-1">
+                    <Input
+                      placeholder="Custom sides option name"
+                      value={option.name}
+                      onChange={(e) => {
+                        const newOptions = [...customSidesOptions];
+                        newOptions[index].name = e.target.value;
+                        setCustomSidesOptions(newOptions);
+                      }}
+                      className="flex-1"
+                    />
+                    <Switch
+                      checked={option.available}
+                      onCheckedChange={(checked) => {
+                        const newOptions = [...customSidesOptions];
+                        newOptions[index].available = checked;
+                        setCustomSidesOptions(newOptions);
+                      }}
+                    />
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={loadOptions} 
-                    className="mt-2"
-                  >
-                    Retry Loading
-                  </Button>
-                </div>
-              ) : (printSizes.length === 0 && turnaroundTimes.length === 0 && addOns.length === 0) ? (
-                <div className="text-center py-4">
-                  <p className="text-gray-500 mb-2">No additional options available</p>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={loadOptions}
-                  >
-                    Retry Loading
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {/* Print Sizes */}
-                  <div>
-                    <FormLabel className="text-base font-medium">Available Print Sizes</FormLabel>
-                    <FormDescription className="mb-3">
-                      Select which print sizes are available for this paper stock
-                    </FormDescription>
-                    <div className="grid grid-cols-2 gap-2">
-                      {printSizes.map((size) => (
-                        <FormField
-                          key={size.id}
-                          control={form.control}
-                          name="available_print_sizes"
-                          render={({ field }) => {
-                            return (
-                              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(size.id)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...field.value, size.id])
-                                        : field.onChange(field.value?.filter((value) => value !== size.id))
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                  {size.name} ({size.width}" × {size.height}")
-                                </FormLabel>
-                              </FormItem>
-                            )
-                          }}
-                        />
-                      ))}
+                  <div className="flex items-center space-x-2 min-w-[120px]">
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="100"
+                        placeholder="1"
+                        className="pr-8 w-20"
+                        value={option.markup}
+                        onChange={(e) => {
+                          const newOptions = [...customSidesOptions];
+                          newOptions[index].markup = parseFloat(e.target.value) || 0;
+                          setCustomSidesOptions(newOptions);
+                        }}
+                      />
+                      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">%</span>
                     </div>
+                    <span className="text-sm text-muted-foreground">markup</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeCustomSidesOption(index)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
-
-                  {/* Turnaround Times */}
-                  <div>
-                    <FormLabel className="text-base font-medium">Available Turnaround Times</FormLabel>
-                    <FormDescription className="mb-3">
-                      Select which turnaround times are available for this paper stock
-                    </FormDescription>
-                    <div className="grid grid-cols-2 gap-2">
-                      {turnaroundTimes.map((time) => (
-                        <FormField
-                          key={time.id}
-                          control={form.control}
-                          name="available_turnaround_times"
-                          render={({ field }) => {
-                            return (
-                              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(time.id)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...field.value, time.id])
-                                        : field.onChange(field.value?.filter((value) => value !== time.id))
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                  {time.name} ({time.business_days} days)
-                                </FormLabel>
-                              </FormItem>
-                            )
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Add-ons */}
-                  <div>
-                    <FormLabel className="text-base font-medium">Available Add-ons</FormLabel>
-                    <FormDescription className="mb-3">
-                      Select which add-ons are available for this paper stock
-                    </FormDescription>
-                    <div className="grid grid-cols-1 gap-2">
-                      {addOns.map((addon) => (
-                        <FormField
-                          key={addon.id}
-                          control={form.control}
-                          name="available_add_ons"
-                          render={({ field }) => {
-                            return (
-                              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(addon.id)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...field.value, addon.id])
-                                        : field.onChange(field.value?.filter((value) => value !== addon.id))
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                  {addon.name} {addon.price_modifier !== 0 && `(${addon.price_modifier > 0 ? '+' : ''}${addon.price_modifier})`}
-                                </FormLabel>
-                              </FormItem>
-                            )
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
                 </div>
-              )}
+              ))}
+            </div>
+
+            {/* Custom Coating Options */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">Custom Coating Options</h3>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addCustomCoatingOption}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Custom Option
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground">Add custom coating options beyond the standard 4 options above.</p>
+              
+              {customCoatingOptions.map((option, index) => (
+                <div key={index} className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="flex items-center space-x-4 flex-1">
+                    <Input
+                      placeholder="Custom coating option name"
+                      value={option.name}
+                      onChange={(e) => {
+                        const newOptions = [...customCoatingOptions];
+                        newOptions[index].name = e.target.value;
+                        setCustomCoatingOptions(newOptions);
+                      }}
+                      className="flex-1"
+                    />
+                    <Switch
+                      checked={option.available}
+                      onCheckedChange={(checked) => {
+                        const newOptions = [...customCoatingOptions];
+                        newOptions[index].available = checked;
+                        setCustomCoatingOptions(newOptions);
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2 min-w-[120px]">
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="100"
+                        placeholder="1"
+                        className="pr-8 w-20"
+                        value={option.markup}
+                        onChange={(e) => {
+                          const newOptions = [...customCoatingOptions];
+                          newOptions[index].markup = parseFloat(e.target.value) || 0;
+                          setCustomCoatingOptions(newOptions);
+                        }}
+                      />
+                      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">%</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">markup</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeCustomCoatingOption(index)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* Status */}
