@@ -34,6 +34,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { paperStocksApi, printSizesApi, turnaroundTimesApi, addOnsApi, coatingsApi } from '@/api/global-options';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+import { ensureSidesColumns } from '@/utils/apply-migration';
 
 const paperStockSchema = z.object({
   name: z.string().min(1, 'Paper stock name is required'),
@@ -109,21 +110,55 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
   const loadOptions = async () => {
     setLoadingOptions(true);
     try {
-      const [printSizesResult, turnaroundTimesResult, addOnsResult, coatingsResult] = await Promise.all([
-        printSizesApi.getAll({ is_active: true }),
-        turnaroundTimesApi.getAll({ is_active: true }),
-        addOnsApi.getAll({ is_active: true }),
-        coatingsApi.getAll({ is_active: true })
-      ]);
+      console.log('🔄 Loading options...');
+      
+      // Load each API separately to identify which one is failing
+      console.log('📥 Loading print sizes...');
+      const printSizesResult = await printSizesApi.getAll({ is_active: true });
+      console.log('Print sizes result:', printSizesResult);
+      
+      console.log('📥 Loading turnaround times...');
+      const turnaroundTimesResult = await turnaroundTimesApi.getAll({ is_active: true });
+      console.log('Turnaround times result:', turnaroundTimesResult);
+      
+      console.log('📥 Loading add-ons...');
+      const addOnsResult = await addOnsApi.getAll({ is_active: true });
+      console.log('Add-ons result:', addOnsResult);
+      
+      console.log('📥 Loading coatings...');
+      const coatingsResult = await coatingsApi.getAll({ is_active: true });
+      console.log('Coatings result:', coatingsResult);
+
+      // Check for errors in any of the results
+      if (printSizesResult.error) {
+        console.error('❌ Print Sizes Error:', printSizesResult.error);
+      }
+      if (turnaroundTimesResult.error) {
+        console.error('❌ Turnaround Times Error:', turnaroundTimesResult.error);
+      }
+      if (addOnsResult.error) {
+        console.error('❌ Add-ons Error:', addOnsResult.error);
+      }
+      if (coatingsResult.error) {
+        console.error('❌ Coatings Error:', coatingsResult.error);
+      }
 
       setPrintSizes(printSizesResult.data || []);
       setTurnaroundTimes(turnaroundTimesResult.data || []);
       setAddOns(addOnsResult.data || []);
       setCoatings(coatingsResult.data || []);
+      
+      console.log('✅ Options loaded successfully:', {
+        printSizes: printSizesResult.data?.length || 0,
+        turnaroundTimes: turnaroundTimesResult.data?.length || 0,
+        addOns: addOnsResult.data?.length || 0,
+        coatings: coatingsResult.data?.length || 0
+      });
     } catch (error) {
+      console.error('💥 Load options error:', error);
       toast({
         title: "Error",
-        description: "Failed to load options",
+        description: `Failed to load options: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
     } finally {
@@ -132,7 +167,41 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
   };
 
   useEffect(() => {
-    loadOptions();
+    // Check database schema first, then load options
+    const initializeForm = async () => {
+      console.log('🔄 Initializing form...');
+      
+      // Check if enhanced sides columns exist
+      const schemaCheck = await ensureSidesColumns();
+      if (!schemaCheck.success) {
+        console.warn('⚠️ Database schema issue:', schemaCheck.error);
+        toast({
+          title: "Database Schema Issue",
+          description: "Some enhanced features may not be available. Please contact support.",
+          variant: "destructive",
+        });
+      }
+      
+      // Load options regardless of schema check
+      loadOptions();
+    };
+    
+    initializeForm();
+    
+    // Add timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      if (loadingOptions) {
+        console.warn('⏰ Options loading timeout - forcing completion');
+        setLoadingOptions(false);
+        toast({
+          title: "Loading Timeout",
+          description: "Options loading took too long. Some features may not be available.",
+          variant: "destructive",
+        });
+      }
+    }, 10000); // 10 second timeout
+    
+    return () => clearTimeout(timeout);
   }, []);
 
   useEffect(() => {
@@ -281,6 +350,15 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
         <CardDescription>
           {isEditing ? 'Update paper stock information and pricing' : 'Add a new paper stock for product configuration'}
         </CardDescription>
+        
+        {/* Debug Info */}
+        <div className="text-xs text-gray-400 mt-2">
+          Loading: {loadingOptions ? 'Yes' : 'No'} | 
+          Coatings: {coatings.length} | 
+          Print Sizes: {printSizes.length} | 
+          Turnaround Times: {turnaroundTimes.length} | 
+          Add-ons: {addOns.length}
+        </div>
       </CardHeader>
       <CardContent>
 
@@ -619,7 +697,54 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
               <p className="text-sm text-muted-foreground">Configure the coating options that customers will see as their third choice.</p>
               
               {loadingOptions ? (
-                <div className="text-center py-4">Loading coating options...</div>
+                <div className="text-center py-4">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+                    Loading coating options...
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={loadOptions} 
+                    className="mt-2"
+                  >
+                    Retry Loading
+                  </Button>
+                </div>
+              ) : coatings.length === 0 ? (
+                <div className="space-y-4">
+                  <div className="text-center py-4">
+                    <p className="text-gray-500 mb-2">No coating options loaded from database</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={loadOptions}
+                    >
+                      Retry Loading
+                    </Button>
+                  </div>
+                  
+                  {/* Fallback: Show expected coating options */}
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <FormLabel className="text-base font-medium">Expected Coating Options</FormLabel>
+                    <FormDescription className="mb-3">
+                      These are the coating options that should be available (requires database setup)
+                    </FormDescription>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        'High Gloss UV',
+                        'High Gloss UV on ONE SIDE', 
+                        'Gloss Aqueous',
+                        'Matte Aqueous'
+                      ].map((coating) => (
+                        <div key={coating} className="flex items-center space-x-2 text-sm text-gray-600">
+                          <div className="w-4 h-4 border rounded bg-white"></div>
+                          <span>{coating}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <div className="space-y-6">
                   <div>
@@ -687,7 +812,31 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
               <h3 className="text-lg font-medium">Additional Configuration</h3>
               
               {loadingOptions ? (
-                <div className="text-center py-4">Loading options...</div>
+                <div className="text-center py-4">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+                    Loading additional options...
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={loadOptions} 
+                    className="mt-2"
+                  >
+                    Retry Loading
+                  </Button>
+                </div>
+              ) : (printSizes.length === 0 && turnaroundTimes.length === 0 && addOns.length === 0) ? (
+                <div className="text-center py-4">
+                  <p className="text-gray-500 mb-2">No additional options available</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={loadOptions}
+                  >
+                    Retry Loading
+                  </Button>
+                </div>
               ) : (
                 <div className="space-y-6">
                   {/* Print Sizes */}
