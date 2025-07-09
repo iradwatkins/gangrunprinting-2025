@@ -58,8 +58,7 @@ const navigation = [
   {
     name: 'Paper Stocks',
     href: '/admin/paper-stocks',
-    icon: Palette,
-    badge: 'Global'
+    icon: Palette
   },
   {
     name: 'Print Sizes',

@@ -39,15 +39,13 @@ const paperStockSchema = z.object({
   name: z.string().min(1, 'Paper stock name is required'),
   description: z.string().optional(),
   weight: z.coerce.number().min(1, 'Weight must be at least 1 GSM').max(1000, 'Weight cannot exceed 1000 GSM'),
-  finish: z.string().min(1, 'Finish is required'),
-  price_per_square_inch: z.coerce.number().min(0.0001, 'Price must be greater than 0').max(99.9999, 'Price too high'),
+  price_per_sq_inch: z.coerce.number().min(0.0001, 'Price must be greater than 0').max(99.9999, 'Price too high'),
   single_sided_available: z.boolean(),
   double_sided_available: z.boolean(),
   second_side_markup_percent: z.coerce.number().min(0).max(100).optional(),
   sides_tooltip_text: z.string().optional(),
   available_coatings: z.array(z.string()).optional(),
   coatings_tooltip_text: z.string().optional(),
-  default_coating_id: z.string().optional(),
   available_print_sizes: z.array(z.string()).optional(),
   available_turnaround_times: z.array(z.string()).optional(),
   available_add_ons: z.array(z.string()).optional(),
@@ -64,18 +62,6 @@ interface PaperStockFormProps {
   onSuccess: () => void;
 }
 
-const finishOptions = [
-  'Matte',
-  'Gloss',
-  'Satin',
-  'Uncoated',
-  'Textured',
-  'Linen',
-  'Felt',
-  'Smooth',
-  'Recycled',
-  'Metallic'
-];
 
 export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperStockFormProps) {
   const { toast } = useToast();
@@ -94,15 +80,13 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
       name: '',
       description: '',
       weight: 120, // Common default weight for business cards
-      finish: '',
-      price_per_square_inch: 0.0100, // $0.01 per square inch default
+      price_per_sq_inch: 0.0100, // $0.01 per square inch default
       single_sided_available: true,
       double_sided_available: true,
       second_side_markup_percent: 50, // 50% markup for double-sided
       sides_tooltip_text: '',
       available_coatings: [],
       coatings_tooltip_text: '',
-      default_coating_id: '',
       available_print_sizes: [],
       available_turnaround_times: [],
       available_add_ons: [],
@@ -158,15 +142,13 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
         name: paperStock.name || '',
         description: paperStock.description || '',
         weight: paperStock.weight || 120,
-        finish: paperStock.finish || '',
-        price_per_square_inch: paperStock.price_per_square_inch || 0.0100,
+        price_per_sq_inch: paperStock.price_per_sq_inch || 0.0100,
         single_sided_available: paperStock.single_sided_available ?? true,
         double_sided_available: paperStock.double_sided_available ?? true,
         second_side_markup_percent: paperStock.second_side_markup_percent || 50,
         sides_tooltip_text: paperStock.sides_tooltip_text || '',
         available_coatings: additionalData.available_coatings || [],
         coatings_tooltip_text: paperStock.coatings_tooltip_text || '',
-        default_coating_id: paperStock.default_coating_id || '',
         available_print_sizes: additionalData.available_print_sizes || [],
         available_turnaround_times: additionalData.available_turnaround_times || [],
         available_add_ons: additionalData.available_add_ons || [],
@@ -177,16 +159,14 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
         name: '',
         description: '',
         weight: 120,
-        finish: '',
-        price_per_square_inch: 0.0100,
+          price_per_sq_inch: 0.0100,
         single_sided_available: true,
         double_sided_available: true,
         second_side_markup_percent: 50,
         sides_tooltip_text: '',
         available_coatings: [],
         coatings_tooltip_text: '',
-        default_coating_id: '',
-        available_print_sizes: [],
+          available_print_sizes: [],
         available_turnaround_times: [],
         available_add_ons: [],
         is_active: true
@@ -210,14 +190,12 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
         name: data.name,
         description: data.description,
         weight: data.weight,
-        finish: data.finish,
-        price_per_square_inch: data.price_per_square_inch,
+        price_per_sq_inch: data.price_per_sq_inch,
         single_sided_available: data.single_sided_available,
         double_sided_available: data.double_sided_available,
         second_side_markup_percent: data.second_side_markup_percent,
         sides_tooltip_text: data.sides_tooltip_text,
         coatings_tooltip_text: data.coatings_tooltip_text,
-        default_coating_id: data.default_coating_id,
         tooltip_text: JSON.stringify(additionalData),
         is_active: data.is_active
       };
@@ -329,58 +307,28 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Paper Specifications</h3>
               
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="weight"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Weight (GSM) *</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          min="1" 
-                          max="1000"
-                          placeholder="120"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Paper weight in grams per square meter
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="finish"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Finish *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select finish" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {finishOptions.map((finish) => (
-                            <SelectItem key={finish} value={finish}>
-                              {finish}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Paper surface finish type
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="weight"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Weight (GSM) *</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        min="1" 
+                        max="1000"
+                        placeholder="120"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Paper weight in grams per square meter
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             {/* Pricing */}
@@ -389,7 +337,7 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
               
               <FormField
                 control={form.control}
-                name="price_per_square_inch"
+                name="price_per_sq_inch"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Price per Square Inch *</FormLabel>
@@ -584,34 +532,6 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="default_coating_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Default Coating</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select default coating" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="none">No Default</SelectItem>
-                            {coatings.map((coating) => (
-                              <SelectItem key={coating.id} value={coating.id}>
-                                {coating.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormDescription>
-                          Default coating selection for customers
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                 </div>
               )}
             </div>
