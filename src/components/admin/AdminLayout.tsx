@@ -36,6 +36,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { UserButton } from '@/components/auth/UserButton';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { getShortBuildTime } from '@/utils/buildInfo';
 
 const navigation = [
   // Main Dashboard
@@ -202,7 +203,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const SidebarContent = () => (
     <div className="flex h-full flex-col">
       <div className="flex h-16 shrink-0 items-center px-6">
-        <h1 className="text-lg font-semibold">Admin Panel</h1>
+        <div>
+          <h1 className="text-lg font-semibold">Admin Panel</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">Updated: {getShortBuildTime()}</p>
+        </div>
       </div>
       <Separator />
       <nav className="flex-1 space-y-1 px-3 py-4">
