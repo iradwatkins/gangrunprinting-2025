@@ -8,99 +8,107 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Printing Company Color Scheme - Light Theme */
-    --background: 210 17% 98%; /* #F8F9FA */
-    --foreground: 210 11% 24%; /* #343A40 */
+    /* Enhanced Printing Company Color Scheme - Light Theme */
+    --background: 210 20% 98%; /* #F7F9FC */
+    --foreground: 215 25% 15%; /* #1E293B */
 
     --card: 0 0% 100%; /* #FFFFFF */
-    --card-foreground: 210 11% 24%; /* #343A40 */
+    --card-foreground: 215 25% 15%; /* #1E293B */
 
     --popover: 0 0% 100%;
-    --popover-foreground: 210 11% 24%;
+    --popover-foreground: 215 25% 15%;
 
-    --primary: 204 70% 53%; /* #3498DB */
+    --primary: 217 91% 60%; /* #3B82F6 - Better blue */
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 210 74% 15%; /* #0a243d */
+    --primary-hover: 217 91% 50%; /* Darker on hover */
 
-    --secondary: 144 32% 96%; /* #F0FAF5 */
-    --secondary-foreground: 210 11% 24%;
+    --secondary: 210 40% 94%; /* #E2E8F0 */
+    --secondary-foreground: 215 25% 15%;
 
-    --muted: 210 10% 92%; /* #E9ECEF */
-    --muted-foreground: 210 10% 46%; /* #6C757D */
+    --muted: 210 40% 94%; /* #E2E8F0 */
+    --muted-foreground: 215 16% 47%; /* #64748B */
 
-    --accent: 204 70% 53%; /* Same as primary */
+    --accent: 217 91% 60%; /* Same as primary */
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 6 78% 57%; /* #E74C3C */
+    --destructive: 0 84% 60%; /* #EF4444 */
     --destructive-foreground: 0 0% 100%;
 
-    --success: 134 61% 41%; /* #28A745 */
+    --success: 142 76% 36%; /* #10B981 */
     --success-foreground: 0 0% 100%;
 
-    --warning: 35 89% 52%; /* #F39C12 */
+    --warning: 45 93% 47%; /* #F59E0B */
     --warning-foreground: 0 0% 100%;
 
-    --border: 210 10% 92%; /* #E9ECEF */
-    --input: 210 10% 92%;
-    --ring: 204 70% 53%;
+    --info: 199 89% 48%; /* #0EA5E9 */
+    --info-foreground: 0 0% 100%;
+
+    --border: 214 32% 91%; /* #E2E8F0 */
+    --input: 214 32% 91%;
+    --ring: 217 91% 60%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 210 11% 24%;
-    --sidebar-primary: 204 70% 53%;
+    /* Enhanced sidebar colors */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 25% 15%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 10% 92%;
-    --sidebar-accent-foreground: 210 11% 24%;
-    --sidebar-border: 210 10% 92%;
-    --sidebar-ring: 204 70% 53%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 215 25% 15%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 217 91% 60%;
   }
 
   .dark {
-    /* Printing Company Color Scheme - Dark Theme */
-    --background: 210 11% 24%; /* #343A40 */
-    --foreground: 0 0% 100%; /* #FFFFFF */
+    /* Enhanced Printing Company Color Scheme - Dark Theme */
+    --background: 224 71% 4%; /* #0C0A09 - Rich dark */
+    --foreground: 210 40% 98%; /* #F8FAFC */
 
-    --card: 213 74% 22%; /* #0F3460 */
-    --card-foreground: 0 0% 100%;
+    --card: 224 71% 8%; /* #1A1625 */
+    --card-foreground: 210 40% 98%;
 
-    --popover: 213 74% 22%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 224 71% 8%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 204 70% 53%; /* #3498DB */
+    --primary: 217 91% 60%; /* #3B82F6 - Same blue, works well in dark */
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 210 74% 15%; /* #0a243d */
+    --primary-hover: 217 91% 70%; /* Lighter on hover in dark mode */
 
-    --secondary: 210 11% 15%; /* #212529 */
-    --secondary-foreground: 210 10% 92%; /* #E9ECEF */
+    --secondary: 215 27% 12%; /* #1E293B */
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 10% 46%; /* #6C757D */
-    --muted-foreground: 210 10% 92%;
+    --muted: 215 27% 17%; /* #334155 */
+    --muted-foreground: 215 20% 65%; /* #94A3B8 */
 
-    --accent: 204 70% 53%;
+    --accent: 217 91% 60%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 6 78% 57%; /* #E74C3C */
+    --destructive: 0 84% 60%; /* #EF4444 */
     --destructive-foreground: 0 0% 100%;
 
-    --success: 134 61% 41%; /* #28A745 */
+    --success: 142 76% 36%; /* #10B981 */
     --success-foreground: 0 0% 100%;
 
-    --warning: 35 89% 52%; /* #F39C12 */
+    --warning: 45 93% 47%; /* #F59E0B */
     --warning-foreground: 0 0% 100%;
 
-    --border: 210 10% 46%;
-    --input: 210 10% 46%;
-    --ring: 204 70% 53%;
+    --info: 199 89% 48%; /* #0EA5E9 */
+    --info-foreground: 0 0% 100%;
 
-    --sidebar-background: 210 11% 15%;
-    --sidebar-foreground: 210 10% 92%;
-    --sidebar-primary: 204 70% 53%;
+    --border: 215 27% 17%; /* #334155 */
+    --input: 215 27% 17%;
+    --ring: 217 91% 60%;
+
+    /* Enhanced dark sidebar */
+    --sidebar-background: 224 71% 6%; /* #151119 */
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 11% 24%;
-    --sidebar-accent-foreground: 210 10% 92%;
-    --sidebar-border: 210 10% 46%;
-    --sidebar-ring: 204 70% 53%;
+    --sidebar-accent: 215 27% 12%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 215 27% 17%;
+    --sidebar-ring: 217 91% 60%;
   }
 }
 
@@ -111,9 +119,51 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground font-lato;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-montserrat;
+  }
+}
+
+@layer components {
+  /* Enhanced component styles for better theme compatibility */
+  .theme-card {
+    @apply bg-card text-card-foreground border-border;
+  }
+  
+  .theme-button-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+  }
+  
+  .theme-button-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+  }
+  
+  .theme-input {
+    @apply bg-background border-input text-foreground placeholder:text-muted-foreground;
+  }
+
+  /* Status color utilities that work in both themes */
+  .status-success {
+    @apply bg-success text-success-foreground;
+  }
+  
+  .status-warning {
+    @apply bg-warning text-warning-foreground;
+  }
+  
+  .status-error {
+    @apply bg-destructive text-destructive-foreground;
+  }
+  
+  .status-info {
+    @apply bg-info text-info-foreground;
+  }
+
+  /* Animation for theme transitions */
+  .theme-transition {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
   }
 }

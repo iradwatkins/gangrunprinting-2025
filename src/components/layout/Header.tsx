@@ -8,6 +8,7 @@ import { UserButton } from '@/components/auth/UserButton';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/hooks/useCart';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export function Header() {
   const { user } = useAuth();
@@ -33,13 +34,13 @@ export function Header() {
 
   return (
     <>
-      <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50">
+      <header className="bg-background shadow-sm border-b border-border sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-2">
-              <Printer className="h-8 w-8 text-blue-600" />
-              <span className="text-xl font-bold text-gray-900 dark:text-white">GangRun</span>
+              <Printer className="h-8 w-8 text-primary" />
+              <span className="text-xl font-bold text-foreground">GangRun</span>
             </Link>
             
             {/* Desktop Navigation */}
@@ -50,8 +51,8 @@ export function Header() {
                   to={item.href}
                   className={`font-medium transition-colors ${
                     isActive(item.href)
-                      ? 'text-blue-600 dark:text-blue-400'
-                      : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+                      ? 'text-primary'
+                      : 'text-muted-foreground hover:text-primary'
                   }`}
                 >
                   {item.name}
@@ -75,6 +76,9 @@ export function Header() {
                   )}
                 </Link>
               </Button>
+              
+              {/* Theme Toggle */}
+              <ThemeToggle />
               
               {/* Authentication */}
               {user ? (

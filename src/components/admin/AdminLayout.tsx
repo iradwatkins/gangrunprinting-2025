@@ -25,6 +25,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { UserButton } from '@/components/auth/UserButton';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const navigation = [
   // Main Dashboard
@@ -162,9 +163,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   );
 
   return (
-    <div className="flex h-screen bg-background dark:bg-gray-900">
+    <div className="flex h-screen bg-background">
       {/* Desktop Sidebar */}
-      <div className="hidden w-64 flex-col border-r bg-card dark:bg-gray-800 lg:flex">
+      <div className="hidden w-64 flex-col border-r bg-sidebar lg:flex">
         <SidebarContent />
       </div>
 
@@ -182,10 +183,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="border-b bg-card dark:bg-gray-800 px-6 py-4 lg:px-6 pl-16 lg:pl-6">
+        <header className="border-b bg-card px-6 py-4 lg:px-6 pl-16 lg:pl-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <h2 className="text-2xl font-bold tracking-tight text-foreground dark:text-white">Business Management</h2>
+              <h2 className="text-2xl font-bold tracking-tight text-foreground">Business Management</h2>
               <Badge variant="secondary" className="text-xs">
                 Admin Panel
               </Badge>
@@ -201,6 +202,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   Add Product
                 </a>
               </Button>
+              <ThemeToggle />
               <UserButton />
             </div>
           </div>
