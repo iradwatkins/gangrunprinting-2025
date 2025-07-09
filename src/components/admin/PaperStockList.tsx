@@ -195,38 +195,41 @@ export function PaperStockList() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Search and Filters */}
-          <div className="flex items-center gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Search paper stocks..."
-                className="pl-10"
-                onChange={(e) => handleSearch(e.target.value)}
-              />
+          {/* Header Actions */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4 flex-1">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search paper stocks..."
+                  className="pl-10"
+                  onChange={(e) => handleSearch(e.target.value)}
+                />
+              </div>
+              
+              <Select onValueChange={(value) => handleFilterChange('is_active', value === 'true' ? true : value === 'false' ? false : value === 'all' ? undefined : undefined)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="true">Active</SelectItem>
+                  <SelectItem value="false">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            
-            <Select onValueChange={(value) => handleFilterChange('is_active', value === 'true' ? true : value === 'false' ? false : undefined)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="true">Active</SelectItem>
-                <SelectItem value="false">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
 
-            <Button onClick={() => setShowForm(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Paper Stock
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button onClick={() => setShowForm(true)} className="bg-primary hover:bg-primary/90">
+                <Plus className="h-4 w-4 mr-2" />
+                Create Paper Stock
+              </Button>
 
-            <Button variant="outline" onClick={() => setShowBulkImport(true)}>
-              <Upload className="h-4 w-4 mr-2" />
-              Bulk Import
-            </Button>
-
+              <Button variant="outline" onClick={() => setShowBulkImport(true)}>
+                <Upload className="h-4 w-4 mr-2" />
+                Bulk Import
+              </Button>
+            </div>
           </div>
 
           {/* Paper Stocks Table */}
@@ -246,8 +249,18 @@ export function PaperStockList() {
               <TableBody>
                 {paperStocks.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      No paper stocks found. Add your first paper stock to get started.
+                    <TableCell colSpan={7} className="text-center py-12">
+                      <div className="flex flex-col items-center gap-4">
+                        <Palette className="h-12 w-12 text-muted-foreground" />
+                        <div>
+                          <h3 className="text-lg font-semibold text-foreground">No paper stocks yet</h3>
+                          <p className="text-muted-foreground">Create your first paper stock to get started with product configuration.</p>
+                        </div>
+                        <Button onClick={() => setShowForm(true)} className="bg-primary hover:bg-primary/90">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create Paper Stock
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : (
