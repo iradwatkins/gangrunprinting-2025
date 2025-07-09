@@ -117,6 +117,7 @@ function StarRating({ rating, readonly = true, onRatingChange }: StarRatingProps
 export function VendorList() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<VendorFilters>({
     page: 1,
     limit: 20
@@ -131,28 +132,41 @@ export function VendorList() {
   const [emailVendor, setEmailVendor] = useState<Vendor | null>(null);
   const { toast } = useToast();
 
+  // Debug logging
+  console.log('VendorList component mounted');
+
   useEffect(() => {
     loadData();
   }, [filters]);
 
   const loadData = async () => {
+    console.log('Loading vendors with filters:', filters);
     setLoading(true);
+    setError(null);
     try {
       const response = await vendorsApi.getVendors(filters);
+      console.log('Vendors API response:', response);
       
       if (response.error) {
+        const errorMsg = response.error;
+        console.error('Vendors API error:', errorMsg);
+        setError(errorMsg);
         toast({
-          title: "Error",
-          description: response.error,
+          title: "Error Loading Vendors",
+          description: errorMsg,
           variant: "destructive",
         });
       } else {
+        console.log('Vendors loaded successfully:', response.data?.length || 0, 'items');
         setVendors(response.data || []);
       }
     } catch (error) {
+      console.error('Vendors load error (catch block):', error);
+      const errorMsg = error instanceof Error ? error.message : 'Failed to load vendors';
+      setError(errorMsg);
       toast({
-        title: "Error",
-        description: "Failed to load vendors",
+        title: "Error Loading Vendors",
+        description: errorMsg,
         variant: "destructive",
       });
     }
@@ -278,6 +292,38 @@ export function VendorList() {
     const specialties = capabilities.specialties || [];
     return [...methods, ...specialties].slice(0, 3); // Show first 3
   };
+
+  // Show error state
+  if (error && !loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Truck className="h-5 w-5" />
+            Vendor Management
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <Truck className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Failed to Load Vendors</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <div className="space-x-2">
+              <Button onClick={loadData} variant="outline">
+                Retry
+              </Button>
+              <Button onClick={() => window.location.reload()}>
+                Refresh Page
+              </Button>
+            </div>
+            <div className="mt-4 text-sm text-muted-foreground">
+              <p>Check the browser console for more details.</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (loading) {
     return (

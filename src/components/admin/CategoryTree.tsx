@@ -197,6 +197,7 @@ function CategoryTreeNode({
 export function CategoryTree() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<CategoryFilters>({
     page: 1,
     limit: 100
@@ -205,6 +206,9 @@ export function CategoryTree() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [parentCategory, setParentCategory] = useState<Category | null>(null);
   const { toast } = useToast();
+
+  // Debug logging
+  console.log('CategoryTree component mounted');
 
   useEffect(() => {
     loadData();
@@ -251,25 +255,35 @@ export function CategoryTree() {
   };
 
   const loadData = async () => {
+    console.log('Loading categories...');
     setLoading(true);
+    setError(null);
     try {
       const response = await categoriesApi.getCategories({});
+      console.log('Categories API response:', response);
       
       if (response.error) {
+        const errorMsg = response.error;
+        console.error('Categories API error:', errorMsg);
+        setError(errorMsg);
         toast({
-          title: "Error",
-          description: response.error,
+          title: "Error Loading Categories",
+          description: errorMsg,
           variant: "destructive",
         });
       } else {
         const categories = response.data || [];
+        console.log('Categories loaded successfully:', categories.length, 'items');
         const treeData = buildCategoryTree(categories);
         setCategories(treeData);
       }
     } catch (error) {
+      console.error('Categories load error (catch block):', error);
+      const errorMsg = error instanceof Error ? error.message : 'Failed to load categories';
+      setError(errorMsg);
       toast({
-        title: "Error",
-        description: "Failed to load categories",
+        title: "Error Loading Categories",
+        description: errorMsg,
         variant: "destructive",
       });
     }
@@ -376,6 +390,38 @@ export function CategoryTree() {
   };
 
   const totalCategories = flattenCategories(categories).length;
+
+  // Show error state
+  if (error && !loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Tags className="h-5 w-5" />
+            Category Management
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <Tags className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Failed to Load Categories</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <div className="space-x-2">
+              <Button onClick={loadData} variant="outline">
+                Retry
+              </Button>
+              <Button onClick={() => window.location.reload()}>
+                Refresh Page
+              </Button>
+            </div>
+            <div className="mt-4 text-sm text-muted-foreground">
+              <p>Check the browser console for more details.</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (loading) {
     return (

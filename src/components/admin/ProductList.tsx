@@ -57,11 +57,15 @@ export function ProductList() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<ProductFilters>({
     page: 1,
     limit: 20
   });
   const { toast } = useToast();
+
+  // Debug logging
+  console.log('ProductList component mounted');
 
   useEffect(() => {
     loadData();
@@ -89,24 +93,34 @@ export function ProductList() {
   }, [loading, toast]);
 
   const loadData = async () => {
+    console.log('Loading products with filters:', filters);
     setLoading(true);
+    setError(null);
     try {
       const response = await productsApi.getProducts(filters);
+      console.log('Products API response:', response);
       
       if (response.error) {
+        const errorMsg = response.error;
+        console.error('Products API error:', errorMsg);
+        setError(errorMsg);
         toast({
-          title: 'Error',
-          description: response.error,
+          title: 'Error Loading Products',
+          description: errorMsg,
           variant: 'destructive'
         });
         setProducts([]);
       } else {
+        console.log('Products loaded successfully:', response.data?.length || 0, 'items');
         setProducts(response.data || []);
       }
     } catch (error) {
+      console.error('Products load error (catch block):', error);
+      const errorMsg = error instanceof Error ? error.message : 'Failed to load products. Please try again.';
+      setError(errorMsg);
       toast({
-        title: 'Error',
-        description: 'Failed to load products. Please try again.',
+        title: 'Error Loading Products',
+        description: errorMsg,
         variant: 'destructive'
       });
       setProducts([]);
@@ -116,23 +130,31 @@ export function ProductList() {
   };
 
   const loadCategories = async () => {
+    console.log('Loading categories...');
     try {
       const response = await categoriesApi.getCategories({ is_active: true });
+      console.log('Categories API response:', response);
       if (response.data) {
         setCategories(response.data);
+        console.log('Categories loaded successfully:', response.data.length, 'items');
       }
     } catch (error) {
+      console.error('Categories load error:', error);
       // Silently fail - categories are optional
     }
   };
 
   const loadVendors = async () => {
+    console.log('Loading vendors...');
     try {
       const response = await vendorsApi.getVendors({ is_active: true });
+      console.log('Vendors API response:', response);
       if (response.data) {
         setVendors(response.data);
+        console.log('Vendors loaded successfully:', response.data.length, 'items');
       }
     } catch (error) {
+      console.error('Vendors load error:', error);
       // Silently fail - vendors are optional
     }
   };
@@ -186,6 +208,40 @@ export function ProductList() {
       page: 1 
     }));
   };
+
+  // Show error state
+  if (error && !loading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Products</h1>
+            <p className="text-muted-foreground">Manage your product catalog</p>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center py-8">
+              <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Failed to Load Products</h3>
+              <p className="text-muted-foreground mb-4">{error}</p>
+              <div className="space-x-2">
+                <Button onClick={loadData} variant="outline">
+                  Retry
+                </Button>
+                <Button onClick={() => window.location.reload()}>
+                  Refresh Page
+                </Button>
+              </div>
+              <div className="mt-4 text-sm text-muted-foreground">
+                <p>Check the browser console for more details.</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (loading && products.length === 0) {
     return (
