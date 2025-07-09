@@ -260,6 +260,22 @@ export function PaperStockList() {
 
   return (
     <div className="space-y-6">
+      {/* Inline Form */}
+      {showForm && (
+        <PaperStockForm
+          paperStock={editingStock}
+          onSuccess={() => {
+            loadData();
+            setShowForm(false);
+            setEditingStock(null);
+          }}
+          onCancel={() => {
+            setShowForm(false);
+            setEditingStock(null);
+          }}
+        />
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -490,17 +506,6 @@ export function PaperStockList() {
           )}
         </CardContent>
       </Card>
-
-      {/* Paper Stock Form Dialog */}
-      <PaperStockForm
-        open={showForm}
-        onClose={() => {
-          setShowForm(false);
-          setEditingStock(null);
-        }}
-        paperStock={editingStock}
-        onSuccess={loadData}
-      />
 
       {/* Bulk Import Dialog */}
       <PaperStockBulkImport

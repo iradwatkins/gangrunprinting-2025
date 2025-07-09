@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Edit, Trash2, AlertCircle, Settings, Info } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, AlertCircle, Settings, Info, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,7 +9,6 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AdminLayout } from '@/components/admin/AdminLayout';
@@ -35,7 +34,7 @@ export function AddOnsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingAddOn, setEditingAddOn] = useState<AddOn | null>(null);
   const [activeTab, setActiveTab] = useState('basic');
   const [formData, setFormData] = useState<AddOnFormData>({
@@ -64,7 +63,7 @@ export function AddOnsPage() {
       queryClient.invalidateQueries({ queryKey: ['admin-add-ons'] });
       toast({ title: 'Success', description: 'Add-on created successfully' });
       resetForm();
-      setIsDialogOpen(false);
+      setIsFormOpen(false);
     },
     onError: (error: any) => {
       toast({ title: 'Error', description: error.message || 'Failed to create add-on', variant: 'destructive' });
@@ -77,7 +76,7 @@ export function AddOnsPage() {
       queryClient.invalidateQueries({ queryKey: ['admin-add-ons'] });
       toast({ title: 'Success', description: 'Add-on updated successfully' });
       resetForm();
-      setIsDialogOpen(false);
+      setIsFormOpen(false);
     },
     onError: (error: any) => {
       toast({ title: 'Error', description: error.message || 'Failed to update add-on', variant: 'destructive' });
@@ -133,7 +132,7 @@ export function AddOnsPage() {
       is_mandatory: addOn.is_mandatory || false,
       is_active: addOn.is_active
     });
-    setIsDialogOpen(true);
+    setIsFormOpen(true);
   };
 
   const handleDelete = (id: string) => {
@@ -303,17 +302,32 @@ export function AddOnsPage() {
             <p className="text-gray-600">Manage additional services and pricing options</p>
           </div>
           
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={resetForm}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Service
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>{editingAddOn ? 'Edit Add-on Service' : 'Add New Service'}</DialogTitle>
-              </DialogHeader>
+          <Button onClick={() => {
+            resetForm();
+            setIsFormOpen(true);
+          }}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Service
+          </Button>
+        </div>
+
+        {/* Inline Form */}
+        {isFormOpen && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                {editingAddOn ? 'Edit Add-on Service' : 'Add New Service'}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsFormOpen(false)}
+                  className="h-6 w-6 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               
               <form onSubmit={handleSubmit}>
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -433,14 +447,14 @@ export function AddOnsPage() {
                   <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
                     {editingAddOn ? 'Update' : 'Create'} Service
                   </Button>
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>
                     Cancel
                   </Button>
                 </div>
               </form>
-            </DialogContent>
-          </Dialog>
-        </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="flex items-center space-x-2">
           <Search className="h-4 w-4 text-gray-400" />

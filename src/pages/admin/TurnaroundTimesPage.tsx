@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Edit, Trash2, AlertCircle, Clock } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, AlertCircle, Clock, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +8,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
@@ -30,7 +29,7 @@ export function TurnaroundTimesPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTime, setEditingTime] = useState<TurnaroundTime | null>(null);
   const [formData, setFormData] = useState<TurnaroundTimeFormData>({
     name: '',
@@ -53,7 +52,7 @@ export function TurnaroundTimesPage() {
       queryClient.invalidateQueries({ queryKey: ['admin-turnaround-times'] });
       toast({ title: 'Success', description: 'Turnaround time created successfully' });
       resetForm();
-      setIsDialogOpen(false);
+      setIsFormOpen(false);
     },
     onError: (error: any) => {
       toast({ title: 'Error', description: error.message || 'Failed to create turnaround time', variant: 'destructive' });
@@ -66,7 +65,7 @@ export function TurnaroundTimesPage() {
       queryClient.invalidateQueries({ queryKey: ['admin-turnaround-times'] });
       toast({ title: 'Success', description: 'Turnaround time updated successfully' });
       resetForm();
-      setIsDialogOpen(false);
+      setIsFormOpen(false);
     },
     onError: (error: any) => {
       toast({ title: 'Error', description: error.message || 'Failed to update turnaround time', variant: 'destructive' });
@@ -108,7 +107,7 @@ export function TurnaroundTimesPage() {
       tooltip: time.tooltip || '',
       is_active: time.is_active
     });
-    setIsDialogOpen(true);
+    setIsFormOpen(true);
   };
 
   const handleDelete = (id: string) => {
@@ -148,17 +147,32 @@ export function TurnaroundTimesPage() {
             <p className="text-gray-600">Manage delivery speed options and pricing markups</p>
           </div>
           
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={resetForm}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Turnaround Time
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>{editingTime ? 'Edit Turnaround Time' : 'Add New Turnaround Time'}</DialogTitle>
-              </DialogHeader>
+          <Button onClick={() => {
+            resetForm();
+            setIsFormOpen(true);
+          }}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Turnaround Time
+          </Button>
+        </div>
+
+        {/* Inline Form */}
+        {isFormOpen && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                {editingTime ? 'Edit Turnaround Time' : 'Add New Turnaround Time'}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsFormOpen(false)}
+                  className="h-6 w-6 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
@@ -239,14 +253,14 @@ export function TurnaroundTimesPage() {
                   <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
                     {editingTime ? 'Update' : 'Create'}
                   </Button>
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>
                     Cancel
                   </Button>
                 </div>
               </form>
-            </DialogContent>
-          </Dialog>
-        </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="flex items-center space-x-2">
           <Search className="h-4 w-4 text-gray-400" />

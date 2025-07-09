@@ -25,12 +25,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { paperStocksApi, printSizesApi, turnaroundTimesApi, addOnsApi, coatingsApi } from '@/api/global-options';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
@@ -56,14 +56,13 @@ type PaperStockFormData = z.infer<typeof paperStockSchema>;
 type PaperStock = Tables<'paper_stocks'>;
 
 interface PaperStockFormProps {
-  open: boolean;
-  onClose: () => void;
   paperStock?: PaperStock | null;
   onSuccess: () => void;
+  onCancel: () => void;
 }
 
 
-export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperStockFormProps) {
+export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFormProps) {
   const { toast } = useToast();
   const isEditing = !!paperStock;
   
@@ -121,10 +120,8 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
   };
 
   useEffect(() => {
-    if (open) {
-      loadOptions();
-    }
-  }, [open]);
+    loadOptions();
+  }, []);
 
   useEffect(() => {
     if (paperStock) {
@@ -222,7 +219,7 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
 
       form.reset();
       onSuccess();
-      onClose();
+      onCancel();
     } catch (error) {
       toast({
         title: "Error",
@@ -232,30 +229,30 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
     }
   };
 
-  const handleClose = () => {
+  const handleCancel = () => {
     form.reset();
-    onClose();
+    onCancel();
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            {isEditing ? 'Edit Paper Stock' : 'Add Paper Stock'}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClose}
-              className="h-6 w-6 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </DialogTitle>
-          <DialogDescription>
-            {isEditing ? 'Update paper stock information and pricing' : 'Add a new paper stock for product configuration'}
-          </DialogDescription>
-        </DialogHeader>
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          {isEditing ? 'Edit Paper Stock' : 'Add New Paper Stock'}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleCancel}
+            className="h-6 w-6 p-0"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </CardTitle>
+        <CardDescription>
+          {isEditing ? 'Update paper stock information and pricing' : 'Add a new paper stock for product configuration'}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -707,7 +704,7 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
               <Button 
                 type="button" 
                 variant="outline" 
-                onClick={handleClose}
+                onClick={handleCancel}
                 disabled={form.formState.isSubmitting}
               >
                 Cancel
@@ -715,7 +712,7 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
             </div>
           </form>
         </Form>
-      </DialogContent>
-    </Dialog>
+      </CardContent>
+    </Card>
   );
 }

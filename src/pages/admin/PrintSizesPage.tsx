@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Edit, Trash2, AlertCircle, Ruler } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, AlertCircle, Ruler, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
@@ -32,7 +31,7 @@ export function PrintSizesPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingSize, setEditingSize] = useState<PrintSize | null>(null);
   const [formData, setFormData] = useState<PrintSizeFormData>({
     name: '',
@@ -56,7 +55,7 @@ export function PrintSizesPage() {
       queryClient.invalidateQueries({ queryKey: ['admin-print-sizes'] });
       toast({ title: 'Success', description: 'Print size created successfully' });
       resetForm();
-      setIsDialogOpen(false);
+      setIsFormOpen(false);
     },
     onError: (error: any) => {
       toast({ title: 'Error', description: error.message || 'Failed to create print size', variant: 'destructive' });
@@ -69,7 +68,7 @@ export function PrintSizesPage() {
       queryClient.invalidateQueries({ queryKey: ['admin-print-sizes'] });
       toast({ title: 'Success', description: 'Print size updated successfully' });
       resetForm();
-      setIsDialogOpen(false);
+      setIsFormOpen(false);
     },
     onError: (error: any) => {
       toast({ title: 'Error', description: error.message || 'Failed to update print size', variant: 'destructive' });
@@ -114,7 +113,7 @@ export function PrintSizesPage() {
       max_height: size.max_height || undefined,
       is_active: size.is_active
     });
-    setIsDialogOpen(true);
+    setIsFormOpen(true);
   };
 
   const handleDelete = (id: string) => {
@@ -151,18 +150,32 @@ export function PrintSizesPage() {
             <p className="text-gray-600">Manage standard and custom print size options</p>
           </div>
           
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={resetForm}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Print Size
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>{editingSize ? 'Edit Print Size' : 'Add New Print Size'}</DialogTitle>
-              </DialogHeader>
-              
+          <Button onClick={() => {
+            resetForm();
+            setIsFormOpen(true);
+          }}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Print Size
+          </Button>
+        </div>
+
+        {/* Inline Form */}
+        {isFormOpen && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                {editingSize ? 'Edit Print Size' : 'Add New Print Size'}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsFormOpen(false)}
+                  className="h-6 w-6 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <Label htmlFor="name">Name *</Label>
@@ -282,14 +295,14 @@ export function PrintSizesPage() {
                   <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
                     {editingSize ? 'Update' : 'Create'}
                   </Button>
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>
                     Cancel
                   </Button>
                 </div>
               </form>
-            </DialogContent>
-          </Dialog>
-        </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="flex items-center space-x-2">
           <Search className="h-4 w-4 text-gray-400" />
