@@ -38,8 +38,8 @@ import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase
 const paperStockSchema = z.object({
   name: z.string().min(1, 'Paper stock name is required'),
   description: z.string().optional(),
-  weight: z.coerce.number().min(1, 'Weight must be at least 1 GSM').max(1000, 'Weight cannot exceed 1000 GSM'),
-  price_per_sq_inch: z.coerce.number().min(0.0001, 'Price must be greater than 0').max(99.9999, 'Price too high'),
+  weight: z.coerce.number().min(0.1, 'Weight must be at least 0.1 GSI').max(100, 'Weight cannot exceed 100 GSI'),
+  price_per_sq_inch: z.coerce.number().min(0.10, 'Price must be at least $0.10').max(99.99, 'Price cannot exceed $99.99'),
   single_sided_available: z.boolean(),
   double_sided_available: z.boolean(),
   second_side_markup_percent: z.coerce.number().min(0).max(100).optional(),
@@ -79,8 +79,8 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
     defaultValues: {
       name: '',
       description: '',
-      weight: 120, // Common default weight for business cards
-      price_per_sq_inch: 0.0100, // $0.01 per square inch default
+      weight: 12.0, // Common default weight for business cards (GSI)
+      price_per_sq_inch: 0.10, // $0.10 per square inch default
       single_sided_available: true,
       double_sided_available: true,
       second_side_markup_percent: 50, // 50% markup for double-sided
@@ -141,8 +141,8 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
       form.reset({
         name: paperStock.name || '',
         description: paperStock.description || '',
-        weight: paperStock.weight || 120,
-        price_per_sq_inch: paperStock.price_per_sq_inch || 0.0100,
+        weight: paperStock.weight || 12.0,
+        price_per_sq_inch: paperStock.price_per_sq_inch || 0.10,
         single_sided_available: paperStock.single_sided_available ?? true,
         double_sided_available: paperStock.double_sided_available ?? true,
         second_side_markup_percent: paperStock.second_side_markup_percent || 50,
@@ -158,8 +158,8 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
       form.reset({
         name: '',
         description: '',
-        weight: 120,
-          price_per_sq_inch: 0.0100,
+        weight: 12.0,
+          price_per_sq_inch: 0.10,
         single_sided_available: true,
         double_sided_available: true,
         second_side_markup_percent: 50,
@@ -312,18 +312,19 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
                 name="weight"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Weight (GSM) *</FormLabel>
+                    <FormLabel>Weight (GSI) *</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
-                        min="1" 
-                        max="1000"
-                        placeholder="120"
+                        step="0.1"
+                        min="0.1" 
+                        max="100"
+                        placeholder="12.0"
                         {...field}
                       />
                     </FormControl>
                     <FormDescription>
-                      Paper weight in grams per square meter
+                      Paper weight in grams per square inch (GSI)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -346,17 +347,17 @@ export function PaperStockForm({ open, onClose, paperStock, onSuccess }: PaperSt
                         <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
                         <Input 
                           type="number" 
-                          step="0.0001"
-                          min="0.0001"
-                          max="99.9999"
-                          placeholder="0.0100"
+                          step="0.10"
+                          min="0.10"
+                          max="99.99"
+                          placeholder="0.10"
                           className="pl-8"
                           {...field}
                         />
                       </div>
                     </FormControl>
                     <FormDescription>
-                      Base pricing per square inch for calculations (e.g., $0.0100)
+                      Base pricing per square inch for calculations (e.g., $0.10)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

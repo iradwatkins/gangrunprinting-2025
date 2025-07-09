@@ -84,22 +84,42 @@ export function PaperStockList() {
   }, [loading]);
 
   const loadData = async () => {
+    console.log('🔍 Loading paper stocks...');
     setLoading(true);
+    
     try {
-      console.log('🔍 Loading paper stocks...');
+      console.log('📊 Step 1: Starting auth check...');
       
-      // Check authentication status
-      const { data: { session }, error: authError } = await supabase.auth.getSession();
-      console.log('🔐 Auth status:', session ? 'Authenticated' : 'Not authenticated');
+      // Check authentication status with timeout
+      const authPromise = supabase.auth.getSession();
+      const authResult = await Promise.race([
+        authPromise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 5000))
+      ]);
+      
+      const { data: { session }, error: authError } = authResult as any;
+      console.log('🔐 Step 2: Auth status:', session ? 'Authenticated' : 'Not authenticated');
+      
       if (authError) {
-        console.error('Auth error:', authError);
+        console.error('❌ Auth error:', authError);
       }
       
-      // Direct Supabase query as fallback
-      const { data: directData, error: directError } = await supabase
+      console.log('📊 Step 3: Starting database query...');
+      
+      // Direct Supabase query with timeout
+      const queryPromise = supabase
         .from('paper_stocks')
         .select('*')
         .order('name');
+        
+      const queryResult = await Promise.race([
+        queryPromise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Query timeout')), 5000))
+      ]);
+      
+      const { data: directData, error: directError } = queryResult as any;
+      
+      console.log('📊 Step 4: Query completed');
       
       if (directError) {
         console.error('🚫 Direct Supabase error:', directError);
@@ -112,27 +132,28 @@ export function PaperStockList() {
         throw new Error(`Database error (${directError.code}): ${directError.message}`);
       }
       
-      console.log('✅ Direct query successful, found:', directData?.length || 0, 'items');
+      console.log('✅ Step 5: Query successful, found:', directData?.length || 0, 'items');
       
       if (directData) {
         setPaperStocks(directData);
-        console.log('📋 Paper stocks loaded directly from Supabase');
+        console.log('📋 Step 6: Paper stocks set in state');
       } else {
-        console.log('⚠️ No paper stocks found');
+        console.log('⚠️ Step 6: No paper stocks found, setting empty array');
         setPaperStocks([]);
       }
       
     } catch (error) {
-      console.error('💥 Failed to load paper stocks:', error);
+      console.error('💥 Error in loadData:', error);
       toast({
-        title: "Database Error",
-        description: `Failed to load paper stocks: ${error instanceof Error ? error.message : 'Unknown error'}. Check console for details.`,
+        title: "Loading Error",
+        description: `Failed to load data: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
-      // Set empty array so loading stops
       setPaperStocks([]);
+    } finally {
+      console.log('🏁 Step 7: Setting loading to false');
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleSearch = (search: string) => {
@@ -212,9 +233,18 @@ export function PaperStockList() {
           </CardTitle>
           <CardDescription className="flex items-center gap-2">
             Please wait while we load your paper stock data
-            <Button variant="outline" size="sm" onClick={loadData} disabled={loading}>
-              Retry
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={loadData} disabled={loading}>
+                Retry
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => {
+                console.log('🔄 Manual override - stopping loading');
+                setLoading(false);
+                setPaperStocks([]);
+              }}>
+                Stop Loading
+              </Button>
+            </div>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -353,10 +383,10 @@ export function PaperStockList() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{stock.weight} GSM</TableCell>
+                      <TableCell>{stock.weight} GSI</TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          <div>${stock.price_per_sq_inch?.toFixed(4) || '0.0000'}/sq in</div>
+                          <div>${stock.price_per_sq_inch?.toFixed(2) || '0.00'}/sq in</div>
                           {stock.second_side_markup_percent && stock.second_side_markup_percent > 0 && (
                             <div className="text-xs text-muted-foreground">
                               Double: +{stock.second_side_markup_percent}%
