@@ -45,57 +45,19 @@ const EmailTemplateList: React.FC<EmailTemplateListProps> = ({ onEdit, onCreateN
     try {
       setLoading(true);
       
-      // Mock data for demonstration - replace with actual API call when backend is ready
-      const mockTemplates: EmailTemplate[] = [
-        {
-          id: '1',
-          name: 'Welcome Email',
-          description: 'Welcome new customers to your printing service',
-          category: 'onboarding',
-          subject: 'Welcome to GangRun Printing!',
-          html_content: '<h1>Welcome!</h1><p>Thank you for choosing our printing services.</p>',
-          text_content: 'Welcome! Thank you for choosing our printing services.',
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          id: '2',
-          name: 'Order Confirmation',
-          description: 'Confirm customer orders',
-          category: 'transactional',
-          subject: 'Your Order Confirmation #{{order_number}}',
-          html_content: '<h1>Order Confirmed</h1><p>Your order #{{order_number}} has been confirmed.</p>',
-          text_content: 'Order Confirmed: Your order #{{order_number}} has been confirmed.',
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          id: '3',
-          name: 'Promotional Offer',
-          description: 'Special offers and discounts',
-          category: 'marketing',
-          subject: 'Special Offer: 20% Off Your Next Order',
-          html_content: '<h1>Special Offer</h1><p>Get 20% off your next printing order!</p>',
-          text_content: 'Special Offer: Get 20% off your next printing order!',
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }
-      ];
-
-      // Apply filters
-      let filteredTemplates = mockTemplates;
-      if (categoryFilter) {
-        filteredTemplates = filteredTemplates.filter(t => t.category === categoryFilter);
-      }
-      if (activeFilter) {
-        const isActive = activeFilter === 'active';
-        filteredTemplates = filteredTemplates.filter(t => t.is_active === isActive);
+      // Get templates from API
+      const response = await emailTemplateApi.getTemplates({ 
+        category: categoryFilter || undefined,
+        is_active: activeFilter ? activeFilter === 'active' : undefined
+      });
+      
+      if (response.error) {
+        console.error('Failed to fetch templates:', response.error);
+        setTemplates([]);
+        return;
       }
       
-      setTemplates(filteredTemplates);
+      setTemplates(response.data || []);
     } catch (error) {
       console.error('Failed to fetch templates:', error);
     } finally {
@@ -282,12 +244,12 @@ const EmailTemplateList: React.FC<EmailTemplateListProps> = ({ onEdit, onCreateN
             <CardContent>
               <div className="space-y-3">
                 <div className="text-sm text-gray-600">
-                  <strong>Subject:</strong> {template.subject_line}
+                  <strong>Subject:</strong> {template.subject}
                 </div>
                 <div className="flex items-center justify-between text-sm text-gray-500">
                   <div className="flex items-center gap-1">
                     <User size={14} />
-                    {template.created_by}
+                    Admin
                   </div>
                   <div className="flex items-center gap-1">
                     <Calendar size={14} />
@@ -328,11 +290,11 @@ const EmailTemplateList: React.FC<EmailTemplateListProps> = ({ onEdit, onCreateN
               <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
                 <div>
                   <Label className="text-sm font-medium text-gray-700">Subject Line</Label>
-                  <p className="text-sm">{selectedTemplate.subject_line}</p>
+                  <p className="text-sm">{selectedTemplate.subject}</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-700">Preview Text</Label>
-                  <p className="text-sm">{selectedTemplate.preview_text || 'None'}</p>
+                  <p className="text-sm">{selectedTemplate.subject || 'None'}</p>
                 </div>
               </div>
               <div className="border rounded-lg p-4">
