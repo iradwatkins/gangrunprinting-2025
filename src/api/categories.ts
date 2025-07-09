@@ -23,22 +23,41 @@ export interface CategoryFilters {
 export const categoriesApi = {
   // Get all categories with hierarchical structure
   async getCategories(filters: CategoryFilters = {}): Promise<ApiResponse<Tables<'product_categories'>[]>> {
+    console.log('Categories API: Starting request with filters:', filters);
+    
     try {
+      // Check authentication first
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      console.log('Categories API: Auth check - User:', user?.id, 'Error:', authError);
+      
+      if (authError) {
+        console.error('Categories API: Authentication error:', authError);
+        return { error: `Authentication error: ${authError.message}` };
+      }
+
+      if (!user) {
+        console.error('Categories API: No authenticated user');
+        return { error: 'Authentication required' };
+      }
+
+      // Start with simplest possible query
+      console.log('Categories API: Building query...');
       let query = supabase
         .from('product_categories')
-        .select(`
-          *,
-          parent_category:parent_category_id(id, name, slug)
-        `);
+        .select('*'); // Simplified - no joins initially
 
+      console.log('Categories API: Applying filters...');
       // Apply filters
       if (filters.parent_category_id) {
+        console.log('Categories API: Adding parent_category_id filter:', filters.parent_category_id);
         query = query.eq('parent_category_id', filters.parent_category_id);
       }
       if (filters.is_active !== undefined) {
+        console.log('Categories API: Adding is_active filter:', filters.is_active);
         query = query.eq('is_active', filters.is_active);
       }
       if (filters.search) {
+        console.log('Categories API: Adding search filter:', filters.search);
         query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
       }
 
@@ -48,14 +67,27 @@ export const categoriesApi = {
       const from = (page - 1) * limit;
       const to = from + limit - 1;
 
+      console.log('Categories API: Adding pagination:', { page, limit, from, to });
       query = query.range(from, to).order('sort_order', { ascending: true });
 
-      const { data, error, count } = await query;
+      console.log('Categories API: Executing query...');
+      
+      // Add timeout protection
+      const queryPromise = query;
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Query timeout after 10 seconds')), 10000);
+      });
+      
+      const { data, error, count } = await Promise.race([queryPromise, timeoutPromise]) as any;
+
+      console.log('Categories API: Query completed. Data:', data?.length, 'Error:', error, 'Count:', count);
 
       if (error) {
-        return { error: error.message };
+        console.error('Categories API: Supabase error:', error);
+        return { error: `Database error: ${error.message}` };
       }
 
+      console.log('Categories API: Success! Returning', data?.length || 0, 'categories');
       return {
         data: data || [],
         meta: {
@@ -65,7 +97,9 @@ export const categoriesApi = {
         }
       };
     } catch (error) {
-      return { error: 'Failed to fetch categories' };
+      console.error('Categories API: Unexpected error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch categories';
+      return { error: `Unexpected error: ${errorMessage}` };
     }
   },
 
