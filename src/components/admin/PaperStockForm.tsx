@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Save, Loader2, X } from 'lucide-react';
+import { Save, Loader2, X, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -32,10 +32,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { paperStocksApi, printSizesApi, turnaroundTimesApi, addOnsApi, coatingsApi } from '@/api/global-options';
+import { paperStocksApi } from '@/api/global-options';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
-import { ensureSidesColumns } from '@/utils/apply-migration';
-import { seedCoatingOptions, getCoatingsDirectly } from '@/utils/seed-coatings';
 
 const paperStockSchema = z.object({
   name: z.string().min(1, 'Paper stock name is required'),
@@ -52,11 +50,27 @@ const paperStockSchema = z.object({
   your_design_front_our_back_available: z.boolean(),
   your_design_front_our_back_markup: z.coerce.number().min(0).max(100).optional(),
   sides_tooltip_text: z.string().optional(),
-  available_coatings: z.array(z.string()).optional(),
+  // Enhanced coating options with individual markups
+  high_gloss_uv_available: z.boolean(),
+  high_gloss_uv_markup: z.coerce.number().min(0).max(100).optional(),
+  high_gloss_uv_one_side_available: z.boolean(),
+  high_gloss_uv_one_side_markup: z.coerce.number().min(0).max(100).optional(),
+  gloss_aqueous_available: z.boolean(),
+  gloss_aqueous_markup: z.coerce.number().min(0).max(100).optional(),
+  matte_aqueous_available: z.boolean(),
+  matte_aqueous_markup: z.coerce.number().min(0).max(100).optional(),
   coatings_tooltip_text: z.string().optional(),
-  available_print_sizes: z.array(z.string()).optional(),
-  available_turnaround_times: z.array(z.string()).optional(),
-  available_add_ons: z.array(z.string()).optional(),
+  // Custom options
+  custom_sides_options: z.array(z.object({
+    name: z.string(),
+    available: z.boolean(),
+    markup: z.number().min(0).max(100)
+  })).optional(),
+  custom_coating_options: z.array(z.object({
+    name: z.string(),
+    available: z.boolean(),
+    markup: z.number().min(0).max(100)
+  })).optional(),
   is_active: z.boolean()
 });
 
@@ -74,12 +88,9 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
   const { toast } = useToast();
   const isEditing = !!paperStock;
   
-  // State for loaded options
-  const [printSizes, setPrintSizes] = useState<Tables<'print_sizes'>[]>([]);
-  const [turnaroundTimes, setTurnaroundTimes] = useState<Tables<'turnaround_times'>[]>([]);
-  const [addOns, setAddOns] = useState<Tables<'add_ons'>[]>([]);
-  const [coatings, setCoatings] = useState<Tables<'coatings'>[]>([]);
-  const [loadingOptions, setLoadingOptions] = useState(false);
+  // State for custom options
+  const [customSidesOptions, setCustomSidesOptions] = useState<Array<{name: string, available: boolean, markup: number}>>([]);
+  const [customCoatingOptions, setCustomCoatingOptions] = useState<Array<{name: string, available: boolean, markup: number}>>([]);
 
   const form = useForm<PaperStockFormData>({
     resolver: zodResolver(paperStockSchema),
@@ -98,11 +109,19 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
       your_design_front_our_back_available: true,
       your_design_front_our_back_markup: 1,
       sides_tooltip_text: '',
-      available_coatings: [],
+      // Enhanced coating options with 1% default markup
+      high_gloss_uv_available: true,
+      high_gloss_uv_markup: 1,
+      high_gloss_uv_one_side_available: true,
+      high_gloss_uv_one_side_markup: 1,
+      gloss_aqueous_available: true,
+      gloss_aqueous_markup: 1,
+      matte_aqueous_available: true,
+      matte_aqueous_markup: 1,
       coatings_tooltip_text: '',
-      available_print_sizes: [],
-      available_turnaround_times: [],
-      available_add_ons: [],
+      // Custom options
+      custom_sides_options: [],
+      custom_coating_options: [],
       is_active: true
     }
   });
@@ -125,15 +144,6 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
       console.log('📥 Loading add-ons...');
       const addOnsResult = await addOnsApi.getAll({ is_active: true });
       console.log('Add-ons result:', addOnsResult);
-      
-      console.log('📥 Loading coatings...');
-      // Try direct fetch first, then fallback to API
-      let coatingsResult = await getCoatingsDirectly();
-      if (!coatingsResult.success) {
-        console.log('🔄 Direct fetch failed, trying API...');
-        coatingsResult = await coatingsApi.getAll({ is_active: true });
-      }
-      console.log('Coatings result:', coatingsResult);
 
       // Check for errors in any of the results
       if (printSizesResult.error) {
@@ -145,20 +155,16 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
       if (addOnsResult.error) {
         console.error('❌ Add-ons Error:', addOnsResult.error);
       }
-      if (coatingsResult.error) {
-        console.error('❌ Coatings Error:', coatingsResult.error);
-      }
 
       setPrintSizes(printSizesResult.data || []);
       setTurnaroundTimes(turnaroundTimesResult.data || []);
       setAddOns(addOnsResult.data || []);
-      setCoatings(coatingsResult.success ? coatingsResult.data || [] : []);
+      // Note: Coatings are now handled directly in the form, not via API loading
       
       console.log('✅ Options loaded successfully:', {
         printSizes: printSizesResult.data?.length || 0,
         turnaroundTimes: turnaroundTimesResult.data?.length || 0,
-        addOns: addOnsResult.data?.length || 0,
-        coatings: coatingsResult.data?.length || 0
+        addOns: addOnsResult.data?.length || 0
       });
     } catch (error) {
       console.error('💥 Load options error:', error);
@@ -237,7 +243,15 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
         your_design_front_our_back_available: paperStock.your_design_front_our_back_available ?? true,
         your_design_front_our_back_markup: paperStock.your_design_front_our_back_markup ?? 1,
         sides_tooltip_text: paperStock.sides_tooltip_text || '',
-        available_coatings: additionalData.available_coatings || [],
+        // Enhanced coating options - fallback to defaults if not set
+        high_gloss_uv_available: paperStock.high_gloss_uv_available ?? true,
+        high_gloss_uv_markup: paperStock.high_gloss_uv_markup ?? 1,
+        high_gloss_uv_one_side_available: paperStock.high_gloss_uv_one_side_available ?? true,
+        high_gloss_uv_one_side_markup: paperStock.high_gloss_uv_one_side_markup ?? 1,
+        gloss_aqueous_available: paperStock.gloss_aqueous_available ?? true,
+        gloss_aqueous_markup: paperStock.gloss_aqueous_markup ?? 1,
+        matte_aqueous_available: paperStock.matte_aqueous_available ?? true,
+        matte_aqueous_markup: paperStock.matte_aqueous_markup ?? 1,
         coatings_tooltip_text: paperStock.coatings_tooltip_text || '',
         available_print_sizes: additionalData.available_print_sizes || [],
         available_turnaround_times: additionalData.available_turnaround_times || [],
@@ -260,7 +274,15 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
         your_design_front_our_back_available: true,
         your_design_front_our_back_markup: 1,
         sides_tooltip_text: '',
-        available_coatings: [],
+        // Enhanced coating options with 1% default markup
+        high_gloss_uv_available: true,
+        high_gloss_uv_markup: 1,
+        high_gloss_uv_one_side_available: true,
+        high_gloss_uv_one_side_markup: 1,
+        gloss_aqueous_available: true,
+        gloss_aqueous_markup: 1,
+        matte_aqueous_available: true,
+        matte_aqueous_markup: 1,
         coatings_tooltip_text: '',
           available_print_sizes: [],
         available_turnaround_times: [],
@@ -297,6 +319,15 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
         your_design_front_our_back_available: data.your_design_front_our_back_available,
         your_design_front_our_back_markup: data.your_design_front_our_back_markup,
         sides_tooltip_text: data.sides_tooltip_text,
+        // Enhanced coating options
+        high_gloss_uv_available: data.high_gloss_uv_available,
+        high_gloss_uv_markup: data.high_gloss_uv_markup,
+        high_gloss_uv_one_side_available: data.high_gloss_uv_one_side_available,
+        high_gloss_uv_one_side_markup: data.high_gloss_uv_one_side_markup,
+        gloss_aqueous_available: data.gloss_aqueous_available,
+        gloss_aqueous_markup: data.gloss_aqueous_markup,
+        matte_aqueous_available: data.matte_aqueous_available,
+        matte_aqueous_markup: data.matte_aqueous_markup,
         coatings_tooltip_text: data.coatings_tooltip_text,
         tooltip_text: JSON.stringify(additionalData),
         is_active: data.is_active
@@ -361,36 +392,10 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
         <div className="text-xs text-gray-400 mt-2 flex items-center gap-2">
           <span>
             Loading: {loadingOptions ? 'Yes' : 'No'} | 
-            Coatings: {coatings.length} | 
             Print Sizes: {printSizes.length} | 
             Turnaround Times: {turnaroundTimes.length} | 
             Add-ons: {addOns.length}
           </span>
-          {coatings.length === 0 && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-xs h-6"
-              onClick={async () => {
-                const result = await seedCoatingOptions();
-                if (result.success) {
-                  toast({
-                    title: "Success",
-                    description: result.message || "Coating options created successfully",
-                  });
-                  loadOptions();
-                } else {
-                  toast({
-                    title: "Error",
-                    description: result.error || "Failed to create coating options",
-                    variant: "destructive",
-                  });
-                }
-              }}
-            >
-              Quick Fix Coatings
-            </Button>
-          )}
         </div>
       </CardHeader>
       <CardContent>
@@ -724,144 +729,225 @@ export function PaperStockForm({ paperStock, onSuccess, onCancel }: PaperStockFo
               />
             </div>
 
-            {/* Step 3: Coating Options */}
+            {/* Step 3: Enhanced Coating Configuration */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Step 3: Coating Options</h3>
-              <p className="text-sm text-muted-foreground">Configure the coating options that customers will see as their third choice.</p>
+              <p className="text-sm text-muted-foreground">Configure the specific coating options that customers will see as their third choice. Each option can have its own markup percentage.</p>
               
-              {loadingOptions ? (
-                <div className="text-center py-4">
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
-                    Loading coating options...
+              <div className="grid grid-cols-1 gap-4">
+                {/* High Gloss UV */}
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="flex items-center space-x-4 flex-1">
+                    <FormField
+                      control={form.control}
+                      name="high_gloss_uv_available"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormLabel className="text-base font-medium">
+                            High Gloss UV
+                          </FormLabel>
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={loadOptions} 
-                    className="mt-2"
-                  >
-                    Retry Loading
-                  </Button>
-                </div>
-              ) : coatings.length === 0 ? (
-                <div className="space-y-4">
-                  <div className="text-center py-4">
-                    <p className="text-gray-500 mb-2">No coating options loaded from database</p>
-                    <div className="flex gap-2 justify-center">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={loadOptions}
-                      >
-                        Retry Loading
-                      </Button>
-                      <Button 
-                        variant="default" 
-                        size="sm" 
-                        onClick={async () => {
-                          const result = await seedCoatingOptions();
-                          if (result.success) {
-                            toast({
-                              title: "Success",
-                              description: result.message || "Coating options created successfully",
-                            });
-                            loadOptions(); // Reload after seeding
-                          } else {
-                            toast({
-                              title: "Error",
-                              description: result.error || "Failed to create coating options",
-                              variant: "destructive",
-                            });
-                          }
-                        }}
-                      >
-                        Create Coating Options
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  {/* Fallback: Show expected coating options */}
-                  <div className="border rounded-lg p-4 bg-gray-50">
-                    <FormLabel className="text-base font-medium">Expected Coating Options</FormLabel>
-                    <FormDescription className="mb-3">
-                      These are the coating options that should be available (requires database setup)
-                    </FormDescription>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        'High Gloss UV',
-                        'High Gloss UV on ONE SIDE', 
-                        'Gloss Aqueous',
-                        'Matte Aqueous'
-                      ].map((coating) => (
-                        <div key={coating} className="flex items-center space-x-2 text-sm text-gray-600">
-                          <div className="w-4 h-4 border rounded bg-white"></div>
-                          <span>{coating}</span>
-                        </div>
-                      ))}
-                    </div>
+                  <div className="flex items-center space-x-2 min-w-[120px]">
+                    <FormField
+                      control={form.control}
+                      name="high_gloss_uv_markup"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <div className="relative">
+                              <Input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                max="100"
+                                placeholder="1"
+                                className="pr-8 w-20"
+                                {...field}
+                              />
+                              <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">%</span>
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <span className="text-sm text-muted-foreground">markup</span>
                   </div>
                 </div>
-              ) : (
-                <div className="space-y-6">
-                  <div>
-                    <FormLabel className="text-base font-medium">Available Coatings</FormLabel>
-                    <FormDescription className="mb-3">
-                      Select which coatings are available for this paper stock
-                    </FormDescription>
-                    <div className="grid grid-cols-2 gap-2">
-                      {coatings.map((coating) => (
-                        <FormField
-                          key={coating.id}
-                          control={form.control}
-                          name="available_coatings"
-                          render={({ field }) => {
-                            return (
-                              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(coating.id)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...field.value, coating.id])
-                                        : field.onChange(field.value?.filter((value) => value !== coating.id))
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                  {coating.name} {coating.price_modifier !== 0 && `(${coating.price_modifier > 0 ? '+' : ''}$${coating.price_modifier})`}
-                                </FormLabel>
-                              </FormItem>
-                            )
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
 
-                  <FormField
-                    control={form.control}
-                    name="coatings_tooltip_text"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Coatings Tooltip Text</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Helpful text to explain coating options to customers..."
-                            className="min-h-[60px]"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Optional tooltip text to help customers understand coating options
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
+                {/* High Gloss UV on ONE SIDE */}
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="flex items-center space-x-4 flex-1">
+                    <FormField
+                      control={form.control}
+                      name="high_gloss_uv_one_side_available"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormLabel className="text-base font-medium">
+                            High Gloss UV on ONE SIDE
+                          </FormLabel>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2 min-w-[120px]">
+                    <FormField
+                      control={form.control}
+                      name="high_gloss_uv_one_side_markup"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <div className="relative">
+                              <Input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                max="100"
+                                placeholder="1"
+                                className="pr-8 w-20"
+                                {...field}
+                              />
+                              <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">%</span>
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <span className="text-sm text-muted-foreground">markup</span>
+                  </div>
                 </div>
-              )}
+
+                {/* Gloss Aqueous */}
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="flex items-center space-x-4 flex-1">
+                    <FormField
+                      control={form.control}
+                      name="gloss_aqueous_available"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormLabel className="text-base font-medium">
+                            Gloss Aqueous
+                          </FormLabel>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2 min-w-[120px]">
+                    <FormField
+                      control={form.control}
+                      name="gloss_aqueous_markup"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <div className="relative">
+                              <Input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                max="100"
+                                placeholder="1"
+                                className="pr-8 w-20"
+                                {...field}
+                              />
+                              <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">%</span>
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <span className="text-sm text-muted-foreground">markup</span>
+                  </div>
+                </div>
+
+                {/* Matte Aqueous */}
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="flex items-center space-x-4 flex-1">
+                    <FormField
+                      control={form.control}
+                      name="matte_aqueous_available"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormLabel className="text-base font-medium">
+                            Matte Aqueous
+                          </FormLabel>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2 min-w-[120px]">
+                    <FormField
+                      control={form.control}
+                      name="matte_aqueous_markup"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <div className="relative">
+                              <Input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                max="100"
+                                placeholder="1"
+                                className="pr-8 w-20"
+                                {...field}
+                              />
+                              <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">%</span>
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <span className="text-sm text-muted-foreground">markup</span>
+                  </div>
+                </div>
+              </div>
+
+              <FormField
+                control={form.control}
+                name="coatings_tooltip_text"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Coatings Tooltip Text</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Helpful text to explain coating options to customers..."
+                        className="min-h-[60px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Optional tooltip text to help customers understand coating options
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             {/* Additional Options */}

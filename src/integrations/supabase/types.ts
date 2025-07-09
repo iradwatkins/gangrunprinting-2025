@@ -759,6 +759,15 @@ export type Database = {
           your_design_front_our_back_available: boolean | null
           your_design_front_our_back_markup: number | null
           sides_tooltip_text: string | null
+          // Enhanced coating options
+          high_gloss_uv_available: boolean | null
+          high_gloss_uv_markup: number | null
+          high_gloss_uv_one_side_available: boolean | null
+          high_gloss_uv_one_side_markup: number | null
+          gloss_aqueous_available: boolean | null
+          gloss_aqueous_markup: number | null
+          matte_aqueous_available: boolean | null
+          matte_aqueous_markup: number | null
           coatings_tooltip_text: string | null
           sort_order: number | null
           tooltip_text: string | null
@@ -785,6 +794,15 @@ export type Database = {
           your_design_front_our_back_available?: boolean | null
           your_design_front_our_back_markup?: number | null
           sides_tooltip_text?: string | null
+          // Enhanced coating options
+          high_gloss_uv_available?: boolean | null
+          high_gloss_uv_markup?: number | null
+          high_gloss_uv_one_side_available?: boolean | null
+          high_gloss_uv_one_side_markup?: number | null
+          gloss_aqueous_available?: boolean | null
+          gloss_aqueous_markup?: number | null
+          matte_aqueous_available?: boolean | null
+          matte_aqueous_markup?: number | null
           coatings_tooltip_text?: string | null
           sort_order?: number | null
           tooltip_text?: string | null
@@ -811,6 +829,15 @@ export type Database = {
           your_design_front_our_back_available?: boolean | null
           your_design_front_our_back_markup?: number | null
           sides_tooltip_text?: string | null
+          // Enhanced coating options
+          high_gloss_uv_available?: boolean | null
+          high_gloss_uv_markup?: number | null
+          high_gloss_uv_one_side_available?: boolean | null
+          high_gloss_uv_one_side_markup?: number | null
+          gloss_aqueous_available?: boolean | null
+          gloss_aqueous_markup?: number | null
+          matte_aqueous_available?: boolean | null
+          matte_aqueous_markup?: number | null
           coatings_tooltip_text?: string | null
           sort_order?: number | null
           tooltip_text?: string | null
