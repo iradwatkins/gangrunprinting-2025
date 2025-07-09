@@ -42,6 +42,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { paperStocksApi, type GlobalOptionsFilters } from '@/api/global-options';
+import { supabase } from '@/integrations/supabase/client';
 import { PaperStockForm } from '@/components/admin/PaperStockForm';
 import { PaperStockBulkImport } from '@/components/admin/PaperStockBulkImport';
 import type { Tables } from '@/integrations/supabase/types';
@@ -68,6 +69,15 @@ export function PaperStockList() {
     setLoading(true);
     try {
       console.log('🔍 Loading paper stocks...');
+      
+      // Test Supabase connection first
+      const { data: testData, error: testError } = await supabase.from('paper_stocks').select('count').limit(1);
+      if (testError) {
+        console.error('🚫 Supabase connection error:', testError);
+        throw new Error(`Database connection failed: ${testError.message}`);
+      }
+      console.log('✅ Supabase connection successful');
+      
       const response = await paperStocksApi.getPaperStocks(filters);
       
       console.log('📋 Paper stocks API response:', response);
@@ -75,7 +85,7 @@ export function PaperStockList() {
       if (response.error) {
         console.error('❌ Paper stocks API error:', response.error);
         toast({
-          title: "Error",
+          title: "API Error",
           description: response.error,
           variant: "destructive",
         });
@@ -87,8 +97,8 @@ export function PaperStockList() {
     } catch (error) {
       console.error('💥 Failed to load paper stocks:', error);
       toast({
-        title: "Error",
-        description: "Failed to load paper stocks. Check console for details.",
+        title: "Connection Error",
+        description: `Failed to load paper stocks: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
     }
