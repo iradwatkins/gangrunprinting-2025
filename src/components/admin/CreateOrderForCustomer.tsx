@@ -124,7 +124,6 @@ export function CreateOrderForCustomer() {
         throw new Error(response.error);
       }
     } catch (error) {
-      console.error('Error creating invoice:', error);
       toast.error('Failed to create invoice. Please try again.');
     } finally {
       setIsSubmitting(false);

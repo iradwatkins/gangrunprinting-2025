@@ -1,4 +1,5 @@
 import type { CashAppPaymentRequest, PaymentResponse } from '@/types/payments';
+import { api, API_TIMEOUTS } from '@/lib/api-client';
 
 declare global {
   interface Window {
@@ -74,10 +75,10 @@ export class CashAppPaymentService {
       currency: options.currency || 'USD',
       onSuccess: options.onSuccess,
       onError: options.onError || ((error: any) => {
-        console.error('Cash App Pay error:', error);
+        // Cash App Pay error
       }),
       onCancel: options.onCancel || (() => {
-        console.log('Cash App Pay cancelled');
+        // Cash App Pay cancelled
       })
     });
 
@@ -91,47 +92,29 @@ export class CashAppPaymentService {
   async processPayment(request: CashAppPaymentRequest): Promise<PaymentResponse> {
     try {
       // This would normally make a secure server-side call
-      const response = await fetch('/api/payments/cashapp/process', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(request),
+      const response = await api.post('/api/payments/cashapp/process', request, {
+        timeout: API_TIMEOUTS.STANDARD
       });
-
-      if (!response.ok) {
-        throw new Error('Cash App payment processing failed');
-      }
 
       const result = await response.json();
       return result;
     } catch (error) {
-      console.error('Cash App payment processing error:', error);
       throw new Error('Payment failed to process');
     }
   }
 
   async createPaymentRequest(amount: number, currency = 'USD'): Promise<any> {
     try {
-      const response = await fetch('/api/payments/cashapp/create-request', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount,
-          currency,
-          applicationId: this.clientId
-        }),
+      const response = await api.post('/api/payments/cashapp/create-request', {
+        amount,
+        currency,
+        applicationId: this.clientId
+      }, {
+        timeout: API_TIMEOUTS.STANDARD
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to create Cash App payment request');
-      }
 
       return await response.json();
     } catch (error) {
-      console.error('Error creating Cash App payment request:', error);
       throw new Error('Payment request creation failed');
     }
   }

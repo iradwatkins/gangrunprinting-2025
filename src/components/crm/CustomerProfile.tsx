@@ -48,7 +48,7 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
         setOrders(customerOrders || []);
       }
     } catch (error) {
-      console.error('Error loading customer data:', error);
+      // Handle error silently or with user feedback
     }
   };
 
@@ -66,7 +66,7 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
       setShowAddNote(false);
       loadCustomerData(); // Refresh data
     } catch (error) {
-      console.error('Error adding note:', error);
+      // Handle error silently or with user feedback
     }
   };
 
@@ -92,7 +92,7 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
       setShowAddInteraction(false);
       loadCustomerData(); // Refresh data
     } catch (error) {
-      console.error('Error adding interaction:', error);
+      // Handle error silently or with user feedback
     }
   };
 

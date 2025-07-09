@@ -29,7 +29,6 @@ export function CartSummary({
 
   const handleCheckout = () => {
     // TODO: Implement checkout navigation
-    console.log('Navigate to checkout');
   };
 
   return (

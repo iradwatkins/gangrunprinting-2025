@@ -1,4 +1,5 @@
 import type { PayPalPaymentRequest, PaymentResponse } from '@/types/payments';
+import { api, API_TIMEOUTS } from '@/lib/api-client';
 
 declare global {
   interface Window {
@@ -78,10 +79,10 @@ export class PayPalPaymentService {
       },
       onApprove: options.onApprove,
       onError: options.onError || ((error: any) => {
-        console.error('PayPal payment error:', error);
+        // PayPal payment error
       }),
       onCancel: options.onCancel || ((data: any) => {
-        console.log('PayPal payment cancelled:', data);
+        // PayPal payment cancelled
       })
     });
 
@@ -91,43 +92,25 @@ export class PayPalPaymentService {
   async processPayment(request: PayPalPaymentRequest): Promise<PaymentResponse> {
     try {
       // This would normally make a secure server-side call
-      const response = await fetch('/api/payments/paypal/process', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(request),
+      const response = await api.post('/api/payments/paypal/process', request, {
+        timeout: API_TIMEOUTS.STANDARD
       });
-
-      if (!response.ok) {
-        throw new Error('PayPal payment processing failed');
-      }
 
       const result = await response.json();
       return result;
     } catch (error) {
-      console.error('PayPal payment processing error:', error);
       throw new Error('Payment failed to process');
     }
   }
 
   async capturePayment(orderId: string): Promise<any> {
     try {
-      const response = await fetch('/api/payments/paypal/capture', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ orderId }),
+      const response = await api.post('/api/payments/paypal/capture', { orderId }, {
+        timeout: API_TIMEOUTS.STANDARD
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to capture PayPal payment');
-      }
 
       return await response.json();
     } catch (error) {
-      console.error('Error capturing PayPal payment:', error);
       throw new Error('Payment capture failed');
     }
   }

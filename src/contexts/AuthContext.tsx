@@ -104,7 +104,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching user profile:', error);
         return null;
       }
 
@@ -128,7 +127,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return profile;
     } catch (error) {
-      console.error('Error in getUserProfile:', error);
       return null;
     }
   };
@@ -162,7 +160,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .single();
 
         if (createError) {
-          console.error('Error creating user profile:', createError);
           setUser({ ...authUser, profile: undefined });
         } else {
           finalProfile = {
@@ -175,7 +172,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
         }
       } else if (error) {
-        console.error('Error fetching user profile:', error);
         setUser({ ...authUser, profile: undefined });
       } else {
         finalProfile = {
@@ -197,7 +193,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch (error) {
-      console.error('Error loading user profile:', error);
       setUser({ ...authUser, profile: undefined });
     } finally {
       setLoading(false);
@@ -213,7 +208,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('adminMode');
       navigate('/');
     } catch (error) {
-      console.error('Error signing out:', error);
       toast.error('Error signing out');
     }
   };

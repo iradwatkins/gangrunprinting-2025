@@ -83,7 +83,11 @@ const AutomationManager: React.FC = () => {
       setBuilderOpen(false);
       setSelectedAutomation(null);
     } catch (error) {
-      console.error('Failed to save automation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save automation",
+        variant: "destructive",
+      });
     }
   };
 
@@ -92,7 +96,11 @@ const AutomationManager: React.FC = () => {
       await emailAutomationApi.toggleAutomation(automationId, isActive);
       await fetchAutomations(); // Refresh data
     } catch (error) {
-      console.error('Failed to toggle automation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to toggle automation",
+        variant: "destructive",
+      });
     }
   };
 
@@ -104,7 +112,11 @@ const AutomationManager: React.FC = () => {
       );
       setAutomations(prev => [clonedAutomation, ...prev]);
     } catch (error) {
-      console.error('Failed to clone automation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to clone automation",
+        variant: "destructive",
+      });
     }
   };
 
@@ -115,7 +127,11 @@ const AutomationManager: React.FC = () => {
       await emailAutomationApi.deleteAutomation(automationId);
       setAutomations(prev => prev.filter(a => a.id !== automationId));
     } catch (error) {
-      console.error('Failed to delete automation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete automation",
+        variant: "destructive",
+      });
     }
   };
 
@@ -130,7 +146,6 @@ const AutomationManager: React.FC = () => {
         description: "Test automation sent successfully",
       });
     } catch (error) {
-      console.error('Failed to test automation:', error);
       toast({
         title: "Error",
         description: "Failed to test automation",

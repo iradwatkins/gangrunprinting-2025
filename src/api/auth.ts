@@ -48,8 +48,7 @@ class AuthApi {
       });
 
       if (!profileResponse.success) {
-        // Log error but don't fail registration
-        console.error('Failed to create user profile:', profileResponse.error);
+        // Profile creation failed but don't fail registration
       }
 
       const user: AuthUser = {

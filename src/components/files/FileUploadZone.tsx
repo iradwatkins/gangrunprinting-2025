@@ -15,6 +15,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { FileValidator } from '@/utils/fileValidation';
 import type { 
   FileUploadConfig, 
   FileUploadProgress, 
@@ -73,24 +74,39 @@ export function FileUploadZone({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const validateFile = (file: File): FileValidationResult => {
+  const validateFile = async (file: File): Promise<FileValidationResult> => {
+    // Use secure file validation
+    const securityValidation = await FileValidator.validateFile(file);
+    
     const errors: any[] = [];
-    const warnings: any[] = [];
+    const warnings: any[] = securityValidation.warnings.map(w => ({ 
+      code: 'SECURITY_WARNING', 
+      message: w 
+    }));
     const suggestions: string[] = [];
+    
+    // Add security errors
+    if (!securityValidation.isValid) {
+      errors.push(...securityValidation.errors.map(e => ({
+        code: 'SECURITY_ERROR',
+        message: e,
+        field: 'security'
+      })));
+    }
 
-    // Check file type
+    // Additional product-specific validation
     if (!uploadConfig.allowedTypes.includes(file.type)) {
       const ext = '.' + file.name.split('.').pop()?.toLowerCase();
       if (!uploadConfig.allowedExtensions.includes(ext)) {
         errors.push({
           code: 'INVALID_TYPE',
-          message: `File type ${file.type || ext} is not supported`,
+          message: `File type ${file.type || ext} is not supported for ${productType}`,
           field: 'type'
         });
       }
     }
 
-    // Check file size
+    // Check file size for product requirements
     if (file.size > uploadConfig.maxFileSize) {
       errors.push({
         code: 'FILE_TOO_LARGE',
@@ -172,7 +188,7 @@ export function FileUploadZone({
     }
   };
 
-  const handleFileSelection = (files: File[]) => {
+  const handleFileSelection = async (files: File[]) => {
     if (selectedFiles.length + files.length > uploadConfig.maxFiles) {
       return; // Show error toast or message
     }
@@ -183,18 +199,30 @@ export function FileUploadZone({
       id: `${file.name}-${Date.now()}-${Math.random()}`
     }));
 
-    // Validate files
-    const validatedFiles = newFiles.map(fileItem => {
-      const validation = validateFile(fileItem.file);
-      return {
-        ...fileItem,
-        status: validation.isValid ? 'idle' : 'error' as FileStatus,
-        validation,
-        error: validation.errors[0]?.message
-      };
-    });
+    // Add files in validating state
+    setSelectedFiles(prev => [...prev, ...newFiles]);
 
-    setSelectedFiles(prev => [...prev, ...validatedFiles]);
+    // Validate files asynchronously
+    const validatedFiles = await Promise.all(
+      newFiles.map(async (fileItem) => {
+        const validation = await validateFile(fileItem.file);
+        return {
+          ...fileItem,
+          status: validation.isValid ? 'idle' : 'error' as FileStatus,
+          validation,
+          error: validation.errors[0]?.message
+        };
+      })
+    );
+
+    // Update with validation results
+    setSelectedFiles(prev => 
+      prev.map(file => {
+        const validated = validatedFiles.find(v => v.id === file.id);
+        return validated || file;
+      })
+    );
+    
     onFilesSelected(validatedFiles.filter(f => f.status !== 'error').map(f => f.file));
   };
 

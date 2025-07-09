@@ -50,7 +50,7 @@ export const SupportTickets: React.FC = () => {
         order_id: ''
       });
     } catch (error) {
-      console.error('Error creating ticket:', error);
+      // Handle error silently or with user feedback
     }
   };
 
@@ -59,7 +59,7 @@ export const SupportTickets: React.FC = () => {
       await updateTicket(ticketId, updates);
       setSelectedTicket(null);
     } catch (error) {
-      console.error('Error updating ticket:', error);
+      // Handle error silently or with user feedback
     }
   };
 

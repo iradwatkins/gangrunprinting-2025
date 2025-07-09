@@ -87,7 +87,6 @@ export function ProductConfiguration({ product }: ProductConfigurationProps) {
         .eq('coatings.is_active', true);
 
       if (error) {
-        console.error('Error loading coatings:', error);
         return [];
       }
 
@@ -328,7 +327,6 @@ export function ProductConfiguration({ product }: ProductConfigurationProps) {
         // Navigate to upload page after successful add to cart
         navigate('/upload-artwork');
       } catch (error) {
-        console.error('Failed to add to cart:', error);
         toast({
           title: 'Error',
           description: 'Failed to add item to cart',

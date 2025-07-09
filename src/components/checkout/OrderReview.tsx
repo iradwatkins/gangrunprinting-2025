@@ -75,7 +75,6 @@ export function OrderReview({ onPrev, onComplete }: OrderReviewProps) {
       }
     } catch (error) {
       setError('An unexpected error occurred. Please try again.');
-      console.error('Order placement error:', error);
     } finally {
       setIsProcessing(false);
     }

@@ -1,5 +1,6 @@
 import { USPSAddressValidationService } from './addressValidation';
 import { ShippingCalculator } from './shippingCalculator';
+import { api, API_TIMEOUTS } from '@/lib/api-client';
 import type { Address } from '@/types/auth';
 import type { CartItem } from '@/types/cart';
 import type { 
@@ -63,25 +64,17 @@ export class ShippingService {
       }
 
       // Real tax API call would go here
-      const response = await fetch('/api/shipping/calculate-tax', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          shipping_address,
-          cart_items,
-          shipping_cost
-        }),
+      const response = await api.post('/api/shipping/calculate-tax', {
+        shipping_address,
+        cart_items,
+        shipping_cost
+      }, {
+        timeout: API_TIMEOUTS.STANDARD
       });
-
-      if (!response.ok) {
-        throw new Error('Tax calculation failed');
-      }
 
       return await response.json();
     } catch (error) {
-      console.error('Tax calculation error:', error);
+      // Tax calculation error handled by API client
       // Fallback to demo calculation
       return this.simulateTaxCalculation(shipping_address, cart_items, shipping_cost);
     }

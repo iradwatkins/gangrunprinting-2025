@@ -42,9 +42,7 @@ export function QuantitiesPage() {
   const { data: quantities, isLoading, error } = useQuery({
     queryKey: ['admin-quantities'],
     queryFn: async () => {
-      console.log('Fetching quantities...');
       const response = await quantitiesApi.getAll();
-      console.log('Quantities API response:', response);
       if (response.error) {
         throw new Error(response.error);
       }

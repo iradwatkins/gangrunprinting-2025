@@ -83,7 +83,6 @@ export function PriceCalculator({ product, configuration }: PriceCalculatorProps
         .single();
 
       if (error) {
-        console.error('Error loading coating:', error);
         return null;
       }
 
@@ -214,7 +213,6 @@ export function PriceCalculator({ product, configuration }: PriceCalculatorProps
 
       setPriceBreakdown(breakdown);
     } catch (error) {
-      console.error('Failed to calculate price:', error);
       setPriceBreakdown(null);
     }
 

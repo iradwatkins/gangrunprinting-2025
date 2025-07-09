@@ -41,7 +41,6 @@ export function usePricing() {
       const data = await response.json();
       setBrokerTiers(data.tiers);
     } catch (err) {
-      console.error('Error fetching broker tiers:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch broker tiers');
     } finally {
       setIsLoading(false);
@@ -69,7 +68,6 @@ export function usePricing() {
       const result = await response.json();
       return result;
     } catch (err) {
-      console.error('Error calculating price:', err);
       setError(err instanceof Error ? err.message : 'Failed to calculate price');
       throw err;
     } finally {
@@ -94,7 +92,6 @@ export function usePricing() {
 
       return await response.json();
     } catch (err) {
-      console.error('Error previewing pricing:', err);
       throw err;
     }
   };
@@ -163,7 +160,7 @@ export function usePriceCalculator(
       });
       setCurrentPricing(result);
     } catch (error) {
-      console.error('Error updating price:', error);
+      // Error updating price
     } finally {
       setIsCalculating(false);
     }

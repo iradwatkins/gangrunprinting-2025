@@ -44,7 +44,6 @@ export function ShippingMethodForm({ onNext, onPrev }: ShippingMethodFormProps) 
         }
       } catch (err) {
         setError('Failed to load shipping methods. Please try again.');
-        console.error('Failed to load shipping methods:', err);
       } finally {
         setLoadingMethods(false);
       }
@@ -76,7 +75,6 @@ export function ShippingMethodForm({ onNext, onPrev }: ShippingMethodFormProps) 
       onNext();
     } catch (error) {
       setError('Failed to save shipping method. Please try again.');
-      console.error('Failed to save shipping method:', error);
     }
   };
 

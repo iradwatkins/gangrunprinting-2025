@@ -5,35 +5,30 @@ export const emailAnalyticsApi = {
   trackOpen: async (deliveryId: string, metadata?: Record<string, any>): Promise<void> => {
     // Mock implementation - in production, this would track the open event
     await new Promise(resolve => setTimeout(resolve, 100));
-    console.log('Tracked email open:', { deliveryId, metadata });
   },
 
   // Track email click
   trackClick: async (deliveryId: string, linkUrl: string, metadata?: Record<string, any>): Promise<void> => {
     // Mock implementation - in production, this would track the click event
     await new Promise(resolve => setTimeout(resolve, 100));
-    console.log('Tracked email click:', { deliveryId, linkUrl, metadata });
   },
 
   // Track unsubscribe
   trackUnsubscribe: async (deliveryId: string, reason?: string): Promise<void> => {
     // Mock implementation - in production, this would track the unsubscribe event
     await new Promise(resolve => setTimeout(resolve, 100));
-    console.log('Tracked unsubscribe:', { deliveryId, reason });
   },
 
   // Track bounce
   trackBounce: async (deliveryId: string, bounceType: 'hard' | 'soft', reason: string): Promise<void> => {
     // Mock implementation - in production, this would track the bounce event
     await new Promise(resolve => setTimeout(resolve, 100));
-    console.log('Tracked bounce:', { deliveryId, bounceType, reason });
   },
 
   // Track spam complaint
   trackSpamComplaint: async (deliveryId: string, feedbackType?: string): Promise<void> => {
     // Mock implementation - in production, this would track the spam complaint
     await new Promise(resolve => setTimeout(resolve, 100));
-    console.log('Tracked spam complaint:', { deliveryId, feedbackType });
   },
 
   // Get overall email analytics

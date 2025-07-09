@@ -8,6 +8,7 @@ import { FloatingCart } from "@/components/cart/FloatingCart";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AdminModeWrapper } from "@/components/AdminModeWrapper";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import { ProductCatalog } from "./pages/ProductCatalog";
 import ProductDetail from "./pages/ProductDetail";
@@ -52,50 +53,52 @@ const App = () => (
         <AuthProvider>
           <AdminModeWrapper>
             <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <div className="relative">
-                <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/products" element={<ProductCatalog />} />
-              <Route path="/products/:slug" element={<ProductDetail />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/upload-artwork" element={<UploadArtworkPage />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/checkout/confirmation/:referenceNumber" element={<OrderConfirmation />} />
-              <Route path="/account" element={<DashboardRouter />} />
-              <Route path="/my-account" element={<MyAccountPage />} />
-              <Route path="/my-account/profile" element={<ProfileSettings />} />
-              <Route path="/my-account/orders" element={<AccountOrdersPage />} />
-              <Route path="/my-account/broker-application" element={<BrokerApplication />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/products" element={<ProductsPage />} />
-              <Route path="/admin/products/new" element={<NewProductPage />} />
-              <Route path="/admin/products/:id/edit" element={<EditProductPage />} />
-              <Route path="/admin/analytics" element={<AnalyticsPage />} />
-              <Route path="/admin/checkout-settings" element={<CheckoutSettingsPage />} />
-              <Route path="/admin/orders" element={<AdminOrdersPage />} />
-              <Route path="/admin/email" element={<AdminEmailPage />} />
-              <Route path="/admin/files" element={<AdminFilesPage />} />
-              <Route path="/admin/paper-stocks" element={<PaperStocksPage />} />
-              <Route path="/admin/paper-stocks/new" element={<NewPaperStockPage />} />
-              <Route path="/admin/print-sizes" element={<PrintSizesPage />} />
-              <Route path="/admin/turnaround-times" element={<TurnaroundTimesPage />} />
-              <Route path="/admin/add-ons" element={<AddOnsPage />} />
-              <Route path="/admin/quantities" element={<QuantitiesPage />} />
-              <Route path="/admin/categories" element={<CategoriesPage />} />
-              <Route path="/admin/vendors" element={<VendorsPage />} />
-              <Route path="/files" element={<FilesPage />} />
-              <Route path="/invoice/:invoiceNumber/pay" element={<InvoicePaymentPage />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            
-                {/* Floating Cart - Available on all pages */}
-                <div className="fixed bottom-6 right-6 z-50">
-                  <FloatingCart />
+              <ErrorBoundary>
+                <Toaster />
+                <Sonner />
+                <div className="relative">
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/products" element={<ProductCatalog />} />
+                    <Route path="/products/:slug" element={<ProductDetail />} />
+                    <Route path="/cart" element={<Cart />} />
+                    <Route path="/upload-artwork" element={<UploadArtworkPage />} />
+                    <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/checkout/confirmation/:referenceNumber" element={<OrderConfirmation />} />
+                    <Route path="/account" element={<DashboardRouter />} />
+                    <Route path="/my-account" element={<MyAccountPage />} />
+                    <Route path="/my-account/profile" element={<ProfileSettings />} />
+                    <Route path="/my-account/orders" element={<AccountOrdersPage />} />
+                    <Route path="/my-account/broker-application" element={<BrokerApplication />} />
+                    <Route path="/admin" element={<AdminDashboard />} />
+                    <Route path="/admin/products" element={<ProductsPage />} />
+                    <Route path="/admin/products/new" element={<NewProductPage />} />
+                    <Route path="/admin/products/:id/edit" element={<EditProductPage />} />
+                    <Route path="/admin/analytics" element={<AnalyticsPage />} />
+                    <Route path="/admin/checkout-settings" element={<CheckoutSettingsPage />} />
+                    <Route path="/admin/orders" element={<AdminOrdersPage />} />
+                    <Route path="/admin/email" element={<AdminEmailPage />} />
+                    <Route path="/admin/files" element={<AdminFilesPage />} />
+                    <Route path="/admin/paper-stocks" element={<PaperStocksPage />} />
+                    <Route path="/admin/paper-stocks/new" element={<NewPaperStockPage />} />
+                    <Route path="/admin/print-sizes" element={<PrintSizesPage />} />
+                    <Route path="/admin/turnaround-times" element={<TurnaroundTimesPage />} />
+                    <Route path="/admin/add-ons" element={<AddOnsPage />} />
+                    <Route path="/admin/quantities" element={<QuantitiesPage />} />
+                    <Route path="/admin/categories" element={<CategoriesPage />} />
+                    <Route path="/admin/vendors" element={<VendorsPage />} />
+                    <Route path="/files" element={<FilesPage />} />
+                    <Route path="/invoice/:invoiceNumber/pay" element={<InvoicePaymentPage />} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                  
+                  {/* Floating Cart - Available on all pages */}
+                  <div className="fixed bottom-6 right-6 z-50">
+                    <FloatingCart />
+                  </div>
                 </div>
-              </div>
+              </ErrorBoundary>
             </TooltipProvider>
           </AdminModeWrapper>
         </AuthProvider>

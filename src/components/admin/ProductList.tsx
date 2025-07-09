@@ -76,7 +76,6 @@ export function ProductList() {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (loading) {
-        console.error('Loading timeout - forcing loading to false');
         setLoading(false);
         toast({
           title: 'Loading timeout',
@@ -92,9 +91,7 @@ export function ProductList() {
   const loadData = async () => {
     setLoading(true);
     try {
-      console.log('Loading products with filters:', filters);
       const response = await productsApi.getProducts(filters);
-      console.log('Products API response:', response);
       
       if (response.error) {
         toast({
@@ -107,7 +104,6 @@ export function ProductList() {
         setProducts(response.data || []);
       }
     } catch (error) {
-      console.error('Error loading products:', error);
       toast({
         title: 'Error',
         description: 'Failed to load products. Please try again.',
@@ -126,7 +122,7 @@ export function ProductList() {
         setCategories(response.data);
       }
     } catch (error) {
-      console.error('Error loading categories:', error);
+      // Silently fail - categories are optional
     }
   };
 
@@ -137,7 +133,7 @@ export function ProductList() {
         setVendors(response.data);
       }
     } catch (error) {
-      console.error('Error loading vendors:', error);
+      // Silently fail - vendors are optional
     }
   };
 

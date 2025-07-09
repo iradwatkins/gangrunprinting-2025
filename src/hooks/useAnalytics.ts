@@ -78,7 +78,6 @@ export function useAnalytics(autoLoad = true): UseAnalyticsState & UseAnalyticsA
         loading: false
       }));
     } catch (err) {
-      console.error('Error loading dashboard metrics:', err);
       setError(err instanceof Error ? err.message : 'Failed to load dashboard metrics');
     }
   }, []);
@@ -91,7 +90,6 @@ export function useAnalytics(autoLoad = true): UseAnalyticsState & UseAnalyticsA
       const analytics = await analyticsAPI.getOrderAnalytics(period);
       setState(prev => ({ ...prev, orderAnalytics: analytics, loading: false }));
     } catch (err) {
-      console.error('Error loading order analytics:', err);
       setError(err instanceof Error ? err.message : 'Failed to load order analytics');
     }
   }, []);
@@ -104,7 +102,6 @@ export function useAnalytics(autoLoad = true): UseAnalyticsState & UseAnalyticsA
       const analytics = await analyticsAPI.getCustomerAnalytics(period);
       setState(prev => ({ ...prev, customerAnalytics: analytics, loading: false }));
     } catch (err) {
-      console.error('Error loading customer analytics:', err);
       setError(err instanceof Error ? err.message : 'Failed to load customer analytics');
     }
   }, []);
@@ -117,7 +114,6 @@ export function useAnalytics(autoLoad = true): UseAnalyticsState & UseAnalyticsA
       const analytics = await analyticsAPI.getRevenueAnalytics(period);
       setState(prev => ({ ...prev, revenueAnalytics: analytics, loading: false }));
     } catch (err) {
-      console.error('Error loading revenue analytics:', err);
       setError(err instanceof Error ? err.message : 'Failed to load revenue analytics');
     }
   }, []);
@@ -130,7 +126,6 @@ export function useAnalytics(autoLoad = true): UseAnalyticsState & UseAnalyticsA
       const analytics = await analyticsAPI.getProductAnalytics(period);
       setState(prev => ({ ...prev, productAnalytics: analytics, loading: false }));
     } catch (err) {
-      console.error('Error loading product analytics:', err);
       setError(err instanceof Error ? err.message : 'Failed to load product analytics');
     }
   }, []);
@@ -143,7 +138,6 @@ export function useAnalytics(autoLoad = true): UseAnalyticsState & UseAnalyticsA
       const analytics = await analyticsAPI.getSystemAnalytics(period);
       setState(prev => ({ ...prev, systemAnalytics: analytics, loading: false }));
     } catch (err) {
-      console.error('Error loading system analytics:', err);
       setError(err instanceof Error ? err.message : 'Failed to load system analytics');
     }
   }, []);
@@ -156,7 +150,6 @@ export function useAnalytics(autoLoad = true): UseAnalyticsState & UseAnalyticsA
       const reports = await analyticsAPI.getReports();
       setState(prev => ({ ...prev, reports, loading: false }));
     } catch (err) {
-      console.error('Error loading reports:', err);
       setError(err instanceof Error ? err.message : 'Failed to load reports');
     }
   }, []);
@@ -175,7 +168,6 @@ export function useAnalytics(autoLoad = true): UseAnalyticsState & UseAnalyticsA
       
       return newReport;
     } catch (err) {
-      console.error('Error creating report:', err);
       setError(err instanceof Error ? err.message : 'Failed to create report');
       throw err;
     }
@@ -195,7 +187,6 @@ export function useAnalytics(autoLoad = true): UseAnalyticsState & UseAnalyticsA
       
       return updatedReport;
     } catch (err) {
-      console.error('Error updating report:', err);
       setError(err instanceof Error ? err.message : 'Failed to update report');
       throw err;
     }
@@ -211,7 +202,6 @@ export function useAnalytics(autoLoad = true): UseAnalyticsState & UseAnalyticsA
       
       return results;
     } catch (err) {
-      console.error('Error running report:', err);
       setError(err instanceof Error ? err.message : 'Failed to run report');
       throw err;
     }
@@ -227,7 +217,6 @@ export function useAnalytics(autoLoad = true): UseAnalyticsState & UseAnalyticsA
       
       return result;
     } catch (err) {
-      console.error('Error exporting data:', err);
       setError(err instanceof Error ? err.message : 'Failed to export data');
       throw err;
     }

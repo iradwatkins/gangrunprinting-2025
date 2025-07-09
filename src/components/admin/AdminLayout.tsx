@@ -18,7 +18,17 @@ import {
   ShoppingCart,
   Mail,
   FileText,
-  Zap
+  Zap,
+  ChevronDown,
+  ChevronRight,
+  Users,
+  TrendingUp,
+  Server,
+  Eye,
+  SendHorizontal,
+  LayoutTemplate,
+  UserCheck,
+  Bot
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -43,11 +53,38 @@ const navigation = [
     icon: ShoppingCart
   },
   
-  // Analytics
+  // Analytics with sub-menu
   {
     name: 'Analytics',
     href: '/admin/analytics',
-    icon: BarChart3
+    icon: BarChart3,
+    children: [
+      {
+        name: 'Orders',
+        href: '/admin/analytics/orders',
+        icon: ShoppingCart
+      },
+      {
+        name: 'Customers',
+        href: '/admin/analytics/customers',
+        icon: Users
+      },
+      {
+        name: 'Revenue',
+        href: '/admin/analytics/revenue',
+        icon: TrendingUp
+      },
+      {
+        name: 'Products',
+        href: '/admin/analytics/products',
+        icon: Package
+      },
+      {
+        name: 'System',
+        href: '/admin/analytics/system',
+        icon: Server
+      }
+    ]
   },
   
   // Core Product Management
@@ -96,11 +133,38 @@ const navigation = [
     icon: Truck
   },
   
-  // Marketing
+  // Email Marketing with sub-menu
   {
     name: 'Email Marketing',
     href: '/admin/email',
-    icon: Mail
+    icon: Mail,
+    children: [
+      {
+        name: 'Overview',
+        href: '/admin/email/overview',
+        icon: Eye
+      },
+      {
+        name: 'Campaigns',
+        href: '/admin/email/campaigns',
+        icon: SendHorizontal
+      },
+      {
+        name: 'Templates',
+        href: '/admin/email/templates',
+        icon: LayoutTemplate
+      },
+      {
+        name: 'Segments',
+        href: '/admin/email/segments',
+        icon: UserCheck
+      },
+      {
+        name: 'Automations',
+        href: '/admin/email/automations',
+        icon: Bot
+      }
+    ]
   },
   
   // System
@@ -117,6 +181,7 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const location = useLocation();
 
   const isActive = (href: string, exact?: boolean) => {
@@ -124,6 +189,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       return location.pathname === href;
     }
     return location.pathname.startsWith(href);
+  };
+
+  const toggleExpanded = (itemName: string) => {
+    setExpandedItems(prev => 
+      prev.includes(itemName) 
+        ? prev.filter(name => name !== itemName)
+        : [...prev, itemName]
+    );
   };
 
   const SidebarContent = () => (
@@ -136,23 +209,69 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         {navigation.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href, item.exact);
+          const isExpanded = expandedItems.includes(item.name);
+          const hasChildren = item.children && item.children.length > 0;
           
           return (
-            <Link
-              key={item.name}
-              to={item.href}
-              className={`group flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                active
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              }`}
-              onClick={() => setSidebarOpen(false)}
-            >
-              <div className="flex items-center">
-                <Icon className={`mr-3 h-4 w-4 shrink-0 ${active ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
-                {item.name}
+            <div key={item.name}>
+              <div className="relative">
+                <Link
+                  to={item.href}
+                  className={`group flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                    active
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  }`}
+                  onClick={() => !hasChildren && setSidebarOpen(false)}
+                >
+                  <div className="flex items-center">
+                    <Icon className={`mr-3 h-4 w-4 shrink-0 ${active ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
+                    {item.name}
+                  </div>
+                  {hasChildren && (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleExpanded(item.name);
+                      }}
+                      className="p-1 rounded hover:bg-muted-foreground/20"
+                    >
+                      {isExpanded ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                    </button>
+                  )}
+                </Link>
               </div>
-            </Link>
+              
+              {hasChildren && isExpanded && (
+                <div className="ml-4 mt-1 space-y-1">
+                  {item.children.map((child) => {
+                    const ChildIcon = child.icon;
+                    const childActive = isActive(child.href);
+                    
+                    return (
+                      <Link
+                        key={child.name}
+                        to={child.href}
+                        className={`group flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                          childActive
+                            ? 'bg-primary/90 text-primary-foreground'
+                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                        }`}
+                        onClick={() => setSidebarOpen(false)}
+                      >
+                        <ChildIcon className={`mr-3 h-3 w-3 shrink-0 ${childActive ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
+                        {child.name}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           );
         })}
       </nav>

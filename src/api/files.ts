@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { auth } from '@/lib/auth';
 import { ApiResponse, handleApiError } from '@/lib/errors';
+import { FileValidator } from '@/utils/fileValidation';
 import type {
   ArtworkFile,
   FileUploadRequest,
@@ -26,8 +27,17 @@ class FilesApi {
 
       const { file, purpose = 'artwork', order_job_id } = request;
       
-      // Generate unique filename
-      const fileExtension = file.name.split('.').pop();
+      // Validate file security
+      const validation = await FileValidator.validateFile(file);
+      if (!validation.isValid) {
+        return { 
+          success: false, 
+          error: `File validation failed: ${validation.errors.join(', ')}` 
+        };
+      }
+      
+      // Generate unique filename using sanitized name
+      const fileExtension = validation.sanitizedFileName.split('.').pop();
       const storedFilename = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExtension}`;
       
       // Upload file to Supabase Storage
@@ -57,7 +67,7 @@ class FilesApi {
         file_path: uploadData.path,
         file_size: file.size,
         file_type: fileExtension || '',
-        mime_type: file.type,
+        mime_type: validation.detectedMimeType || file.type,
         dimensions,
         validation_status: 'pending'
       };
@@ -424,19 +434,49 @@ class FilesApi {
   }
 
   private async validateFileInBackground(fileId: string): Promise<void> {
-    // This would run validation logic in the background
-    // For now, we'll just mark it as valid after a delay
+    // Run file validation in background
     setTimeout(async () => {
       try {
+        // Get file details
+        const { data: fileData, error: fetchError } = await supabase
+          .from('artwork_files')
+          .select('*')
+          .eq('id', fileId)
+          .single();
+          
+        if (fetchError || !fileData) {
+          throw new Error('File not found');
+        }
+        
+        // Check file exists in storage
+        const { data: storageData, error: storageError } = await supabase.storage
+          .from(this.bucketName)
+          .list(fileData.user_id, {
+            limit: 1,
+            search: fileData.stored_filename.split('/').pop()
+          });
+          
+        const validationStatus = storageError || !storageData?.length 
+          ? 'invalid' 
+          : 'valid';
+        
+        // Update validation status
         await supabase
           .from('artwork_files')
           .update({
-            validation_status: 'valid',
+            validation_status: validationStatus,
             updated_at: new Date().toISOString()
           })
           .eq('id', fileId);
       } catch (error) {
-        console.error('Background validation failed:', error);
+        // Mark as invalid on any error
+        await supabase
+          .from('artwork_files')
+          .update({
+            validation_status: 'invalid',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', fileId);
       }
     }, 2000);
   }

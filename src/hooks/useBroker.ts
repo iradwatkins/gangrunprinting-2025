@@ -47,7 +47,6 @@ export function useBroker() {
         setBrokerProfile(data.broker_profile);
       }
     } catch (err) {
-      console.error('Error fetching broker status:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch broker status');
     } finally {
       setIsLoading(false);
@@ -79,7 +78,6 @@ export function useBroker() {
       
       return result;
     } catch (err) {
-      console.error('Error applying for broker status:', err);
       setError(err instanceof Error ? err.message : 'Failed to submit application');
       throw err;
     } finally {
@@ -110,7 +108,6 @@ export function useBroker() {
       
       return result;
     } catch (err) {
-      console.error('Error updating broker profile:', err);
       setError(err instanceof Error ? err.message : 'Failed to update profile');
       throw err;
     } finally {
@@ -156,7 +153,6 @@ export function useBrokerDashboard() {
       const data = await response.json();
       setDashboardData(data);
     } catch (err) {
-      console.error('Error fetching dashboard data:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch dashboard data');
     } finally {
       setIsLoading(false);

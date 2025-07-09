@@ -60,7 +60,7 @@ export function useProfile() {
 
       setAddresses(data || []);
     } catch (error) {
-      console.error('Error fetching addresses:', error);
+      // Error fetching addresses
     } finally {
       setIsLoading(false);
     }
@@ -80,7 +80,7 @@ export function useProfile() {
 
       setBrokerApplication(data);
     } catch (error) {
-      console.error('Error fetching broker application:', error);
+      // Error fetching broker application
     }
   };
 
@@ -97,7 +97,6 @@ export function useProfile() {
       toast.success('Profile updated successfully!');
       return { error: null };
     } catch (error) {
-      console.error('Error updating profile:', error);
       toast.error('Error updating profile');
       return { error: 'Failed to update profile' };
     }
@@ -117,7 +116,6 @@ export function useProfile() {
       toast.success('Address added successfully!');
       return { error: null };
     } catch (error) {
-      console.error('Error adding address:', error);
       toast.error('Error adding address');
       return { error: 'Failed to add address' };
     }
@@ -139,7 +137,6 @@ export function useProfile() {
       toast.success('Address updated successfully!');
       return { error: null };
     } catch (error) {
-      console.error('Error updating address:', error);
       toast.error('Error updating address');
       return { error: 'Failed to update address' };
     }
@@ -159,7 +156,6 @@ export function useProfile() {
       toast.success('Address deleted successfully!');
       return { error: null };
     } catch (error) {
-      console.error('Error deleting address:', error);
       toast.error('Error deleting address');
       return { error: 'Failed to delete address' };
     }
@@ -184,7 +180,6 @@ export function useProfile() {
       toast.success('Broker application submitted successfully!');
       return { error: null };
     } catch (error) {
-      console.error('Error submitting broker application:', error);
       toast.error('Error submitting broker application');
       return { error: 'Failed to submit application' };
     }

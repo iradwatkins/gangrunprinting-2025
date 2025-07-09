@@ -44,7 +44,6 @@ export const invoicesApi = {
 
       return { success: true, data };
     } catch (error) {
-      console.error('Error creating invoice:', error);
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Failed to create invoice' 
@@ -65,7 +64,6 @@ export const invoicesApi = {
 
       return { success: true, data };
     } catch (error) {
-      console.error('Error fetching invoice:', error);
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Invoice not found' 
@@ -87,7 +85,6 @@ export const invoicesApi = {
 
       return { success: true, data };
     } catch (error) {
-      console.error('Error updating invoice status:', error);
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Failed to update invoice' 
@@ -117,7 +114,6 @@ export const invoicesApi = {
 
       return { success: true, data: data || [] };
     } catch (error) {
-      console.error('Error fetching invoices:', error);
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Failed to fetch invoices',
@@ -131,11 +127,9 @@ export const invoicesApi = {
     try {
       // TODO: Implement email sending via Supabase Edge Function
       // For now, just simulate success
-      console.log(`Sending invoice email for ${invoiceNumber}`);
       
       return { success: true, message: 'Invoice email sent successfully' };
     } catch (error) {
-      console.error('Error sending invoice email:', error);
       return { 
         success: false, 
         error: 'Failed to send invoice email' 

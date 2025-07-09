@@ -41,7 +41,6 @@ export class NotificationService {
         sent_at: new Date().toISOString()
       });
     } catch (error) {
-      console.error('Failed to send order status notification:', error);
       throw error;
     }
   }
@@ -76,7 +75,6 @@ export class NotificationService {
         sent_at: new Date().toISOString()
       });
     } catch (error) {
-      console.error('Failed to send shipping notification:', error);
       throw error;
     }
   }
@@ -100,7 +98,6 @@ export class NotificationService {
         sent_at: new Date().toISOString()
       });
     } catch (error) {
-      console.error('Failed to send delivery confirmation:', error);
       throw error;
     }
   }
@@ -167,9 +164,7 @@ export class NotificationService {
     // - Resend
     
     // For now, we'll simulate the email sending
-    console.log('Sending email to:', to);
-    console.log('Subject:', template.subject);
-    console.log('HTML:', template.html);
+    // In production, this would integrate with an email service
     
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 100));
@@ -181,7 +176,7 @@ export class NotificationService {
       .insert(notification);
 
     if (error) {
-      console.error('Failed to log notification:', error);
+      // Failed to log notification
     }
   }
 

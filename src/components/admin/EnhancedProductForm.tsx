@@ -122,7 +122,6 @@ export function EnhancedProductForm({ mode }: EnhancedProductFormProps) {
       if (turnaroundTimesRes.data) setTurnaroundTimes(turnaroundTimesRes.data);
       if (addOnsRes.data) setAddOns(addOnsRes.data);
     } catch (error) {
-      console.error('Error loading data:', error);
       toast({
         title: "Error",
         description: "Failed to load form data. Please try again.",
@@ -153,7 +152,6 @@ export function EnhancedProductForm({ mode }: EnhancedProductFormProps) {
         });
       }
     } catch (error) {
-      console.error('Error loading product:', error);
       toast({
         title: "Error",
         description: "Failed to load product. Please try again.",
@@ -230,7 +228,6 @@ export function EnhancedProductForm({ mode }: EnhancedProductFormProps) {
         navigate('/admin/products');
       }
     } catch (error) {
-      console.error('Error saving product:', error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to save product",

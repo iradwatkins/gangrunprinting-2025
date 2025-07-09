@@ -70,7 +70,6 @@ const CampaignManager: React.FC<CampaignManagerProps> = ({ onCreateCampaign, onE
       });
       
       if (campaignResponse.error) {
-        console.error('Failed to fetch campaigns:', campaignResponse.error);
         setCampaigns([]);
       } else {
         setCampaigns(campaignResponse.data || []);
@@ -79,7 +78,6 @@ const CampaignManager: React.FC<CampaignManagerProps> = ({ onCreateCampaign, onE
       // Fetch templates from API
       const templateResponse = await emailTemplateApi.getTemplates();
       if (templateResponse.error) {
-        console.error('Failed to fetch templates:', templateResponse.error);
         setTemplates([]);
       } else {
         setTemplates(templateResponse.data || []);
@@ -88,13 +86,12 @@ const CampaignManager: React.FC<CampaignManagerProps> = ({ onCreateCampaign, onE
       // Fetch segments from API
       const segmentResponse = await emailSegmentApi.getSegments();
       if (segmentResponse.error) {
-        console.error('Failed to fetch segments:', segmentResponse.error);
         setSegments([]);
       } else {
         setSegments(segmentResponse.data || []);
       }
     } catch (error) {
-      console.error('Failed to fetch data:', error);
+      // Failed to fetch data
     } finally {
       setLoading(false);
     }
@@ -126,7 +123,7 @@ const CampaignManager: React.FC<CampaignManagerProps> = ({ onCreateCampaign, onE
         send_at: '',
       });
     } catch (error) {
-      console.error('Failed to create campaign:', error);
+      // Failed to create campaign
     }
   };
 
@@ -137,7 +134,7 @@ const CampaignManager: React.FC<CampaignManagerProps> = ({ onCreateCampaign, onE
       await emailCampaignApi.sendCampaign(campaignId);
       await fetchData(); // Refresh data
     } catch (error) {
-      console.error('Failed to send campaign:', error);
+      // Failed to send campaign
     }
   };
 
@@ -149,7 +146,7 @@ const CampaignManager: React.FC<CampaignManagerProps> = ({ onCreateCampaign, onE
       await emailCampaignApi.scheduleCampaign(campaignId, sendAt);
       await fetchData();
     } catch (error) {
-      console.error('Failed to schedule campaign:', error);
+      // Failed to schedule campaign
     }
   };
 
@@ -158,7 +155,7 @@ const CampaignManager: React.FC<CampaignManagerProps> = ({ onCreateCampaign, onE
       await emailCampaignApi.pauseCampaign(campaignId);
       await fetchData();
     } catch (error) {
-      console.error('Failed to pause campaign:', error);
+      // Failed to pause campaign
     }
   };
 
@@ -167,7 +164,7 @@ const CampaignManager: React.FC<CampaignManagerProps> = ({ onCreateCampaign, onE
       await emailCampaignApi.resumeCampaign(campaignId);
       await fetchData();
     } catch (error) {
-      console.error('Failed to resume campaign:', error);
+      // Failed to resume campaign
     }
   };
 
@@ -178,7 +175,7 @@ const CampaignManager: React.FC<CampaignManagerProps> = ({ onCreateCampaign, onE
       await emailCampaignApi.cancelCampaign(campaignId);
       await fetchData();
     } catch (error) {
-      console.error('Failed to cancel campaign:', error);
+      // Failed to cancel campaign
     }
   };
 
@@ -190,7 +187,7 @@ const CampaignManager: React.FC<CampaignManagerProps> = ({ onCreateCampaign, onE
       );
       setCampaigns(prev => [clonedCampaign, ...prev]);
     } catch (error) {
-      console.error('Failed to clone campaign:', error);
+      // Failed to clone campaign
     }
   };
 
@@ -201,7 +198,7 @@ const CampaignManager: React.FC<CampaignManagerProps> = ({ onCreateCampaign, onE
       await emailCampaignApi.deleteCampaign(campaignId);
       setCampaigns(prev => prev.filter(c => c.id !== campaignId));
     } catch (error) {
-      console.error('Failed to delete campaign:', error);
+      // Failed to delete campaign
     }
   };
 
@@ -213,7 +210,6 @@ const CampaignManager: React.FC<CampaignManagerProps> = ({ onCreateCampaign, onE
       await emailCampaignApi.sendTestEmail(campaign.id, email);
       alert('Test email sent successfully!');
     } catch (error) {
-      console.error('Failed to send test email:', error);
       alert('Failed to send test email');
     }
   };

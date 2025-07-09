@@ -1,5 +1,6 @@
 import type { Address } from '@/types/auth';
 import type { ValidateAddressRequest, ValidateAddressResponse } from '@/types/checkout';
+import { api, API_TIMEOUTS } from '@/lib/api-client';
 
 export interface AddressValidationService {
   validateAddress(address: Omit<Address, 'id' | 'is_default'>): Promise<ValidateAddressResponse>;
@@ -24,21 +25,14 @@ export class USPSAddressValidationService implements AddressValidationService {
       }
 
       // Real USPS API call would go here
-      const response = await fetch('/api/shipping/validate-address', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ address }),
+      const response = await api.post('/api/shipping/validate-address', { address }, {
+        timeout: API_TIMEOUTS.STANDARD,
+        skipToast: true // Don't show toast for validation errors
       });
-
-      if (!response.ok) {
-        throw new Error('Address validation failed');
-      }
 
       return await response.json();
     } catch (error) {
-      console.error('Address validation error:', error);
+      // Address validation error handled silently
       return {
         is_valid: false,
         errors: ['Unable to validate address at this time']
@@ -53,21 +47,14 @@ export class USPSAddressValidationService implements AddressValidationService {
         return this.getMockSuggestions(partialAddress);
       }
 
-      const response = await fetch('/api/shipping/suggest-addresses', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ query: partialAddress }),
+      const response = await api.post('/api/shipping/suggest-addresses', { query: partialAddress }, {
+        timeout: API_TIMEOUTS.QUICK,
+        skipToast: true // Don't show toast for suggestion errors
       });
-
-      if (!response.ok) {
-        throw new Error('Address suggestion failed');
-      }
 
       return await response.json();
     } catch (error) {
-      console.error('Address suggestion error:', error);
+      // Address suggestion error handled silently
       return [];
     }
   }

@@ -1,4 +1,5 @@
 import type { SquarePaymentRequest, PaymentResponse } from '@/types/payments';
+import { api, API_TIMEOUTS } from '@/lib/api-client';
 
 declare global {
   interface Window {
@@ -61,7 +62,6 @@ export class SquarePaymentService {
       const card = await this.payments.card();
       return card;
     } catch (error) {
-      console.error('Error creating Square card payment method:', error);
       throw new Error('Failed to create card payment method');
     }
   }
@@ -79,7 +79,6 @@ export class SquarePaymentService {
         throw new Error(tokenResult.errors?.[0]?.message || 'Tokenization failed');
       }
     } catch (error) {
-      console.error('Error tokenizing card:', error);
       throw new Error('Card tokenization failed');
     }
   }
@@ -88,22 +87,13 @@ export class SquarePaymentService {
     try {
       // This would normally make a secure server-side call
       // For demo purposes, we'll simulate the response
-      const response = await fetch('/api/payments/square/process', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(request),
+      const response = await api.post('/api/payments/square/process', request, {
+        timeout: API_TIMEOUTS.STANDARD
       });
-
-      if (!response.ok) {
-        throw new Error('Payment processing failed');
-      }
 
       const result = await response.json();
       return result;
     } catch (error) {
-      console.error('Square payment processing error:', error);
       throw new Error('Payment failed to process');
     }
   }
@@ -118,7 +108,6 @@ export class SquarePaymentService {
       const verificationResult = await card.verifyBuyer(verificationDetails);
       return verificationResult;
     } catch (error) {
-      console.error('Error creating verification details:', error);
       throw new Error('Card verification failed');
     }
   }
