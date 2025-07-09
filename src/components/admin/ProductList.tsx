@@ -72,33 +72,72 @@ export function ProductList() {
     loadVendors();
   }, []);
 
+  // Add timeout safety
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (loading) {
+        console.error('Loading timeout - forcing loading to false');
+        setLoading(false);
+        toast({
+          title: 'Loading timeout',
+          description: 'Products are taking too long to load. Please refresh the page.',
+          variant: 'destructive'
+        });
+      }
+    }, 10000); // 10 second timeout
+    
+    return () => clearTimeout(timeoutId);
+  }, [loading, toast]);
+
   const loadData = async () => {
     setLoading(true);
-    const response = await productsApi.getProducts(filters);
-    
-    if (response.error) {
+    try {
+      console.log('Loading products with filters:', filters);
+      const response = await productsApi.getProducts(filters);
+      console.log('Products API response:', response);
+      
+      if (response.error) {
+        toast({
+          title: 'Error',
+          description: response.error,
+          variant: 'destructive'
+        });
+        setProducts([]);
+      } else {
+        setProducts(response.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading products:', error);
       toast({
         title: 'Error',
-        description: response.error,
+        description: 'Failed to load products. Please try again.',
         variant: 'destructive'
       });
-    } else {
-      setProducts(response.data || []);
+      setProducts([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const loadCategories = async () => {
-    const response = await categoriesApi.getCategories({ is_active: true });
-    if (response.data) {
-      setCategories(response.data);
+    try {
+      const response = await categoriesApi.getCategories({ is_active: true });
+      if (response.data) {
+        setCategories(response.data);
+      }
+    } catch (error) {
+      console.error('Error loading categories:', error);
     }
   };
 
   const loadVendors = async () => {
-    const response = await vendorsApi.getVendors({ is_active: true });
-    if (response.data) {
-      setVendors(response.data);
+    try {
+      const response = await vendorsApi.getVendors({ is_active: true });
+      if (response.data) {
+        setVendors(response.data);
+      }
+    } catch (error) {
+      console.error('Error loading vendors:', error);
     }
   };
 

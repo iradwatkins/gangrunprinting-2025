@@ -28,13 +28,14 @@ export const productsApi = {
   // Get all products with filtering and pagination
   async getProducts(filters: ProductFilters = {}): Promise<ApiResponse<Tables<'products'>[]>> {
     try {
+      console.log('productsApi.getProducts called with filters:', filters);
       let query = supabase
         .from('products')
         .select(`
           *,
           product_categories(id, name, slug),
           vendors(id, name)
-        `);
+        `, { count: 'exact' });
 
       // Apply filters
       if (filters.category_id) {
@@ -63,8 +64,11 @@ export const productsApi = {
       query = query.range(from, to).order('created_at', { ascending: false });
 
       const { data, error, count } = await query;
+      
+      console.log('Supabase query result:', { data, error, count });
 
       if (error) {
+        console.error('Supabase error:', error);
         return { error: error.message };
       }
 
@@ -77,7 +81,8 @@ export const productsApi = {
         }
       };
     } catch (error) {
-      return { error: 'Failed to fetch products' };
+      console.error('productsApi.getProducts error:', error);
+      return { error: error instanceof Error ? error.message : 'Failed to fetch products' };
     }
   },
 
