@@ -67,13 +67,13 @@ export function PaperStockList() {
   const loadData = async () => {
     setLoading(true);
     try {
-      console.log('Loading paper stocks...');
+      console.log('🔍 Loading paper stocks...');
       const response = await paperStocksApi.getPaperStocks(filters);
       
-      console.log('Paper stocks API response:', response);
+      console.log('📋 Paper stocks API response:', response);
       
       if (response.error) {
-        console.error('Paper stocks API error:', response.error);
+        console.error('❌ Paper stocks API error:', response.error);
         toast({
           title: "Error",
           description: response.error,
@@ -81,14 +81,14 @@ export function PaperStockList() {
         });
       } else {
         const stocks = response.data || [];
-        console.log('Paper stocks loaded:', stocks.length);
+        console.log('✅ Paper stocks loaded:', stocks.length);
         setPaperStocks(stocks);
       }
     } catch (error) {
-      console.error('Failed to load paper stocks:', error);
+      console.error('💥 Failed to load paper stocks:', error);
       toast({
         title: "Error",
-        description: "Failed to load paper stocks",
+        description: "Failed to load paper stocks. Check console for details.",
         variant: "destructive",
       });
     }
