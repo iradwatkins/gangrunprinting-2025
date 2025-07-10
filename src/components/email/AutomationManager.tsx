@@ -253,12 +253,12 @@ const AutomationManager: React.FC = () => {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-lg">{getTriggerIcon(automation.trigger.type)}</span>
+                    <span className="text-lg">{getTriggerIcon(automation.trigger?.type || '')}</span>
                     <Badge variant={automation.is_active ? "default" : "secondary"}>
                       {automation.is_active ? 'Active' : 'Inactive'}
                     </Badge>
                     <Badge variant="outline">
-                      {automation.actions.length} action{automation.actions.length !== 1 ? 's' : ''}
+                      {automation.actions?.length || 0} action{(automation.actions?.length || 0) !== 1 ? 's' : ''}
                     </Badge>
                   </div>
                   <CardTitle className="text-lg">{automation.name}</CardTitle>
@@ -307,7 +307,7 @@ const AutomationManager: React.FC = () => {
                 <div className="flex items-center gap-2 text-sm">
                   <Zap size={16} className="text-blue-600" />
                   <span className="font-medium">Trigger:</span>
-                  <span>{getTriggerLabel(automation.trigger.type)}</span>
+                  <span>{getTriggerLabel(automation.trigger?.type || '')}</span>
                 </div>
                 
                 <div className="space-y-2">
@@ -316,7 +316,7 @@ const AutomationManager: React.FC = () => {
                     <span>Actions:</span>
                   </div>
                   <div className="ml-5 space-y-1">
-                    {automation.actions.slice(0, 3).map((action, index) => (
+                    {(automation.actions || []).slice(0, 3).map((action, index) => (
                       <div key={index} className="flex items-center gap-2 text-sm text-gray-600">
                         {action.type === 'send_email' && <Mail size={12} />}
                         {action.type === 'wait' && <Clock size={12} />}
@@ -329,9 +329,9 @@ const AutomationManager: React.FC = () => {
                         </span>
                       </div>
                     ))}
-                    {automation.actions.length > 3 && (
+                    {(automation.actions?.length || 0) > 3 && (
                       <div className="text-sm text-gray-500 ml-4">
-                        +{automation.actions.length - 3} more actions
+                        +{(automation.actions?.length || 0) - 3} more actions
                       </div>
                     )}
                   </div>
