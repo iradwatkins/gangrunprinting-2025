@@ -58,11 +58,19 @@ export function UserButton() {
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link to={canUseAdminMode ? '/admin' : '/my-account'}>
-            <LayoutDashboard className="mr-2 h-4 w-4" />
-            {canUseAdminMode ? 'Admin Dashboard' : 'My Account'}
+          <Link to="/my-account">
+            <User className="mr-2 h-4 w-4" />
+            My Account
           </Link>
         </DropdownMenuItem>
+        {canUseAdminMode && (
+          <DropdownMenuItem asChild>
+            <Link to="/admin">
+              <LayoutDashboard className="mr-2 h-4 w-4" />
+              Admin
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem asChild>
           <Link to="/my-account/profile">
             <User className="mr-2 h-4 w-4" />
@@ -73,17 +81,6 @@ export function UserButton() {
           <Settings className="mr-2 h-4 w-4" />
           Settings
         </DropdownMenuItem>
-{canUseAdminMode && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link to="/my-account">
-                <User className="mr-2 h-4 w-4" />
-                View as Customer
-              </Link>
-            </DropdownMenuItem>
-          </>
-        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={signOut}>
           <LogOut className="mr-2 h-4 w-4" />

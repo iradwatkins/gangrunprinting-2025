@@ -37,8 +37,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Helper function to clean OAuth fragments from URL
 const cleanOAuthFragments = () => {
-  if (window.location.hash.includes('access_token')) {
-    // Remove OAuth fragments but preserve any other hash
+  // Remove hash if it contains OAuth tokens or if it's just an empty hash
+  if (window.location.hash && (window.location.hash.includes('access_token') || window.location.hash === '#')) {
     const cleanUrl = window.location.href.split('#')[0];
     window.history.replaceState({}, document.title, cleanUrl);
   }
@@ -78,11 +78,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (session?.user) {
           await loadUserProfile(session.user);
-          // Clean OAuth fragments after successful session
-          cleanOAuthFragments();
         } else {
           setLoading(false);
         }
+        
+        // Always clean OAuth fragments and trailing hashes
+        cleanOAuthFragments();
       } catch (error) {
         console.error('Auth initialization error:', error);
         setLoading(false);

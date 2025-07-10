@@ -46,8 +46,9 @@ import EmailDashboard from "./pages/email/EmailDashboard";
 import { OrdersPage } from "./pages/orders/OrdersPage";
 import InvoicePaymentPage from "./pages/InvoicePaymentPage";
 
-// Import cleanup utility to make it available
+// Import cleanup utilities to make them available
 import "./utils/cleanup-auth";
+import "./utils/clean-url";
 
 const queryClient = new QueryClient();
 
