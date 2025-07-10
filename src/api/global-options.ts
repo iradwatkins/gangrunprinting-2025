@@ -549,12 +549,56 @@ export const addOnsApi = {
   }
 };
 
+// Database schema test utility
+export const schemaTestApi = {
+  async checkQuantitiesSchema(): Promise<{ hasNewSchema: boolean; currentData: any; error?: string }> {
+    try {
+      console.log('🔍 Checking current quantities table schema...');
+      
+      // Try to select using new schema fields
+      const { data: newSchemaTest, error: newSchemaError } = await supabase
+        .from('quantities')
+        .select('id, name, values, default_value, has_custom, is_active')
+        .limit(1);
+      
+      if (!newSchemaError && newSchemaTest) {
+        console.log('✅ New schema detected!', newSchemaTest);
+        return { hasNewSchema: true, currentData: newSchemaTest };
+      }
+      
+      // Try to select using old schema fields
+      console.log('🔍 Testing old schema...');
+      const { data: oldSchemaTest, error: oldSchemaError } = await supabase
+        .from('quantities')
+        .select('id, name, value, is_custom, is_active')
+        .limit(5);
+      
+      if (!oldSchemaError) {
+        console.log('⚠️ Old schema detected!', oldSchemaTest);
+        return { hasNewSchema: false, currentData: oldSchemaTest };
+      }
+      
+      console.error('❌ Schema check failed:', { newSchemaError, oldSchemaError });
+      return { hasNewSchema: false, currentData: null, error: 'Unable to determine schema' };
+      
+    } catch (error) {
+      console.error('❌ Schema check exception:', error);
+      return { hasNewSchema: false, currentData: null, error: (error as Error).message };
+    }
+  }
+};
+
 // Quantity Groups API
 export const quantitiesApi = {
   // Get all quantity groups - simple method for React Query
   async getAll(): Promise<ApiResponse<Tables<'quantities'>[]>> {
     try {
       console.log('🔄 quantitiesApi.getAll called...');
+      
+      // First check what schema we're working with
+      const schemaCheck = await schemaTestApi.checkQuantitiesSchema();
+      console.log('📋 Schema check result:', schemaCheck);
+      
       const { data, error } = await supabase
         .from('quantities')
         .select('*')
@@ -595,6 +639,16 @@ export const quantitiesApi = {
     }
     
     try {
+      // First, let's test what the current table schema looks like
+      console.log('🔍 Testing current quantities table schema...');
+      const { data: schemaTest, error: schemaError } = await supabase
+        .from('quantities')
+        .select('*')
+        .limit(1);
+      
+      console.log('📋 Current table data sample:', schemaTest);
+      console.log('📋 Schema test error:', schemaError);
+      
       console.log('🔄 Making supabase.from("quantities").insert call...');
       const { data, error } = await supabase
         .from('quantities')

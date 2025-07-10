@@ -40,10 +40,14 @@ export function QuantitiesPage() {
   const { data: quantityGroups, isLoading, error } = useQuery({
     queryKey: ['admin-quantity-groups'],
     queryFn: async () => {
+      // Add immediate schema check
+      console.log('🔍 QuantitiesPage: Starting to fetch quantity groups...');
       const response = await quantitiesApi.getAll();
       if (response.error) {
+        console.error('❌ QuantitiesPage: Error fetching quantity groups:', response.error);
         throw new Error(response.error);
       }
+      console.log('✅ QuantitiesPage: Successfully fetched quantity groups:', response.data);
       return response.data;
     }
   });
