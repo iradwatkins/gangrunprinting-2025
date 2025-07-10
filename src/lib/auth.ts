@@ -2,9 +2,12 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
+export type UserRole = 'admin' | 'customer' | 'broker';
+
 export interface AuthUser extends User {
   profile?: {
-    is_broker: boolean;
+    role: UserRole;
+    is_broker: boolean; // Deprecated - use role instead
     broker_category_discounts: Record<string, any>;
   };
 }
@@ -32,19 +35,24 @@ export const auth = {
         return null;
       }
 
-      // Get user profile
+      // Get user profile with new role system
       const { data: profile } = await supabase
         .from('user_profiles')
-        .select('is_broker, broker_category_discounts')
+        .select('role, broker_category_discounts')
         .eq('user_id', user.id)
         .single();
 
       return {
         ...user,
         profile: profile ? {
-          is_broker: profile.is_broker,
+          role: profile.role as UserRole,
+          is_broker: profile.role === 'broker', // Backward compatibility
           broker_category_discounts: (profile.broker_category_discounts as Record<string, any>) || {}
-        } : { is_broker: false, broker_category_discounts: {} }
+        } : { 
+          role: 'customer' as UserRole, 
+          is_broker: false, 
+          broker_category_discounts: {} 
+        }
       };
     } catch (error) {
       console.error('Failed to get current user:', error);
@@ -61,11 +69,9 @@ export const auth = {
         return false;
       }
 
-      // Check if user has admin privileges
-      const isEmailAdmin = currentUser.email?.endsWith('@gangrunprinting.com');
-      const hasAdminDiscount = currentUser.profile?.broker_category_discounts?.admin;
-
-      return isEmailAdmin || !!hasAdminDiscount;
+      // Use new role system - only iradwatkins@gmail.com or role === 'admin'
+      return currentUser.email === 'iradwatkins@gmail.com' || 
+             currentUser.profile?.role === 'admin';
     } catch (error) {
       console.error('Failed to check admin status:', error);
       return false;
@@ -98,10 +104,27 @@ export const auth = {
         return false;
       }
 
-      return currentUser.profile?.is_broker || false;
+      // Use new role system
+      return currentUser.profile?.role === 'broker';
     } catch (error) {
       console.error('Failed to check broker status:', error);
       return false;
+    }
+  },
+
+  // Get user role
+  async getUserRole(user?: AuthUser): Promise<UserRole> {
+    try {
+      const currentUser = user || await this.getCurrentUser();
+      
+      if (!currentUser) {
+        return 'customer';
+      }
+
+      return currentUser.profile?.role || 'customer';
+    } catch (error) {
+      console.error('Failed to get user role:', error);
+      return 'customer';
     }
   },
 
