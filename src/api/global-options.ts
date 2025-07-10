@@ -628,6 +628,70 @@ export const quantitiesApi = {
     }
   },
 
+  // Bulk create quantities method
+  async bulkCreate(quantities: Array<{ name: string; value: number | null; is_custom?: boolean; is_default?: boolean }>): Promise<ApiResponse<Tables<'quantities'>[]>> {
+    try {
+      // If any quantity should be default, first unset all existing defaults
+      const hasDefault = quantities.some(q => q.is_default);
+      if (hasDefault) {
+        await supabase
+          .from('quantities')
+          .update({ is_default: false })
+          .eq('is_default', true);
+      }
+
+      // Prepare quantities with sort_order
+      const quantitiesWithSort = quantities.map((q, index) => ({
+        name: q.name,
+        value: q.value,
+        is_custom: q.is_custom || false,
+        is_default: q.is_default || false,
+        is_active: true,
+        sort_order: q.value || 999999
+      }));
+
+      const { data, error } = await supabase
+        .from('quantities')
+        .insert(quantitiesWithSort)
+        .select();
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data: data || [] };
+    } catch (error) {
+      return { error: 'Failed to bulk create quantities' };
+    }
+  },
+
+  // Set default quantity method
+  async setDefault(id: string): Promise<ApiResponse<Tables<'quantities'>>> {
+    try {
+      // First unset all defaults
+      await supabase
+        .from('quantities')
+        .update({ is_default: false })
+        .eq('is_default', true);
+
+      // Then set the new default
+      const { data, error } = await supabase
+        .from('quantities')
+        .update({ is_default: true })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data };
+    } catch (error) {
+      return { error: 'Failed to set default quantity' };
+    }
+  },
+
   // Convenience methods for consistency
   async getAll(filters: GlobalOptionsFilters = {}) {
     return this.getQuantities(filters);
