@@ -549,239 +549,63 @@ export const addOnsApi = {
   }
 };
 
-// Database schema test utility
-export const schemaTestApi = {
-  async checkDatabaseAccess(): Promise<{ canAccess: boolean; tableExists: boolean; error?: string }> {
-    try {
-      console.log('🔍 Testing basic database access...');
-      
-      // Test if we can access any table at all
-      const { data: profileTest, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .limit(1);
-      
-      if (profileError) {
-        console.error('❌ Cannot access database at all:', profileError);
-        return { canAccess: false, tableExists: false, error: profileError.message };
-      }
-      
-      console.log('✅ Database access works, testing quantities table...');
-      
-      // Test quantities table with minimal query
-      const { data: quantitiesTest, error: quantitiesError } = await supabase
-        .from('quantities')
-        .select('id')
-        .limit(1);
-      
-      if (quantitiesError) {
-        console.error('❌ Quantities table error:', quantitiesError);
-        
-        if (quantitiesError.message.includes('relation') && quantitiesError.message.includes('does not exist')) {
-          return { canAccess: true, tableExists: false, error: 'Quantities table does not exist' };
-        }
-        
-        return { canAccess: true, tableExists: true, error: quantitiesError.message };
-      }
-      
-      console.log('✅ Quantities table accessible');
-      return { canAccess: true, tableExists: true };
-      
-    } catch (error) {
-      console.error('❌ Database access exception:', error);
-      return { canAccess: false, tableExists: false, error: (error as Error).message };
-    }
-  }
-};
 
-// Utility function to add timeout to promises
-const withTimeout = <T>(promise: Promise<T>, timeoutMs: number = 10000): Promise<T> => {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) => 
-      setTimeout(() => reject(new Error(`Operation timed out after ${timeoutMs}ms`)), timeoutMs)
-    )
-  ]);
-};
 
 // Quantity Groups API
 export const quantitiesApi = {
-  // Test method to diagnose database issues
-  async testDirectInsert(): Promise<{ success: boolean; error?: string; details?: any }> {
-    try {
-      console.log('🧪 Testing direct insert without auth checks...');
-      
-      const testData = {
-        name: `Test Group ${Date.now()}`,
-        values: '10,20,30,40,50',
-        default_value: 20,
-        has_custom: false,
-        is_active: false // Set to false so it doesn't appear in UI
-      };
-      
-      console.log('🧪 Test data:', testData);
-      
-      const { data, error } = await supabase
-        .from('quantities')
-        .insert(testData)
-        .select()
-        .single();
-      
-      if (error) {
-        console.error('🧪 Direct insert error:', error);
-        return {
-          success: false,
-          error: error.message,
-          details: {
-            code: error.code,
-            details: error.details,
-            hint: error.hint
-          }
-        };
-      }
-      
-      console.log('🧪 Direct insert success:', data);
-      
-      // Clean up test data
-      if (data?.id) {
-        await supabase.from('quantities').delete().eq('id', data.id);
-      }
-      
-      return { success: true, details: data };
-    } catch (err) {
-      console.error('🧪 Direct insert exception:', err);
-      return {
-        success: false,
-        error: (err as Error).message,
-        details: err
-      };
-    }
-  },
 
   // Get all quantity groups - simple method for React Query
   async getAll(): Promise<ApiResponse<Tables<'quantities'>[]>> {
     try {
-      console.log('🔄 quantitiesApi.getAll called...');
-      
-      const response = await withTimeout(
-        supabase
-          .from('quantities')
-          .select('*')
-          .order('name'),
-        8000 // 8 second timeout
-      );
-
-      const { data, error } = response;
-
-      console.log('📊 getAll response - data count:', data?.length);
-      console.log('📊 getAll response - error:', error);
+      const { data, error } = await supabase
+        .from('quantities')
+        .select('*')
+        .order('name');
 
       if (error) {
-        console.error('❌ getAll error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
+        console.error('❌ Database error:', error);
         return { error: error.message };
       }
 
-      console.log('✅ Successfully fetched quantity groups:', data);
       return { data: data || [] };
     } catch (error) {
       console.error('❌ Exception in quantitiesApi.getAll:', error);
-      if ((error as Error).message.includes('timed out')) {
-        return { error: 'Database request timed out. Please check the migration status.' };
-      }
       return { error: 'Failed to fetch quantity groups' };
     }
   },
 
-  // Create new quantity group - for React Query mutations
+  // Create new quantity group - for React Query mutations  
   async create(quantityGroup: TablesInsert<'quantities'>): Promise<Tables<'quantities'>> {
     console.log('🔄 quantitiesApi.create called with:', quantityGroup);
-    console.log('🔄 quantityGroup type:', typeof quantityGroup);
-    console.log('🔄 quantityGroup keys:', Object.keys(quantityGroup));
     
     // Validate required fields
     if (!quantityGroup.name || !quantityGroup.values) {
-      const error = 'Missing required fields: name and values are required';
-      console.error('❌ Validation error:', error);
-      throw new Error(error);
+      throw new Error('Missing required fields: name and values are required');
     }
     
     try {
-      // First check if user is authenticated
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
-      if (authError) {
-        console.error('❌ Auth error:', authError);
-        throw new Error(`Authentication error: ${authError.message}`);
-      }
-      
-      if (!user) {
-        console.error('❌ No authenticated user');
-        throw new Error('You must be logged in to create quantity groups');
-      }
-      
-      console.log('✅ Authenticated user:', user.email);
-      console.log('🔄 Making direct supabase insert call...');
-      
-      // Check if user is admin
-      const { data: profile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('is_admin')
-        .eq('user_id', user.id)
+      const { data, error } = await supabase
+        .from('quantities')
+        .insert(quantityGroup)
+        .select()
         .single();
-      
-      if (profileError) {
-        console.error('❌ Error checking admin status:', profileError);
-        throw new Error('Could not verify admin status');
-      }
-      
-      if (!profile?.is_admin) {
-        console.error('❌ User is not admin');
-        throw new Error('You must be an admin to create quantity groups');
-      }
-      
-      console.log('✅ User is admin, proceeding with insert...');
-      
-      const response = await withTimeout(
-        supabase
-          .from('quantities')
-          .insert(quantityGroup)
-          .select()
-          .single(),
-        8000 // 8 second timeout
-      );
-
-      const { data, error } = response;
-
-      console.log('✅ Supabase response - data:', data);
-      console.log('❌ Supabase response - error:', error);
 
       if (error) {
-        console.error('❌ Supabase error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
+        console.error('❌ Database error:', error);
         
-        // Provide more specific error messages
+        // Provide specific error messages
         if (error.code === '42501') {
           throw new Error('Permission denied. Please ensure you have admin privileges.');
         } else if (error.code === '23505') {
           throw new Error('A quantity group with this name already exists.');
-        } else if (error.message.includes('new row violates row-level security policy')) {
-          throw new Error('Security policy violation. Please check your admin permissions.');
+        } else if (error.message.includes('row-level security policy')) {
+          throw new Error('You must be an admin to create quantity groups.');
         }
         
-        throw new Error(`Database error: ${error.message}`);
+        throw new Error(error.message);
       }
 
       if (!data) {
-        console.error('❌ No data returned from insert');
         throw new Error('No data returned from database');
       }
 
@@ -789,9 +613,6 @@ export const quantitiesApi = {
       return data;
     } catch (err) {
       console.error('❌ Exception in quantitiesApi.create:', err);
-      if ((err as Error).message.includes('timed out')) {
-        throw new Error('Database insert timed out. Please check your connection and try again.');
-      }
       throw err;
     }
   },

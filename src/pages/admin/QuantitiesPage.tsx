@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Edit, Trash2, AlertCircle, Hash, X, Copy, CheckCircle2 } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, AlertCircle, Hash, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,14 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AdminLayout } from '@/components/admin/AdminLayout';
-import { DatabaseDiagnostic } from '@/components/admin/DatabaseDiagnostic';
-import { MigrationTool } from '@/components/admin/MigrationTool';
 import { AuthStatusDebug } from '@/components/admin/AuthStatusDebug';
 import { useToast } from '@/hooks/use-toast';
 import { quantitiesApi } from '@/api/global-options';
 import type { Tables } from '@/integrations/supabase/types';
-import { getRLSFixInstructions } from '@/utils/fix-quantities-rls';
-import { debugQuantitiesIssue } from '@/utils/debug-quantities';
 
 type QuantityGroup = Tables<'quantities'>;
 
@@ -34,8 +30,6 @@ export function QuantitiesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<QuantityGroup | null>(null);
-  const [showRLSFix, setShowRLSFix] = useState(false);
-  const [copiedSQL, setCopiedSQL] = useState(false);
   const [formData, setFormData] = useState<QuantityGroupFormData>({
     name: '',
     values: '',
@@ -181,25 +175,9 @@ export function QuantitiesPage() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            <div>
-              <strong>Failed to load quantity groups:</strong> {(error as Error).message}
-            </div>
-            {(error as Error).message.includes('does not exist') && (
-              <div className="mt-2">
-                <p>The quantities table may not be migrated yet. Please check the database migration status.</p>
-              </div>
-            )}
-            {(error as Error).message.includes('timed out') && (
-              <div className="mt-2">
-                <p>The database request timed out. This might indicate a connection issue or missing table.</p>
-              </div>
-            )}
+            Failed to load quantity groups: {(error as Error).message}
           </AlertDescription>
         </Alert>
-        <div className="mt-6 space-y-6">
-          <DatabaseDiagnostic />
-          <MigrationTool />
-        </div>
       </AdminLayout>
     );
   }
@@ -247,115 +225,8 @@ export function QuantitiesPage() {
           </Alert>
         )}
 
-        {/* Authentication Status Debug */}
-        <AuthStatusDebug />
-        
-        {/* Debug Button */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Debug Quantities Issue</CardTitle>
-            <CardDescription>Run comprehensive diagnostics</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button 
-              variant="destructive"
-              onClick={async () => {
-                console.log('🔍 Running debug...');
-                const result = await debugQuantitiesIssue();
-                console.log('Debug complete:', result);
-              }}
-            >
-              Run Debug Diagnostics
-            </Button>
-            <p className="text-xs text-gray-500 mt-2">
-              Check the browser console for detailed diagnostic information.
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Database Insert Test */}
-        {process.env.NODE_ENV === 'development' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Database Diagnostic</CardTitle>
-              <CardDescription>Test direct database insert without auth checks</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <Button 
-                    variant="outline"
-                    onClick={async () => {
-                      console.log('🧪 Running direct insert test...');
-                      const result = await quantitiesApi.testDirectInsert();
-                      console.log('🧪 Test result:', result);
-                      
-                      if (result.success) {
-                        toast({ 
-                          title: 'Success', 
-                          description: 'Direct database insert works! The issue is likely with RLS policies.',
-                          duration: 5000
-                        });
-                      } else {
-                        toast({ 
-                          title: 'Database Error', 
-                          description: result.error || 'Direct insert failed',
-                          variant: 'destructive',
-                          duration: 5000
-                        });
-                      }
-                    }}
-                  >
-                    Test Direct Insert
-                  </Button>
-                  <p className="text-xs text-gray-500 mt-2">
-                    This will test if the database table exists and accepts inserts without auth checks.
-                  </p>
-                </div>
-                
-                {(createMutation.error?.message || '').includes('policy') && (
-                  <div>
-                    <Button
-                      variant="default"
-                      onClick={() => setShowRLSFix(!showRLSFix)}
-                    >
-                      {showRLSFix ? 'Hide' : 'Show'} RLS Policy Fix
-                    </Button>
-                  </div>
-                )}
-                
-                {showRLSFix && (
-                  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-semibold">SQL Fix for RLS Policy</h4>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          navigator.clipboard.writeText(getRLSFixInstructions());
-                          setCopiedSQL(true);
-                          setTimeout(() => setCopiedSQL(false), 2000);
-                        }}
-                      >
-                        {copiedSQL ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                        {copiedSQL ? 'Copied!' : 'Copy'}
-                      </Button>
-                    </div>
-                    <pre className="text-xs overflow-x-auto whitespace-pre-wrap">
-                      {getRLSFixInstructions()}
-                    </pre>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Emergency Database Diagnostics */}
-        <DatabaseDiagnostic />
-        
-        {/* Database Migration Tool */}
-        <MigrationTool />
+        {/* Show authentication status in development */}
+        {process.env.NODE_ENV === 'development' && <AuthStatusDebug />}
 
         {/* Inline Form */}
         {isFormOpen && (

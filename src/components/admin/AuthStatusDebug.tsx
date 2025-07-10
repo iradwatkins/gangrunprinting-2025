@@ -86,11 +86,13 @@ export function AuthStatusDebug() {
           
           {profile && (
             <div className="flex items-center gap-2">
-              <strong>Admin Status:</strong>
-              {profile.is_admin ? (
-                <Badge variant="default" className="bg-green-600">Admin</Badge>
-              ) : (
-                <Badge variant="destructive">Not Admin</Badge>
+              <strong>Role:</strong>
+              <Badge variant={profile.role === 'admin' ? 'default' : profile.role === 'broker' ? 'secondary' : 'outline'} 
+                     className={profile.role === 'admin' ? 'bg-green-600' : ''}>
+                {profile.role || 'customer'}
+              </Badge>
+              {profile.role === 'admin' && (
+                <Badge variant="default" className="bg-green-600">Admin Access</Badge>
               )}
             </div>
           )}
@@ -101,9 +103,9 @@ export function AuthStatusDebug() {
             </div>
           )}
 
-          {user && !profile?.is_admin && (
+          {user && profile?.role !== 'admin' && (
             <div className="text-amber-600 text-sm mt-2">
-              <strong>Note:</strong> You need admin privileges to create quantity groups.
+              <strong>Note:</strong> You need admin privileges to manage global options.
             </div>
           )}
         </div>
