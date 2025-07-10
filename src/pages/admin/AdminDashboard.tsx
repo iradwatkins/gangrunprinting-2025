@@ -20,6 +20,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { CreateOrderForCustomer } from '@/components/admin/CreateOrderForCustomer';
 import { DatabaseTestPanel } from '@/components/admin/DatabaseTestPanel';
 import { DeploymentComparison } from '@/components/admin/DeploymentComparison';
+import { AuthenticationDebugger } from '@/components/admin/AuthenticationDebugger';
 import { supabase } from '@/integrations/supabase/client';
 
 export function AdminDashboard() {
@@ -338,6 +339,9 @@ export function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Authentication Debugger - For fixing browser cache conflicts */}
+        <AuthenticationDebugger />
 
         {/* Deployment Comparison - For debugging deployment differences */}
         <DeploymentComparison />

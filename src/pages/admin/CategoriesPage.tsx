@@ -290,8 +290,42 @@ export function CategoriesPage() {
         ) : filteredCategories.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
-              <p className="text-gray-500">No information at this time</p>
+              <p className="text-gray-500">No categories found</p>
               {searchTerm && <p className="text-sm text-gray-400 mt-2">Try adjusting your search</p>}
+              
+              {!searchTerm && (
+                <div className="mt-4 space-y-3">
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      <strong>Possible browser cache issue.</strong> Try opening this page in an incognito/private window. 
+                      If categories appear there, you have an authentication cache conflict.
+                    </AlertDescription>
+                  </Alert>
+                  
+                  <div className="flex gap-2 justify-center">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => window.open(window.location.href, '_blank')}
+                      size="sm"
+                    >
+                      Open in New Tab
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => window.location.href = '/admin'}
+                      size="sm"
+                    >
+                      Go to Admin Dashboard
+                    </Button>
+                  </div>
+                  
+                  <p className="text-sm text-gray-500">
+                    Use the Authentication Debugger on the Admin Dashboard to clear browser cache.
+                  </p>
+                </div>
+              )}
+              
               <div className="mt-4 p-4 bg-gray-100 rounded text-left">
                 <h3 className="font-bold text-sm">Debug Info:</h3>
                 <pre className="text-xs">{JSON.stringify({ 
@@ -299,7 +333,8 @@ export function CategoriesPage() {
                   filteredCount: filteredCategories.length,
                   searchTerm,
                   isLoading,
-                  hasError: !!error 
+                  hasError: !!error,
+                  currentUrl: window.location.origin 
                 }, null, 2)}</pre>
               </div>
             </CardContent>
