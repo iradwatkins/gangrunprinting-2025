@@ -18,6 +18,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateOrderForCustomer } from '@/components/admin/CreateOrderForCustomer';
+import { DatabaseTestPanel } from '@/components/admin/DatabaseTestPanel';
 import { supabase } from '@/integrations/supabase/client';
 
 export function AdminDashboard() {
@@ -336,6 +337,9 @@ export function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Database Test Panel - For debugging save/load issues */}
+        <DatabaseTestPanel />
       </div>
     </AdminLayout>
   );
