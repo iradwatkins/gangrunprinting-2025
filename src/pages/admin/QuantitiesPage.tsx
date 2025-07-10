@@ -9,6 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { DatabaseDiagnostic } from '@/components/admin/DatabaseDiagnostic';
+import { MigrationTool } from '@/components/admin/MigrationTool';
 import { useToast } from '@/hooks/use-toast';
 import { quantitiesApi } from '@/api/global-options';
 import type { Tables } from '@/integrations/supabase/types';
@@ -179,6 +181,12 @@ export function QuantitiesPage() {
             Add Quantity Group
           </Button>
         </div>
+
+        {/* Emergency Database Diagnostics */}
+        <DatabaseDiagnostic />
+        
+        {/* Database Migration Tool */}
+        <MigrationTool />
 
         {/* Inline Form */}
         {isFormOpen && (

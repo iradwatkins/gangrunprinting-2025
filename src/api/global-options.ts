@@ -594,6 +594,16 @@ export const schemaTestApi = {
   }
 };
 
+// Utility function to add timeout to promises
+const withTimeout = <T>(promise: Promise<T>, timeoutMs: number = 10000): Promise<T> => {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => 
+      setTimeout(() => reject(new Error(`Operation timed out after ${timeoutMs}ms`)), timeoutMs)
+    )
+  ]);
+};
+
 // Quantity Groups API
 export const quantitiesApi = {
   // Get all quantity groups - simple method for React Query
@@ -601,22 +611,15 @@ export const quantitiesApi = {
     try {
       console.log('🔄 quantitiesApi.getAll called...');
       
-      // First do a simple database access check
-      const accessCheck = await schemaTestApi.checkDatabaseAccess();
-      console.log('🔍 Database access check:', accessCheck);
-      
-      if (!accessCheck.canAccess) {
-        return { error: `Database access failed: ${accessCheck.error}` };
-      }
-      
-      if (!accessCheck.tableExists) {
-        return { error: `Quantities table does not exist: ${accessCheck.error}` };
-      }
-      
-      const { data, error } = await supabase
-        .from('quantities')
-        .select('*')
-        .order('name');
+      const response = await withTimeout(
+        supabase
+          .from('quantities')
+          .select('*')
+          .order('name'),
+        8000 // 8 second timeout
+      );
+
+      const { data, error } = response;
 
       console.log('📊 getAll response - data count:', data?.length);
       console.log('📊 getAll response - error:', error);
@@ -635,6 +638,9 @@ export const quantitiesApi = {
       return { data: data || [] };
     } catch (error) {
       console.error('❌ Exception in quantitiesApi.getAll:', error);
+      if ((error as Error).message.includes('timed out')) {
+        return { error: 'Database request timed out. Please check the migration status.' };
+      }
       return { error: 'Failed to fetch quantity groups' };
     }
   },
@@ -653,12 +659,18 @@ export const quantitiesApi = {
     }
     
     try {
-      console.log('🔄 Making direct supabase insert call...');
-      const { data, error } = await supabase
-        .from('quantities')
-        .insert(quantityGroup)
-        .select()
-        .single();
+      console.log('🔄 Making direct supabase insert call with timeout...');
+      
+      const response = await withTimeout(
+        supabase
+          .from('quantities')
+          .insert(quantityGroup)
+          .select()
+          .single(),
+        8000 // 8 second timeout
+      );
+
+      const { data, error } = response;
 
       console.log('✅ Supabase response - data:', data);
       console.log('❌ Supabase response - error:', error);
@@ -682,6 +694,9 @@ export const quantitiesApi = {
       return data;
     } catch (err) {
       console.error('❌ Exception in quantitiesApi.create:', err);
+      if ((err as Error).message.includes('timed out')) {
+        throw new Error('Database insert timed out. Please check the migration status and try again.');
+      }
       throw err;
     }
   },
