@@ -42,13 +42,16 @@ export const categoriesApi = {
         query = query.ilike('name', `%${filters.search}%`);
       }
 
-      // Apply pagination
-      const page = filters.page || 1;
-      const limit = filters.limit || 50;
-      const from = (page - 1) * limit;
-      const to = from + limit - 1;
+      // Apply pagination only if page/limit are specified
+      if (filters.page && filters.limit) {
+        const page = filters.page;
+        const limit = filters.limit;
+        const from = (page - 1) * limit;
+        const to = from + limit - 1;
+        query = query.range(from, to);
+      }
 
-      query = query.range(from, to).order('sort_order', { ascending: true });
+      query = query.order('sort_order', { ascending: true });
 
       console.log('Categories API: Executing query');
       const { data, error, count } = await query;
@@ -60,14 +63,21 @@ export const categoriesApi = {
       }
 
       console.log('Categories API: Success!', data?.length || 0, 'categories');
-      return {
-        data: data || [],
-        meta: {
-          total: count || 0,
-          page,
-          limit
-        }
+      
+      const response: ApiResponse<Tables<'product_categories'>[]> = {
+        data: data || []
       };
+
+      // Only include meta if pagination was requested
+      if (filters.page && filters.limit) {
+        response.meta = {
+          total: count || 0,
+          page: filters.page,
+          limit: filters.limit
+        };
+      }
+
+      return response;
     } catch (error) {
       console.error('Categories API: Unexpected error:', error);
       return { error: 'Failed to fetch categories' };
