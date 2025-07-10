@@ -551,39 +551,45 @@ export const addOnsApi = {
 
 // Database schema test utility
 export const schemaTestApi = {
-  async checkQuantitiesSchema(): Promise<{ hasNewSchema: boolean; currentData: any; error?: string }> {
+  async checkDatabaseAccess(): Promise<{ canAccess: boolean; tableExists: boolean; error?: string }> {
     try {
-      console.log('🔍 Checking current quantities table schema...');
+      console.log('🔍 Testing basic database access...');
       
-      // Try to select using new schema fields
-      const { data: newSchemaTest, error: newSchemaError } = await supabase
-        .from('quantities')
-        .select('id, name, values, default_value, has_custom, is_active')
+      // Test if we can access any table at all
+      const { data: profileTest, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('id')
         .limit(1);
       
-      if (!newSchemaError && newSchemaTest) {
-        console.log('✅ New schema detected!', newSchemaTest);
-        return { hasNewSchema: true, currentData: newSchemaTest };
+      if (profileError) {
+        console.error('❌ Cannot access database at all:', profileError);
+        return { canAccess: false, tableExists: false, error: profileError.message };
       }
       
-      // Try to select using old schema fields
-      console.log('🔍 Testing old schema...');
-      const { data: oldSchemaTest, error: oldSchemaError } = await supabase
+      console.log('✅ Database access works, testing quantities table...');
+      
+      // Test quantities table with minimal query
+      const { data: quantitiesTest, error: quantitiesError } = await supabase
         .from('quantities')
-        .select('id, name, value, is_custom, is_active')
-        .limit(5);
+        .select('id')
+        .limit(1);
       
-      if (!oldSchemaError) {
-        console.log('⚠️ Old schema detected!', oldSchemaTest);
-        return { hasNewSchema: false, currentData: oldSchemaTest };
+      if (quantitiesError) {
+        console.error('❌ Quantities table error:', quantitiesError);
+        
+        if (quantitiesError.message.includes('relation') && quantitiesError.message.includes('does not exist')) {
+          return { canAccess: true, tableExists: false, error: 'Quantities table does not exist' };
+        }
+        
+        return { canAccess: true, tableExists: true, error: quantitiesError.message };
       }
       
-      console.error('❌ Schema check failed:', { newSchemaError, oldSchemaError });
-      return { hasNewSchema: false, currentData: null, error: 'Unable to determine schema' };
+      console.log('✅ Quantities table accessible');
+      return { canAccess: true, tableExists: true };
       
     } catch (error) {
-      console.error('❌ Schema check exception:', error);
-      return { hasNewSchema: false, currentData: null, error: (error as Error).message };
+      console.error('❌ Database access exception:', error);
+      return { canAccess: false, tableExists: false, error: (error as Error).message };
     }
   }
 };
@@ -595,9 +601,17 @@ export const quantitiesApi = {
     try {
       console.log('🔄 quantitiesApi.getAll called...');
       
-      // First check what schema we're working with
-      const schemaCheck = await schemaTestApi.checkQuantitiesSchema();
-      console.log('📋 Schema check result:', schemaCheck);
+      // First do a simple database access check
+      const accessCheck = await schemaTestApi.checkDatabaseAccess();
+      console.log('🔍 Database access check:', accessCheck);
+      
+      if (!accessCheck.canAccess) {
+        return { error: `Database access failed: ${accessCheck.error}` };
+      }
+      
+      if (!accessCheck.tableExists) {
+        return { error: `Quantities table does not exist: ${accessCheck.error}` };
+      }
       
       const { data, error } = await supabase
         .from('quantities')
@@ -639,17 +653,7 @@ export const quantitiesApi = {
     }
     
     try {
-      // First, let's test what the current table schema looks like
-      console.log('🔍 Testing current quantities table schema...');
-      const { data: schemaTest, error: schemaError } = await supabase
-        .from('quantities')
-        .select('*')
-        .limit(1);
-      
-      console.log('📋 Current table data sample:', schemaTest);
-      console.log('📋 Schema test error:', schemaError);
-      
-      console.log('🔄 Making supabase.from("quantities").insert call...');
+      console.log('🔄 Making direct supabase insert call...');
       const { data, error } = await supabase
         .from('quantities')
         .insert(quantityGroup)
