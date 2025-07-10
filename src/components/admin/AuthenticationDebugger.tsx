@@ -25,13 +25,54 @@ interface StorageData {
   sessionStorage: Record<string, any>;
 }
 
+interface DeploymentInfo {
+  url: string;
+  type: 'production' | 'preview' | 'development' | 'unknown';
+  name: string;
+  isPrimary: boolean;
+}
+
 export function AuthenticationDebugger() {
   const [authState, setAuthState] = useState<AuthState | null>(null);
   const [storageData, setStorageData] = useState<StorageData>({ localStorage: {}, sessionStorage: {} });
+  const [deploymentInfo, setDeploymentInfo] = useState<DeploymentInfo | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { user, isAuthenticated } = useAuth();
   const { isAdminMode, canUseAdminMode } = useAdminMode();
   const { toast } = useToast();
+
+  const collectDeploymentInfo = () => {
+    const url = window.location.origin;
+    let type: DeploymentInfo['type'] = 'unknown';
+    let name = 'Unknown';
+    let isPrimary = false;
+
+    if (url.includes('localhost') || url.includes('127.0.0.1')) {
+      type = 'development';
+      name = 'Local Development';
+    } else if (url === 'https://gangrunprinting.com') {
+      type = 'production';
+      name = 'Production (Primary)';
+      isPrimary = true;
+    } else if (url === 'https://www.gangrunprinting.com') {
+      type = 'production';
+      name = 'Production (WWW)';
+    } else if (url.includes('test-seven-liard-6nrp8uaf3b.vercel.app')) {
+      type = 'preview';
+      name = 'Preview (Test)';
+    } else if (url.includes('gangrunprinting-v10-git-main')) {
+      type = 'preview';
+      name = 'Preview (Main Branch)';
+    } else if (url.includes('gangrunprinting-v10-ira-watkins-projects')) {
+      type = 'preview';
+      name = 'Preview (Project)';
+    } else if (url.includes('vercel.app')) {
+      type = 'preview';
+      name = 'Vercel Preview';
+    }
+
+    setDeploymentInfo({ url, type, name, isPrimary });
+  };
 
   const collectAuthState = async () => {
     try {
@@ -87,6 +128,7 @@ export function AuthenticationDebugger() {
   const refreshAll = async () => {
     setIsRefreshing(true);
     try {
+      collectDeploymentInfo();
       await collectAuthState();
       collectStorageData();
     } finally {
@@ -189,12 +231,46 @@ export function AuthenticationDebugger() {
         </div>
       </div>
 
+      {/* Deployment Information */}
+      {deploymentInfo && (
+        <Card className={`border-2 ${
+          deploymentInfo.type === 'production' ? 'border-green-200 bg-green-50' :
+          deploymentInfo.type === 'preview' ? 'border-yellow-200 bg-yellow-50' :
+          'border-blue-200 bg-blue-50'
+        }`}>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-lg">{deploymentInfo.name}</h3>
+                <p className="text-sm text-gray-600">{deploymentInfo.url}</p>
+              </div>
+              <div className="flex gap-2">
+                <Badge variant={deploymentInfo.isPrimary ? 'default' : 'secondary'}>
+                  {deploymentInfo.type}
+                </Badge>
+                {deploymentInfo.isPrimary && <Badge variant="default">Primary</Badge>}
+              </div>
+            </div>
+            {!deploymentInfo.isPrimary && (
+              <Alert className="mt-3">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Multi-Deployment Notice:</strong> You're on a {deploymentInfo.type} deployment. 
+                  If you've used other deployment URLs, you may have authentication conflicts. 
+                  Clear browser data if categories aren't loading.
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Quick Fix Alert */}
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
           <strong>Common Fix:</strong> If categories aren't loading, try "Clear All Data" button above. 
-          This fixes authentication conflicts between deployments.
+          This fixes authentication conflicts between multiple deployment URLs.
         </AlertDescription>
       </Alert>
 
@@ -319,6 +395,51 @@ export function AuthenticationDebugger() {
                 {JSON.stringify(storageData.sessionStorage, null, 2)}
               </pre>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Supabase OAuth Configuration */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Supabase OAuth Configuration</CardTitle>
+          <CardDescription>Required settings for all deployment URLs</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <h4 className="font-medium mb-2">Required JavaScript Origins:</h4>
+              <div className="bg-gray-50 p-3 rounded text-xs font-mono space-y-1">
+                <div>https://gangrunprinting.com</div>
+                <div>https://www.gangrunprinting.com</div>
+                <div>https://test-seven-liard-6nrp8uaf3b.vercel.app</div>
+                <div>https://gangrunprinting-v10-ira-watkins-projects.vercel.app</div>
+                <div>https://gangrunprinting-v10-git-main-ira-watkins-projects.vercel.app</div>
+                <div>http://localhost:3000</div>
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="font-medium mb-2">Supabase Site URL (Primary):</h4>
+              <div className="bg-gray-50 p-3 rounded text-xs font-mono">
+                https://gangrunprinting.com
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="font-medium mb-2">OAuth Redirect URI:</h4>
+              <div className="bg-gray-50 p-3 rounded text-xs font-mono">
+                https://dprvugzbsqcufitbxkda.supabase.co/auth/v1/callback
+              </div>
+            </div>
+            
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="text-xs">
+                If any of these URLs are missing from your Google OAuth or Supabase settings, 
+                authentication may fail on that deployment. Add all URLs to ensure consistent behavior.
+              </AlertDescription>
+            </Alert>
           </div>
         </CardContent>
       </Card>
