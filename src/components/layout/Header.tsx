@@ -11,11 +11,19 @@ import { useCart } from '@/hooks/useCart';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export function Header() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { cart } = useCart();
   const location = useLocation();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Debug logging
+  console.log('🔍 HEADER: Render state:', {
+    hasUser: !!user,
+    userEmail: user?.email,
+    loading,
+    userProfile: user?.profile
+  });
 
   const navigation = [
     { name: 'All Products', href: '/products' },
@@ -81,7 +89,12 @@ export function Header() {
               <ThemeToggle />
               
               {/* Authentication */}
-              {user ? (
+              {loading ? (
+                <Button variant="outline" size="sm" disabled>
+                  <User className="h-4 w-4 mr-2" />
+                  Loading...
+                </Button>
+              ) : user ? (
                 <UserButton />
               ) : (
                 <Button onClick={() => setAuthModalOpen(true)} variant="outline" size="sm">
@@ -138,7 +151,16 @@ export function Header() {
                         )}
                       </Link>
                       
-                      {!user && (
+                      {loading ? (
+                        <Button 
+                          variant="outline" 
+                          className="w-full mt-3" 
+                          disabled
+                        >
+                          <User className="h-4 w-4 mr-2" />
+                          Loading...
+                        </Button>
+                      ) : !user && (
                         <Button 
                           onClick={() => {
                             setMobileMenuOpen(false);

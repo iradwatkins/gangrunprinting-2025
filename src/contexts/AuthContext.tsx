@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { checkStorageConflicts, clearConflictingStorage } from '@/utils/check-storage-conflicts';
+// import { checkStorageConflicts, clearConflictingStorage } from '@/utils/check-storage-conflicts';
 
 export interface AuthUser extends User {
   profile?: {
@@ -56,14 +56,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         // Check for storage conflicts with Docker Supabase
         console.log('Checking for storage conflicts...');
-        checkStorageConflicts();
+        // checkStorageConflicts();
         
         // Clear any conflicting storage from local Docker instances
-        const hadConflicts = clearConflictingStorage();
-        if (hadConflicts) {
-          console.log('Cleared conflicting storage from local Docker Supabase');
-          toast.info('Cleared conflicting authentication data');
-        }
+        // const hadConflicts = clearConflictingStorage();
+        // if (hadConflicts) {
+        //   console.log('Cleared conflicting storage from local Docker Supabase');
+        //   toast.info('Cleared conflicting authentication data');
+        // }
         
         // Get initial session
         console.log('🔍 AUTH: Getting initial session...');

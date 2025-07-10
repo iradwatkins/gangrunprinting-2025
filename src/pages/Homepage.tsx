@@ -121,7 +121,15 @@ const HeroCarousel = () => {
 };
 
 export default function Homepage() {
-  const { user, isLoading } = useAuth();
+  const { user, loading } = useAuth();
+  
+  // Debug logging for Homepage
+  console.log('🏠 HOMEPAGE: Render state:', {
+    hasUser: !!user,
+    userEmail: user?.email,
+    loading,
+    userProfile: user?.profile
+  });
 
   // Load real categories from database
   const { data: categories = [] } = useQuery({
@@ -204,6 +212,18 @@ export default function Homepage() {
 
   return (
     <Layout>
+      {/* Temporary Debug Banner */}
+      <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4">
+        <div className="flex">
+          <div className="ml-3">
+            <p className="text-sm">
+              🔍 DEBUG: Auth State - 
+              {loading ? ' Loading...' : user ? ` Logged in as ${user.email}` : ' Not logged in'}
+              {user?.profile && ` (Role: ${user.profile.role})`}
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* Hero Carousel */}
       <HeroCarousel />

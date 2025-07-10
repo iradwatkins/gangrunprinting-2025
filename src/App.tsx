@@ -48,9 +48,9 @@ import { OrdersPage } from "./pages/orders/OrdersPage";
 import InvoicePaymentPage from "./pages/InvoicePaymentPage";
 
 // Import cleanup utilities to make them available
-import "./utils/cleanup-auth";
-import "./utils/clean-url";
-import "./utils/debug-auth-simple";
+// import "./utils/cleanup-auth";
+// import "./utils/clean-url";
+// import "./utils/debug-auth-simple";
 
 const queryClient = new QueryClient();
 
