@@ -174,6 +174,11 @@ const navigation = [
     href: '/admin/checkout-settings',
     icon: Settings
   },
+  {
+    name: 'User Management',
+    href: '/admin/users',
+    icon: Users
+  },
 ];
 
 interface AdminLayoutProps {
