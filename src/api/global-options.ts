@@ -549,8 +549,69 @@ export const addOnsApi = {
   }
 };
 
-// Quantities API
+// Quantity Groups API
 export const quantitiesApi = {
+  // Get all quantity groups - simple method for React Query
+  async getAll(): Promise<ApiResponse<Tables<'quantities'>[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('quantities')
+        .select('*')
+        .order('name');
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data: data || [] };
+    } catch (error) {
+      return { error: 'Failed to fetch quantity groups' };
+    }
+  },
+
+  // Create new quantity group - for React Query mutations
+  async create(quantityGroup: TablesInsert<'quantities'>): Promise<Tables<'quantities'>> {
+    const { data, error } = await supabase
+      .from('quantities')
+      .insert(quantityGroup)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data;
+  },
+
+  // Update quantity group - for React Query mutations
+  async update(id: string, updates: Partial<TablesUpdate<'quantities'>>): Promise<Tables<'quantities'>> {
+    const { data, error } = await supabase
+      .from('quantities')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data;
+  },
+
+  // Delete quantity group - for React Query mutations
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('quantities')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+  },
+
   async getQuantities(filters: GlobalOptionsFilters = {}): Promise<ApiResponse<Tables<'quantities'>[]>> {
     try {
       let query = supabase.from('quantities').select('*');
@@ -562,7 +623,7 @@ export const quantitiesApi = {
         query = query.ilike('name', `%${filters.search}%`);
       }
 
-      const { data, error } = await query.order('value', { ascending: true, nullsLast: true });
+      const { data, error } = await query.order('name');
 
       if (error) {
         return { error: error.message };
@@ -570,7 +631,7 @@ export const quantitiesApi = {
 
       return { data: data || [] };
     } catch (error) {
-      return { error: 'Failed to fetch quantities' };
+      return { error: 'Failed to fetch quantity groups' };
     }
   },
 
@@ -628,82 +689,9 @@ export const quantitiesApi = {
     }
   },
 
-  // Bulk create quantities method
-  async bulkCreate(quantities: Array<{ name: string; value: number | null; is_custom?: boolean; is_default?: boolean }>): Promise<ApiResponse<Tables<'quantities'>[]>> {
-    try {
-      // If any quantity should be default, first unset all existing defaults
-      const hasDefault = quantities.some(q => q.is_default);
-      if (hasDefault) {
-        await supabase
-          .from('quantities')
-          .update({ is_default: false })
-          .eq('is_default', true);
-      }
-
-      // Prepare quantities with sort_order
-      const quantitiesWithSort = quantities.map((q, index) => ({
-        name: q.name,
-        value: q.value,
-        is_custom: q.is_custom || false,
-        is_default: q.is_default || false,
-        is_active: true,
-        sort_order: q.value || 999999
-      }));
-
-      const { data, error } = await supabase
-        .from('quantities')
-        .insert(quantitiesWithSort)
-        .select();
-
-      if (error) {
-        return { error: error.message };
-      }
-
-      return { data: data || [] };
-    } catch (error) {
-      return { error: 'Failed to bulk create quantities' };
-    }
-  },
-
-  // Set default quantity method
-  async setDefault(id: string): Promise<ApiResponse<Tables<'quantities'>>> {
-    try {
-      // First unset all defaults
-      await supabase
-        .from('quantities')
-        .update({ is_default: false })
-        .eq('is_default', true);
-
-      // Then set the new default
-      const { data, error } = await supabase
-        .from('quantities')
-        .update({ is_default: true })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) {
-        return { error: error.message };
-      }
-
-      return { data };
-    } catch (error) {
-      return { error: 'Failed to set default quantity' };
-    }
-  },
-
   // Convenience methods for consistency
-  async getAll(filters: GlobalOptionsFilters = {}) {
+  async getQuantityGroups(filters: GlobalOptionsFilters = {}) {
     return this.getQuantities(filters);
-  },
-  async create(data: TablesInsert<'quantities'>) {
-    return this.createQuantity(data);
-  },
-  async update(id: string, data: TablesUpdate<'quantities'>) {
-    return this.updateQuantity(id, data);
-  },
-  async delete(id: string) {
-    return this.deleteQuantity(id);
   }
 };
 
