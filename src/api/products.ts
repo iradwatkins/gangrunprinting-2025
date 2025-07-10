@@ -28,13 +28,10 @@ export const productsApi = {
   // Get all products - simple method for React Query
   async getAll(): Promise<ApiResponse<Tables<'products'>[]>> {
     try {
+      // Simple query without complex joins for now
       const { data, error } = await supabase
         .from('products')
-        .select(`
-          *,
-          product_categories(id, name, slug),
-          vendors(id, name)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {

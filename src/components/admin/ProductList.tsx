@@ -45,10 +45,7 @@ import { categoriesApi } from '@/api/categories';
 import { vendorsApi } from '@/api/vendors';
 import type { Tables } from '@/integrations/supabase/types';
 
-type Product = Tables<'products'> & {
-  product_categories?: { id: string; name: string; slug: string };
-  vendors?: { id: string; name: string };
-};
+type Product = Tables<'products'>;
 
 type Category = Tables<'product_categories'>;
 type Vendor = Tables<'vendors'>;
@@ -69,7 +66,9 @@ export function ProductList() {
         throw new Error(response.error);
       }
       return response.data;
-    }
+    },
+    retry: 1, // Only retry once
+    staleTime: 30000 // Cache for 30 seconds
   });
 
   const { data: categories } = useQuery({
@@ -111,6 +110,17 @@ export function ProductList() {
     }
   };
 
+  // Helper functions to get category and vendor names
+  const getCategoryName = (categoryId: string) => {
+    const category = categories?.find(c => c.id === categoryId);
+    return category?.name || 'Unknown Category';
+  };
+
+  const getVendorName = (vendorId: string) => {
+    const vendor = vendors?.find(v => v.id === vendorId);
+    return vendor?.name || 'Unknown Vendor';
+  };
+
   // Filter products locally
   const filteredProducts = products?.filter(product => {
     const matchesSearch = !searchTerm || 
@@ -130,34 +140,15 @@ export function ProductList() {
     return matchesSearch && matchesCategory && matchesVendor && matchesStatus;
   }) || [];
 
+  // For errors, we'll show them in console but still show the normal UI with empty state
   if (error) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Products</h1>
-            <p className="text-muted-foreground">Manage your product catalog</p>
-          </div>
-        </div>
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center py-8">
-              <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Failed to Load Products</h3>
-              <p className="text-muted-foreground mb-4">{error}</p>
-              <div className="space-x-2">
-                <Button onClick={() => window.location.reload()}>
-                  Refresh Page
-                </Button>
-              </div>
-              <div className="mt-4 text-sm text-muted-foreground">
-                <p>Check the browser console for more details.</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    console.error('Products loading error:', error);
+    // Show toast notification but don't block the UI
+    toast({
+      title: 'Products Loading Issue',
+      description: 'Unable to load products. Showing empty state.',
+      variant: 'destructive',
+    });
   }
 
   if (isLoading) {
@@ -311,7 +302,7 @@ export function ProductList() {
                   <TableCell colSpan={6} className="text-center py-8">
                     <div className="flex flex-col items-center space-y-2">
                       <Package className="h-8 w-8 text-muted-foreground" />
-                      <p className="text-muted-foreground">No information at this time</p>
+                      <p className="text-muted-foreground">No products yet</p>
                       <Button asChild variant="outline" size="sm">
                         <Link to="/admin/products/new">Add your first product</Link>
                       </Button>
@@ -328,10 +319,10 @@ export function ProductList() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {product.product_categories?.name || 'No Category'}
+                      {getCategoryName(product.category_id)}
                     </TableCell>
                     <TableCell>
-                      {product.vendors?.name || 'No Vendor'}
+                      {getVendorName(product.vendor_id)}
                     </TableCell>
                     <TableCell>
                       ${product.base_price.toFixed(2)}
