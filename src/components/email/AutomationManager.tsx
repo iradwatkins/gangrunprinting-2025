@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -29,37 +30,80 @@ import {
 } from 'lucide-react';
 
 const AutomationManager: React.FC = () => {
-  const [automations, setAutomations] = useState<EmailAutomation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<string>('');
   const [builderOpen, setBuilderOpen] = useState(false);
   const [selectedAutomation, setSelectedAutomation] = useState<EmailAutomation | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchAutomations();
-  }, [activeFilter]);
-
-  const fetchAutomations = async () => {
-    try {
-      setLoading(true);
-      const filters: any = {};
-      if (activeFilter) filters.active = activeFilter === 'active';
-      
-      const response = await emailAutomationApi.getAutomations(filters);
-      setAutomations(response.automations);
-    } catch (error) {
-      console.error('Failed to fetch automations:', error);
-    } finally {
-      setLoading(false);
+  const { data: automations, isLoading, error } = useQuery({
+    queryKey: ['email-automations'],
+    queryFn: async () => {
+      const automations = await emailAutomationApi.getAll();
+      return automations;
     }
-  };
+  });
 
-  const filteredAutomations = automations.filter(automation =>
-    automation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    automation.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const createMutation = useMutation({
+    mutationFn: emailAutomationApi.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['email-automations'] });
+      toast({ title: 'Success', description: 'Automation created successfully' });
+      setBuilderOpen(false);
+      setSelectedAutomation(null);
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'Failed to create automation', variant: 'destructive' });
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<EmailAutomation> }) => emailAutomationApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['email-automations'] });
+      toast({ title: 'Success', description: 'Automation updated successfully' });
+      setBuilderOpen(false);
+      setSelectedAutomation(null);
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'Failed to update automation', variant: 'destructive' });
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: emailAutomationApi.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['email-automations'] });
+      toast({ title: 'Success', description: 'Automation deleted successfully' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'Failed to delete automation', variant: 'destructive' });
+    }
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) => emailAutomationApi.toggleAutomation(id, isActive),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['email-automations'] });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'Failed to toggle automation', variant: 'destructive' });
+    }
+  });
+
+  // Filter automations locally
+  const filteredAutomations = (automations || []).filter(automation => {
+    const matchesSearch = !searchTerm || 
+      automation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      automation.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesFilter = !activeFilter || activeFilter === '' ||
+      (activeFilter === 'active' && automation.is_active) ||
+      (activeFilter === 'inactive' && !automation.is_active);
+    
+    return matchesSearch && matchesFilter;
+  });
 
   const handleCreateAutomation = () => {
     setSelectedAutomation(null);
@@ -71,37 +115,16 @@ const AutomationManager: React.FC = () => {
     setBuilderOpen(true);
   };
 
-  const handleSaveAutomation = async (automationData: Partial<EmailAutomation>) => {
-    try {
-      if (selectedAutomation) {
-        const updatedAutomation = await emailAutomationApi.updateAutomation(selectedAutomation.id, automationData);
-        setAutomations(prev => prev.map(a => a.id === selectedAutomation.id ? updatedAutomation : a));
-      } else {
-        const newAutomation = await emailAutomationApi.createAutomation(automationData as any);
-        setAutomations(prev => [newAutomation, ...prev]);
-      }
-      setBuilderOpen(false);
-      setSelectedAutomation(null);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save automation",
-        variant: "destructive",
-      });
+  const handleSaveAutomation = (automationData: Partial<EmailAutomation>) => {
+    if (selectedAutomation) {
+      updateMutation.mutate({ id: selectedAutomation.id, data: automationData });
+    } else {
+      createMutation.mutate(automationData as any);
     }
   };
 
-  const handleToggleAutomation = async (automationId: string, isActive: boolean) => {
-    try {
-      await emailAutomationApi.toggleAutomation(automationId, isActive);
-      await fetchAutomations(); // Refresh data
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to toggle automation",
-        variant: "destructive",
-      });
-    }
+  const handleToggleAutomation = (automationId: string, isActive: boolean) => {
+    toggleMutation.mutate({ id: automationId, isActive });
   };
 
   const handleCloneAutomation = async (automation: EmailAutomation) => {
@@ -110,28 +133,16 @@ const AutomationManager: React.FC = () => {
         automation.id,
         `${automation.name} (Copy)`
       );
-      setAutomations(prev => [clonedAutomation, ...prev]);
+      queryClient.invalidateQueries({ queryKey: ['email-automations'] });
+      toast({ title: 'Success', description: 'Automation cloned successfully' });
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to clone automation",
-        variant: "destructive",
-      });
+      toast({ title: 'Error', description: 'Failed to clone automation', variant: 'destructive' });
     }
   };
 
-  const handleDeleteAutomation = async (automationId: string) => {
-    if (!confirm('Are you sure you want to delete this automation?')) return;
-    
-    try {
-      await emailAutomationApi.deleteAutomation(automationId);
-      setAutomations(prev => prev.filter(a => a.id !== automationId));
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete automation",
-        variant: "destructive",
-      });
+  const handleDeleteAutomation = (automationId: string) => {
+    if (confirm('Are you sure you want to delete this automation?')) {
+      deleteMutation.mutate(automationId);
     }
   };
 
@@ -141,16 +152,9 @@ const AutomationManager: React.FC = () => {
 
     try {
       await emailAutomationApi.testAutomation(automation.id, testEmail);
-      toast({
-        title: "Success",
-        description: "Test automation sent successfully",
-      });
+      toast({ title: 'Success', description: 'Test automation sent successfully' });
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to test automation",
-        variant: "destructive",
-      });
+      toast({ title: 'Error', description: 'Failed to test automation', variant: 'destructive' });
     }
   };
 
@@ -184,7 +188,7 @@ const AutomationManager: React.FC = () => {
     });
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
@@ -354,7 +358,7 @@ const AutomationManager: React.FC = () => {
       </div>
 
       {/* Empty State */}
-      {filteredAutomations.length === 0 && (
+      {!isLoading && filteredAutomations.length === 0 && (
         <div className="text-center py-12">
           <Zap className="mx-auto h-12 w-12 text-gray-400 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No automations found</h3>

@@ -98,6 +98,58 @@ const mockAutomations: EmailAutomation[] = [
 ];
 
 export const emailAutomationApi = {
+  // Get all automations - simple method for React Query
+  getAll: async (): Promise<EmailAutomation[]> => {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    return mockAutomations;
+  },
+
+  // Create automation - for React Query mutations
+  create: async (automation: Omit<EmailAutomation, 'id' | 'created_at' | 'updated_at'>): Promise<EmailAutomation> => {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    const newAutomation: EmailAutomation = {
+      ...automation,
+      id: Date.now().toString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    mockAutomations.push(newAutomation);
+    return newAutomation;
+  },
+
+  // Update automation - for React Query mutations
+  update: async (id: string, updates: Partial<EmailAutomation>): Promise<EmailAutomation> => {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    const index = mockAutomations.findIndex(a => a.id === id);
+    if (index === -1) {
+      throw new Error('Automation not found');
+    }
+    
+    const updatedAutomation = {
+      ...mockAutomations[index],
+      ...updates,
+      updated_at: new Date().toISOString()
+    };
+    
+    mockAutomations[index] = updatedAutomation;
+    return updatedAutomation;
+  },
+
+  // Delete automation - for React Query mutations
+  delete: async (id: string): Promise<void> => {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    const index = mockAutomations.findIndex(a => a.id === id);
+    if (index === -1) {
+      throw new Error('Automation not found');
+    }
+    
+    mockAutomations.splice(index, 1);
+  },
+
   // List all automations
   getAutomations: async (params?: {
     active?: boolean;

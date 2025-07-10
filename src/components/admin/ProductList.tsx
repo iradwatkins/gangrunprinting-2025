@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { 
   MoreHorizontal, 
@@ -53,164 +54,83 @@ type Category = Tables<'product_categories'>;
 type Vendor = Tables<'vendors'>;
 
 export function ProductList() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<ProductFilters>({
-    page: 1,
-    limit: 20
-  });
+  const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [vendorFilter, setVendorFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const { toast } = useToast();
 
-  // Debug logging
-  console.log('ProductList component mounted');
-
-  useEffect(() => {
-    loadData();
-  }, [filters.search, filters.page, filters.limit, filters.category_id, filters.is_active]);
-
-  useEffect(() => {
-    loadCategories();
-    loadVendors();
-  }, []);
-
-  // Add timeout safety
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (loading) {
-        setLoading(false);
-        toast({
-          title: 'Loading timeout',
-          description: 'Products are taking too long to load. Please refresh the page.',
-          variant: 'destructive'
-        });
-      }
-    }, 10000); // 10 second timeout
-    
-    return () => clearTimeout(timeoutId);
-  }, [loading, toast]);
-
-  const loadData = async () => {
-    console.log('Loading products with filters:', filters);
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await productsApi.getProducts(filters);
-      console.log('Products API response:', response);
-      
+  const { data: products, isLoading, error } = useQuery({
+    queryKey: ['admin-products'],
+    queryFn: async () => {
+      const response = await productsApi.getAll();
       if (response.error) {
-        const errorMsg = response.error;
-        console.error('Products API error:', errorMsg);
-        setError(errorMsg);
-        toast({
-          title: 'Error Loading Products',
-          description: errorMsg,
-          variant: 'destructive'
-        });
-        setProducts([]);
-      } else {
-        console.log('Products loaded successfully:', response.data?.length || 0, 'items');
-        setProducts(response.data || []);
+        throw new Error(response.error);
       }
-    } catch (error) {
-      console.error('Products load error (catch block):', error);
-      const errorMsg = error instanceof Error ? error.message : 'Failed to load products. Please try again.';
-      setError(errorMsg);
-      toast({
-        title: 'Error Loading Products',
-        description: errorMsg,
-        variant: 'destructive'
-      });
-      setProducts([]);
-    } finally {
-      setLoading(false);
+      return response.data;
+    }
+  });
+
+  const { data: categories } = useQuery({
+    queryKey: ['admin-categories'],
+    queryFn: async () => {
+      const response = await categoriesApi.getAll();
+      if (response.error) {
+        throw new Error(response.error);
+      }
+      return response.data;
+    }
+  });
+
+  const { data: vendors } = useQuery({
+    queryKey: ['admin-vendors'],
+    queryFn: async () => {
+      const response = await vendorsApi.getAll();
+      if (response.error) {
+        throw new Error(response.error);
+      }
+      return response.data;
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: productsApi.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      toast({ title: 'Success', description: 'Product deleted successfully' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Error', description: error.message || 'Failed to delete product', variant: 'destructive' });
+    }
+  });
+
+  const handleDelete = (productId: string) => {
+    if (confirm('Are you sure you want to delete this product?')) {
+      deleteMutation.mutate(productId);
     }
   };
 
-  const loadCategories = async () => {
-    console.log('Loading categories...');
-    try {
-      const response = await categoriesApi.getCategories({ is_active: true });
-      console.log('Categories API response:', response);
-      if (response.data) {
-        setCategories(response.data);
-        console.log('Categories loaded successfully:', response.data.length, 'items');
-      }
-    } catch (error) {
-      console.error('Categories load error:', error);
-      // Silently fail - categories are optional
-    }
-  };
-
-  const loadVendors = async () => {
-    console.log('Loading vendors...');
-    try {
-      const response = await vendorsApi.getVendors({ is_active: true });
-      console.log('Vendors API response:', response);
-      if (response.data) {
-        setVendors(response.data);
-        console.log('Vendors loaded successfully:', response.data.length, 'items');
-      }
-    } catch (error) {
-      console.error('Vendors load error:', error);
-      // Silently fail - vendors are optional
-    }
-  };
-
-  const handleDelete = async (productId: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) {
-      return;
-    }
-
-    const response = await productsApi.deleteProduct(productId);
+  // Filter products locally
+  const filteredProducts = products?.filter(product => {
+    const matchesSearch = !searchTerm || 
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.description?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    if (response.error) {
-      toast({
-        title: 'Error',
-        description: response.error,
-        variant: 'destructive'
-      });
-    } else {
-      toast({
-        title: 'Success',
-        description: 'Product deleted successfully'
-      });
-      loadData();
-    }
-  };
+    const matchesCategory = !categoryFilter || categoryFilter === 'all' || 
+      product.category_id === categoryFilter;
+    
+    const matchesVendor = !vendorFilter || vendorFilter === 'all' || 
+      product.vendor_id === vendorFilter;
+    
+    const matchesStatus = !statusFilter || statusFilter === 'all' || 
+      (statusFilter === 'active' && product.is_active) ||
+      (statusFilter === 'inactive' && !product.is_active);
+    
+    return matchesSearch && matchesCategory && matchesVendor && matchesStatus;
+  }) || [];
 
-  const handleSearch = (search: string) => {
-    setFilters(prev => ({ ...prev, search, page: 1 }));
-  };
-
-  const handleCategoryFilter = (categoryId: string) => {
-    setFilters(prev => ({ 
-      ...prev, 
-      category_id: categoryId === 'all' ? undefined : categoryId,
-      page: 1 
-    }));
-  };
-
-  const handleVendorFilter = (vendorId: string) => {
-    setFilters(prev => ({ 
-      ...prev, 
-      vendor_id: vendorId === 'all' ? undefined : vendorId,
-      page: 1 
-    }));
-  };
-
-  const handleStatusFilter = (status: string) => {
-    setFilters(prev => ({ 
-      ...prev, 
-      is_active: status === 'all' ? undefined : status === 'active',
-      page: 1 
-    }));
-  };
-
-  // Show error state
-  if (error && !loading) {
+  if (error) {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -226,9 +146,6 @@ export function ProductList() {
               <h3 className="text-lg font-semibold mb-2">Failed to Load Products</h3>
               <p className="text-muted-foreground mb-4">{error}</p>
               <div className="space-x-2">
-                <Button onClick={loadData} variant="outline">
-                  Retry
-                </Button>
                 <Button onClick={() => window.location.reload()}>
                   Refresh Page
                 </Button>
@@ -243,7 +160,7 @@ export function ProductList() {
     );
   }
 
-  if (loading && products.length === 0) {
+  if (isLoading) {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -307,19 +224,19 @@ export function ProductList() {
                 <Input
                   placeholder="Search products..."
                   className="pl-10"
-                  value={filters.search || ''}
-                  onChange={(e) => handleSearch(e.target.value)}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Select onValueChange={handleCategoryFilter}>
+              <Select onValueChange={setCategoryFilter}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map((category) => (
+                  {(categories || []).map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
                     </SelectItem>
@@ -327,13 +244,13 @@ export function ProductList() {
                 </SelectContent>
               </Select>
               
-              <Select onValueChange={handleVendorFilter}>
+              <Select onValueChange={setVendorFilter}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="All Vendors" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Vendors</SelectItem>
-                  {vendors.map((vendor) => (
+                  {(vendors || []).map((vendor) => (
                     <SelectItem key={vendor.id} value={vendor.id}>
                       {vendor.name}
                     </SelectItem>
@@ -341,7 +258,7 @@ export function ProductList() {
                 </SelectContent>
               </Select>
 
-              <Select onValueChange={handleStatusFilter}>
+              <Select onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
@@ -359,7 +276,7 @@ export function ProductList() {
       {/* Products Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Products ({products.length})</CardTitle>
+          <CardTitle>Products ({filteredProducts.length})</CardTitle>
           <CardDescription>
             A list of all products in your catalog
           </CardDescription>
@@ -377,7 +294,7 @@ export function ProductList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
+              {isLoading ? (
                 // Loading skeleton
                 Array.from({ length: 3 }).map((_, index) => (
                   <TableRow key={index}>
@@ -389,7 +306,7 @@ export function ProductList() {
                     <TableCell><Skeleton className="h-8 w-8" /></TableCell>
                   </TableRow>
                 ))
-              ) : products.length === 0 ? (
+              ) : filteredProducts.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8">
                     <div className="flex flex-col items-center space-y-2">
@@ -402,7 +319,7 @@ export function ProductList() {
                   </TableCell>
                 </TableRow>
               ) : (
-                products.map((product) => (
+                filteredProducts.map((product) => (
                   <TableRow key={product.id}>
                     <TableCell>
                       <div className="font-medium">{product.name}</div>

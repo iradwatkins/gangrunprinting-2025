@@ -25,6 +25,71 @@ export interface ProductFilters {
 
 // Products API
 export const productsApi = {
+  // Get all products - simple method for React Query
+  async getAll(): Promise<ApiResponse<Tables<'products'>[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          product_categories(id, name, slug),
+          vendors(id, name)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data: data || [] };
+    } catch (error) {
+      return { error: 'Failed to fetch products' };
+    }
+  },
+
+  // Create new product - for React Query mutations
+  async create(product: TablesInsert<'products'>): Promise<Tables<'products'>> {
+    const { data, error } = await supabase
+      .from('products')
+      .insert(product)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data;
+  },
+
+  // Update product - for React Query mutations
+  async update(id: string, updates: Partial<TablesUpdate<'products'>>): Promise<Tables<'products'>> {
+    const { data, error } = await supabase
+      .from('products')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data;
+  },
+
+  // Delete product - for React Query mutations
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+  },
+
   // Get all products with filtering and pagination
   async getProducts(filters: ProductFilters = {}): Promise<ApiResponse<Tables<'products'>[]>> {
     try {
