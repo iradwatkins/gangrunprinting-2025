@@ -41,12 +41,19 @@ export function CategoriesPage() {
   const { data: categories, isLoading, error } = useQuery({
     queryKey: ['admin-categories'],
     queryFn: async () => {
+      console.log('CategoriesPage: Starting query...');
       const response = await categoriesApi.getAll();
+      console.log('CategoriesPage: API response:', response);
       if (response.error) {
+        console.error('CategoriesPage: API error:', response.error);
         throw new Error(response.error);
       }
+      console.log('CategoriesPage: Success, returning data:', response.data);
       return response.data;
-    }
+    },
+    retry: 1,
+    staleTime: 0,
+    refetchOnMount: true
   });
 
   const createMutation = useMutation({
@@ -136,6 +143,13 @@ export function CategoriesPage() {
     category.slug.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
+  console.log('CategoriesPage render - State:', { 
+    categoriesCount: categories?.length, 
+    isLoading, 
+    hasError: !!error,
+    errorMessage: error?.message 
+  });
+
   if (error) {
     return (
       <AdminLayout>
@@ -143,6 +157,10 @@ export function CategoriesPage() {
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>Failed to load categories: {(error as Error).message}</AlertDescription>
         </Alert>
+        <div className="mt-4 p-4 bg-gray-100 rounded">
+          <h3 className="font-bold">Debug Info:</h3>
+          <pre className="text-xs">{JSON.stringify({ error: error.message }, null, 2)}</pre>
+        </div>
       </AdminLayout>
     );
   }
@@ -274,6 +292,16 @@ export function CategoriesPage() {
             <CardContent className="p-8 text-center">
               <p className="text-gray-500">No information at this time</p>
               {searchTerm && <p className="text-sm text-gray-400 mt-2">Try adjusting your search</p>}
+              <div className="mt-4 p-4 bg-gray-100 rounded text-left">
+                <h3 className="font-bold text-sm">Debug Info:</h3>
+                <pre className="text-xs">{JSON.stringify({ 
+                  totalCategories: categories?.length || 0,
+                  filteredCount: filteredCategories.length,
+                  searchTerm,
+                  isLoading,
+                  hasError: !!error 
+                }, null, 2)}</pre>
+              </div>
             </CardContent>
           </Card>
         ) : (
