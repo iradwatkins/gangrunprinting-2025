@@ -731,7 +731,7 @@ export const quantitiesApi = {
       const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
         .select('is_admin')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .single();
       
       if (profileError) {
