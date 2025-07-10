@@ -19,6 +19,24 @@ export class AuthError extends Error {
   }
 }
 
+// Environment-aware redirect URL utility
+const getRedirectUrl = () => {
+  const hostname = window.location.hostname;
+  
+  // Development environment
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return `${window.location.origin}/`;
+  }
+  
+  // Production environment - always redirect to canonical domain
+  if (hostname === 'gangrunprinting.com' || hostname.includes('vercel.app')) {
+    return 'https://gangrunprinting.com/';
+  }
+  
+  // Fallback to current origin
+  return `${window.location.origin}/`;
+};
+
 export const auth = {
   // Get current user
   async getCurrentUser(): Promise<AuthUser | null> {
@@ -132,7 +150,7 @@ export const auth = {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/`
+        emailRedirectTo: getRedirectUrl()
       }
     });
     return { error };
@@ -143,7 +161,7 @@ export const auth = {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/`
+        redirectTo: getRedirectUrl()
       }
     });
     return { error };
@@ -155,7 +173,7 @@ export const auth = {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/`
+        emailRedirectTo: getRedirectUrl()
       }
     });
     return { error };
