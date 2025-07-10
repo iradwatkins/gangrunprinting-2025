@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { quantitiesApi } from '@/api/global-options';
 import type { Tables } from '@/integrations/supabase/types';
 import { getRLSFixInstructions } from '@/utils/fix-quantities-rls';
+import { debugQuantitiesIssue } from '@/utils/debug-quantities';
 
 type QuantityGroup = Tables<'quantities'>;
 
@@ -59,14 +60,27 @@ export function QuantitiesPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: quantitiesApi.create,
-    onSuccess: () => {
+    mutationFn: async (data: QuantityGroupFormData) => {
+      console.log('🚀 Starting create mutation with data:', data);
+      try {
+        const result = await quantitiesApi.create(data);
+        console.log('✅ Create mutation success:', result);
+        return result;
+      } catch (error) {
+        console.error('❌ Create mutation failed:', error);
+        throw error;
+      }
+    },
+    onSuccess: (data) => {
+      console.log('🎉 onSuccess called with data:', data);
       queryClient.invalidateQueries({ queryKey: ['admin-quantity-groups'] });
       toast({ title: 'Success', description: 'Quantity group created successfully' });
       resetForm();
       setIsFormOpen(false);
     },
     onError: (error: any) => {
+      console.error('💥 onError called:', error);
+      console.error('Error stack:', error.stack);
       toast({ title: 'Error', description: error.message || 'Failed to create quantity group', variant: 'destructive' });
     }
   });
@@ -108,6 +122,7 @@ export function QuantitiesPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('📝 Form submitted with data:', formData);
     
     // Parse values to check for custom and set has_custom
     const valuesArray = formData.values.split(',').map(v => v.trim().toLowerCase());
@@ -117,10 +132,13 @@ export function QuantitiesPage() {
       ...formData,
       has_custom: hasCustom
     };
+    
+    console.log('📤 Submitting data:', submitData);
 
     if (editingGroup) {
       updateMutation.mutate({ id: editingGroup.id, data: submitData });
     } else {
+      console.log('🆕 Creating new quantity group...');
       createMutation.mutate(submitData);
     }
   };
@@ -232,6 +250,29 @@ export function QuantitiesPage() {
         {/* Authentication Status Debug */}
         <AuthStatusDebug />
         
+        {/* Debug Button */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Debug Quantities Issue</CardTitle>
+            <CardDescription>Run comprehensive diagnostics</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              variant="destructive"
+              onClick={async () => {
+                console.log('🔍 Running debug...');
+                const result = await debugQuantitiesIssue();
+                console.log('Debug complete:', result);
+              }}
+            >
+              Run Debug Diagnostics
+            </Button>
+            <p className="text-xs text-gray-500 mt-2">
+              Check the browser console for detailed diagnostic information.
+            </p>
+          </CardContent>
+        </Card>
+
         {/* Database Insert Test */}
         {process.env.NODE_ENV === 'development' && (
           <Card>
