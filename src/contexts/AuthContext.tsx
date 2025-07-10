@@ -22,22 +22,6 @@ export interface AuthUser extends User {
   };
 }
 
-interface Address {
-  id: string;
-  label: string;
-  first_name: string;
-  last_name: string;
-  company?: string;
-  street_address: string;
-  street_address_2?: string;
-  city: string;
-  state: string;
-  postal_code: string;
-  country: string;
-  phone?: string;
-  is_default: boolean;
-}
-
 interface AuthContextType {
   user: AuthUser | null;
   session: Session | null;
@@ -50,6 +34,15 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper function to clean OAuth fragments from URL
+const cleanOAuthFragments = () => {
+  if (window.location.hash.includes('access_token')) {
+    // Remove OAuth fragments but preserve any other hash
+    const cleanUrl = window.location.href.split('#')[0];
+    window.history.replaceState({}, document.title, cleanUrl);
+  }
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -57,26 +50,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        loadUserProfile(session.user);
-      } else {
+    // Initialize authentication
+    const initializeAuth = async () => {
+      try {
+        // Get initial session
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Session error:', error);
+          setLoading(false);
+          return;
+        }
+
+        setSession(session);
+        
+        if (session?.user) {
+          await loadUserProfile(session.user);
+          // Clean OAuth fragments after successful session
+          cleanOAuthFragments();
+        } else {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
         setLoading(false);
       }
-    });
+    };
+
+    initializeAuth();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.email);
+        
         setSession(session);
         
         if (session?.user) {
           const shouldRedirect = event === 'SIGNED_IN';
           await loadUserProfile(session.user, shouldRedirect);
           
+          // Clean URL fragments after OAuth
           if (event === 'SIGNED_IN') {
+            cleanOAuthFragments();
             toast.success('Successfully signed in!');
           }
         } else {
@@ -94,45 +110,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Helper function to get user profile
-  const getUserProfile = async (authUser: User) => {
-    try {
-      const { data: profile, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', authUser.id)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        return null;
-      }
-
-      if (!profile) {
-        // Create profile if it doesn't exist
-        const newProfile = {
-          user_id: authUser.id,
-          email: authUser.email || '',
-          full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
-          role: 'customer' as const,
-        };
-
-        const { data: createdProfile } = await supabase
-          .from('user_profiles')
-          .insert(newProfile)
-          .select()
-          .single();
-
-        return createdProfile;
-      }
-
-      return profile;
-    } catch (error) {
-      return null;
-    }
-  };
-
+  // Simplified, reliable profile loading function
   const loadUserProfile = async (authUser: User, shouldRedirect = false) => {
     try {
+      console.log('Loading profile for user:', authUser.email);
+      
       // Get or create user profile
       const { data: profile, error } = await supabase
         .from('user_profiles')
@@ -143,7 +125,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       let finalProfile = null;
 
       if (error && error.code === 'PGRST116') {
-        // Profile doesn't exist, create it
+        // Profile doesn't exist, create it with essential fields only
+        console.log('Creating new profile for:', authUser.email);
+        
         const newProfile = {
           user_id: authUser.id,
           email: authUser.email || '',
@@ -160,8 +144,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .single();
 
         if (createError) {
+          console.error('Profile creation failed:', createError);
+          toast.error('Failed to create user profile. Please try again.');
+          // Set user without profile for now - they can retry
           setUser({ ...authUser, profile: undefined });
         } else {
+          console.log('Profile created successfully:', createdProfile);
           finalProfile = {
             ...createdProfile,
             broker_category_discounts: createdProfile.broker_category_discounts || {}
@@ -170,10 +158,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             ...authUser, 
             profile: finalProfile
           });
+          toast.success('Profile created successfully!');
         }
       } else if (error) {
+        console.error('Profile fetch error:', error);
+        toast.error('Failed to load user profile. Please try refreshing.');
         setUser({ ...authUser, profile: undefined });
       } else {
+        console.log('Profile loaded successfully:', profile);
         finalProfile = {
           ...profile,
           broker_category_discounts: profile.broker_category_discounts || {}
@@ -193,6 +185,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch (error) {
+      console.error('Unexpected error loading profile:', error);
+      toast.error('An unexpected error occurred. Please try again.');
       setUser({ ...authUser, profile: undefined });
     } finally {
       setLoading(false);
@@ -218,7 +212,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/`
+          emailRedirectTo: getRedirectUrl()
         }
       });
 
@@ -237,7 +231,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`
+          redirectTo: getRedirectUrl()
         }
       });
 
@@ -250,6 +244,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: 'An unexpected error occurred' };
     }
   };
+
+// Environment-aware redirect URL utility
+const getRedirectUrl = () => {
+  const hostname = window.location.hostname;
+  
+  // Development environment
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return `${window.location.origin}/`;
+  }
+  
+  // Production environment - always redirect to canonical domain
+  if (hostname === 'gangrunprinting.com' || hostname.includes('vercel.app')) {
+    return 'https://gangrunprinting.com/';
+  }
+  
+  // Fallback to current origin
+  return `${window.location.origin}/`;
+};
 
   const value: AuthContextType = {
     user,
