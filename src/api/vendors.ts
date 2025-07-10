@@ -20,6 +20,68 @@ export interface VendorFilters {
 
 // Vendors API
 export const vendorsApi = {
+  // Get all vendors - simple method for React Query
+  async getAll(): Promise<ApiResponse<Tables<'vendors'>[]>> {
+    try {
+      // Simple query without complex joins
+      const { data, error } = await supabase
+        .from('vendors')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data: data || [] };
+    } catch (error) {
+      return { error: 'Failed to fetch vendors' };
+    }
+  },
+
+  // Create new vendor - for React Query mutations
+  async create(vendor: TablesInsert<'vendors'>): Promise<Tables<'vendors'>> {
+    const { data, error } = await supabase
+      .from('vendors')
+      .insert(vendor)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data;
+  },
+
+  // Update vendor - for React Query mutations
+  async update(id: string, updates: Partial<TablesUpdate<'vendors'>>): Promise<Tables<'vendors'>> {
+    const { data, error } = await supabase
+      .from('vendors')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data;
+  },
+
+  // Delete vendor - for React Query mutations
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('vendors')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+  },
+
   // Get all vendors with filtering and pagination
   async getVendors(filters: VendorFilters = {}): Promise<ApiResponse<Tables<'vendors'>[]>> {
     try {
