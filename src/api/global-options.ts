@@ -606,6 +606,58 @@ const withTimeout = <T>(promise: Promise<T>, timeoutMs: number = 10000): Promise
 
 // Quantity Groups API
 export const quantitiesApi = {
+  // Test method to diagnose database issues
+  async testDirectInsert(): Promise<{ success: boolean; error?: string; details?: any }> {
+    try {
+      console.log('🧪 Testing direct insert without auth checks...');
+      
+      const testData = {
+        name: `Test Group ${Date.now()}`,
+        values: '10,20,30,40,50',
+        default_value: 20,
+        has_custom: false,
+        is_active: false // Set to false so it doesn't appear in UI
+      };
+      
+      console.log('🧪 Test data:', testData);
+      
+      const { data, error } = await supabase
+        .from('quantities')
+        .insert(testData)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('🧪 Direct insert error:', error);
+        return {
+          success: false,
+          error: error.message,
+          details: {
+            code: error.code,
+            details: error.details,
+            hint: error.hint
+          }
+        };
+      }
+      
+      console.log('🧪 Direct insert success:', data);
+      
+      // Clean up test data
+      if (data?.id) {
+        await supabase.from('quantities').delete().eq('id', data.id);
+      }
+      
+      return { success: true, details: data };
+    } catch (err) {
+      console.error('🧪 Direct insert exception:', err);
+      return {
+        success: false,
+        error: (err as Error).message,
+        details: err
+      };
+    }
+  },
+
   // Get all quantity groups - simple method for React Query
   async getAll(): Promise<ApiResponse<Tables<'quantities'>[]>> {
     try {
@@ -659,7 +711,40 @@ export const quantitiesApi = {
     }
     
     try {
-      console.log('🔄 Making direct supabase insert call with timeout...');
+      // First check if user is authenticated
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) {
+        console.error('❌ Auth error:', authError);
+        throw new Error(`Authentication error: ${authError.message}`);
+      }
+      
+      if (!user) {
+        console.error('❌ No authenticated user');
+        throw new Error('You must be logged in to create quantity groups');
+      }
+      
+      console.log('✅ Authenticated user:', user.email);
+      console.log('🔄 Making direct supabase insert call...');
+      
+      // Check if user is admin
+      const { data: profile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .single();
+      
+      if (profileError) {
+        console.error('❌ Error checking admin status:', profileError);
+        throw new Error('Could not verify admin status');
+      }
+      
+      if (!profile?.is_admin) {
+        console.error('❌ User is not admin');
+        throw new Error('You must be an admin to create quantity groups');
+      }
+      
+      console.log('✅ User is admin, proceeding with insert...');
       
       const response = await withTimeout(
         supabase
@@ -682,6 +767,16 @@ export const quantitiesApi = {
           hint: error.hint,
           code: error.code
         });
+        
+        // Provide more specific error messages
+        if (error.code === '42501') {
+          throw new Error('Permission denied. Please ensure you have admin privileges.');
+        } else if (error.code === '23505') {
+          throw new Error('A quantity group with this name already exists.');
+        } else if (error.message.includes('new row violates row-level security policy')) {
+          throw new Error('Security policy violation. Please check your admin permissions.');
+        }
+        
         throw new Error(`Database error: ${error.message}`);
       }
 
@@ -695,7 +790,7 @@ export const quantitiesApi = {
     } catch (err) {
       console.error('❌ Exception in quantitiesApi.create:', err);
       if ((err as Error).message.includes('timed out')) {
-        throw new Error('Database insert timed out. Please check the migration status and try again.');
+        throw new Error('Database insert timed out. Please check your connection and try again.');
       }
       throw err;
     }
