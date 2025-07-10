@@ -20,6 +20,67 @@ export interface GlobalOptionsFilters {
 
 // Paper Stocks API
 export const paperStocksApi = {
+  // Get all paper stocks - simple method for React Query
+  async getAll(): Promise<ApiResponse<Tables<'paper_stocks'>[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('paper_stocks')
+        .select('*')
+        .order('name');
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return { data: data || [] };
+    } catch (error) {
+      return { error: 'Failed to fetch paper stocks' };
+    }
+  },
+
+  // Create new paper stock - for React Query mutations
+  async create(paperStock: TablesInsert<'paper_stocks'>): Promise<Tables<'paper_stocks'>> {
+    const { data, error } = await supabase
+      .from('paper_stocks')
+      .insert(paperStock)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data;
+  },
+
+  // Update paper stock - for React Query mutations
+  async update(id: string, updates: Partial<TablesUpdate<'paper_stocks'>>): Promise<Tables<'paper_stocks'>> {
+    const { data, error } = await supabase
+      .from('paper_stocks')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data;
+  },
+
+  // Delete paper stock - for React Query mutations
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('paper_stocks')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+  },
+
   async getPaperStocks(filters: GlobalOptionsFilters = {}): Promise<ApiResponse<Tables<'paper_stocks'>[]>> {
     try {
       let query = supabase.from('paper_stocks').select('*');
