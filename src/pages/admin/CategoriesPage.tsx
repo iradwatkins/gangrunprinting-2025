@@ -11,7 +11,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
 import { categoriesApi } from '@/api/categories';
-import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Category = Tables<'product_categories'>;
@@ -31,7 +30,6 @@ export function CategoriesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
   const [formData, setFormData] = useState<CategoryFormData>({
     name: '',
     slug: '',
@@ -39,41 +37,6 @@ export function CategoriesPage() {
     sort_order: 0,
     is_active: true
   });
-
-  // Debug admin status function
-  const checkAdminStatus = async () => {
-    try {
-      console.log('🔍 Checking admin status...');
-      
-      // Get current user
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      console.log('Auth result:', { user: user ? { id: user.id, email: user.email } : null, error: authError?.message });
-
-      if (!user) {
-        setDebugInfo({ error: 'Not authenticated' });
-        return;
-      }
-
-      // Check is_admin function
-      const { data: isAdminResult, error: adminError } = await supabase.rpc('is_admin');
-      console.log('is_admin() result:', { result: isAdminResult, error: adminError?.message });
-
-      // Try debug_admin_status function if available
-      const { data: debugResult, error: debugError } = await supabase.rpc('debug_admin_status');
-      console.log('debug_admin_status() result:', { result: debugResult, error: debugError?.message });
-
-      setDebugInfo({
-        user,
-        isAdmin: isAdminResult,
-        adminError: adminError?.message,
-        debugStatus: debugResult,
-        debugError: debugError?.message
-      });
-    } catch (error) {
-      console.error('Debug check failed:', error);
-      setDebugInfo({ error: (error as Error).message });
-    }
-  };
 
   const { data: categories, isLoading, error } = useQuery({
     queryKey: ['admin-categories'],
@@ -202,58 +165,16 @@ export function CategoriesPage() {
           </Button>
         </div>
 
-        {/* Debug Admin Status (Development & Production) */}
-        <Card className="border-blue-200 bg-blue-50">
-          <CardHeader>
-            <CardTitle className="text-blue-800 flex items-center gap-2">
-              🔍 Admin Status Debug
-              <Button size="sm" variant="outline" onClick={checkAdminStatus}>
-                Check Status
-              </Button>
-            </CardTitle>
-            <CardDescription>
-              Debug authentication and admin permissions for troubleshooting category saving issues
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {debugInfo ? (
-              <div className="space-y-2 text-sm">
-                {debugInfo.error ? (
-                  <div className="text-red-600">Error: {debugInfo.error}</div>
-                ) : (
-                  <>
-                    <div><strong>User:</strong> {debugInfo.user?.email || 'Not logged in'}</div>
-                    <div><strong>User ID:</strong> {debugInfo.user?.id || 'N/A'}</div>
-                    <div className="flex items-center gap-2">
-                      <strong>Admin Status:</strong>
-                      <Badge variant={debugInfo.isAdmin ? 'default' : 'destructive'}>
-                        {debugInfo.isAdmin ? 'Admin' : 'Not Admin'}
-                      </Badge>
-                    </div>
-                    {debugInfo.adminError && (
-                      <div className="text-red-600">Admin Check Error: {debugInfo.adminError}</div>
-                    )}
-                    {debugInfo.debugStatus && (
-                      <div className="mt-2 p-2 bg-white rounded border">
-                        <strong>Detailed Status:</strong>
-                        <pre className="text-xs mt-1 overflow-auto">
-                          {JSON.stringify(debugInfo.debugStatus, null, 2)}
-                        </pre>
-                      </div>
-                    )}
-                    {debugInfo.debugError && (
-                      <div className="text-orange-600 text-xs">
-                        Debug function not available: {debugInfo.debugError}
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            ) : (
-              <div className="text-gray-500">Click "Check Status" to debug admin permissions</div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Search Bar */}
+        <div className="flex items-center space-x-2">
+          <Search className="h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search categories..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-sm"
+          />
+        </div>
 
         {/* Inline Form */}
         {isFormOpen && (
@@ -336,16 +257,6 @@ export function CategoriesPage() {
             </CardContent>
           </Card>
         )}
-
-        <div className="flex items-center space-x-2">
-          <Search className="h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Search categories..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-sm"
-          />
-        </div>
 
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

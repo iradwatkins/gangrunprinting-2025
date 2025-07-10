@@ -23,26 +23,18 @@ export interface CategoryFilters {
 export const categoriesApi = {
   // Get all categories - simple method for React Query
   async getAll(): Promise<ApiResponse<Tables<'product_categories'>[]>> {
-    console.log('Categories API: Starting request');
-    
     try {
-      // Simple query without filters
       const { data, error } = await supabase
         .from('product_categories')
         .select('*')
         .order('sort_order', { ascending: true });
 
-      console.log('Categories API: Query completed', { dataCount: data?.length, error });
-
       if (error) {
-        console.error('Categories API: Database error:', error);
         return { error: error.message };
       }
 
-      console.log('Categories API: Success!', data?.length || 0, 'categories');
       return { data: data || [] };
     } catch (error) {
-      console.error('Categories API: Unexpected error:', error);
       return { error: 'Failed to fetch categories' };
     }
   },
@@ -112,72 +104,23 @@ export const categoriesApi = {
 
   // Create new category - for React Query mutations
   async create(category: TablesInsert<'product_categories'>): Promise<Tables<'product_categories'>> {
-    console.log('🏷️ Categories API: Creating category', category);
-    
-    try {
-      // First check if user is authenticated
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      console.log('🏷️ Auth check:', { 
-        user: user ? { id: user.id, email: user.email } : null, 
-        error: authError?.message 
-      });
+    const { data, error } = await supabase
+      .from('product_categories')
+      .insert(category)
+      .select()
+      .single();
 
-      if (authError || !user) {
-        throw new Error('Authentication required. Please log in.');
+    if (error) {
+      // Simple, clear error messages
+      if (error.code === '23505') {
+        throw new Error('A category with this name or slug already exists.');
+      } else if (error.code === '42501') {
+        throw new Error('You do not have permission to create categories.');
       }
-
-      // Check admin status by testing the is_admin() function
-      console.log('🏷️ Checking admin status...');
-      const { data: isAdminResult, error: adminError } = await supabase.rpc('is_admin');
-      console.log('🏷️ Admin check result:', { isAdmin: isAdminResult, error: adminError?.message });
-
-      if (adminError) {
-        console.error('🏷️ Admin function error:', adminError);
-      }
-
-      if (!isAdminResult) {
-        // Additional check for specific email
-        if (user.email === 'iradwatkins@gmail.com') {
-          console.log('🏷️ User is iradwatkins@gmail.com - should have admin access');
-        } else {
-          console.log('🏷️ User is not admin:', user.email);
-        }
-      }
-
-      // Attempt the insert
-      console.log('🏷️ Attempting category insert...');
-      const { data, error } = await supabase
-        .from('product_categories')
-        .insert(category)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('🏷️ Database error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
-
-        // Provide specific error messages
-        if (error.code === '42501') {
-          throw new Error('Permission denied. You need admin privileges to create categories.');
-        } else if (error.message.includes('row-level security policy')) {
-          throw new Error('Access denied by security policy. Please ensure you have admin role.');
-        } else if (error.code === '23505') {
-          throw new Error('A category with this name or slug already exists.');
-        }
-        
-        throw new Error(`Database error: ${error.message}`);
-      }
-
-      console.log('🏷️ Category created successfully:', data);
-      return data;
-    } catch (err) {
-      console.error('🏷️ Category creation failed:', err);
-      throw err;
+      throw new Error(error.message);
     }
+
+    return data;
   },
 
   // Create new category
@@ -201,72 +144,35 @@ export const categoriesApi = {
 
   // Update category - for React Query mutations
   async update(id: string, updates: Partial<TablesUpdate<'product_categories'>>): Promise<Tables<'product_categories'>> {
-    console.log('🏷️ Categories API: Updating category', { id, updates });
-    
-    try {
-      const { data, error } = await supabase
-        .from('product_categories')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
+    const { data, error } = await supabase
+      .from('product_categories')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
 
-      if (error) {
-        console.error('🏷️ Update error:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
-
-        if (error.code === '42501') {
-          throw new Error('Permission denied. You need admin privileges to update categories.');
-        } else if (error.message.includes('row-level security policy')) {
-          throw new Error('Access denied by security policy. Please ensure you have admin role.');
-        }
-        
-        throw new Error(error.message);
+    if (error) {
+      if (error.code === '42501') {
+        throw new Error('You do not have permission to update categories.');
       }
-
-      console.log('🏷️ Category updated successfully:', data);
-      return data;
-    } catch (err) {
-      console.error('🏷️ Category update failed:', err);
-      throw err;
+      throw new Error(error.message);
     }
+
+    return data;
   },
 
   // Delete category - for React Query mutations
   async delete(id: string): Promise<void> {
-    console.log('🏷️ Categories API: Deleting category', { id });
-    
-    try {
-      const { error } = await supabase
-        .from('product_categories')
-        .delete()
-        .eq('id', id);
+    const { error } = await supabase
+      .from('product_categories')
+      .delete()
+      .eq('id', id);
 
-      if (error) {
-        console.error('🏷️ Delete error:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
-
-        if (error.code === '42501') {
-          throw new Error('Permission denied. You need admin privileges to delete categories.');
-        } else if (error.message.includes('row-level security policy')) {
-          throw new Error('Access denied by security policy. Please ensure you have admin role.');
-        }
-        
-        throw new Error(error.message);
+    if (error) {
+      if (error.code === '42501') {
+        throw new Error('You do not have permission to delete categories.');
       }
-
-      console.log('🏷️ Category deleted successfully');
-    } catch (err) {
-      console.error('🏷️ Category deletion failed:', err);
-      throw err;
+      throw new Error(error.message);
     }
   },
 
