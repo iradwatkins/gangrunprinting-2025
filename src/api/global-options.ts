@@ -156,20 +156,6 @@ export const paperStocksApi = {
     } catch (error) {
       return { error: 'Failed to delete paper stock' };
     }
-  },
-
-  // Convenience methods for consistency
-  async getAll(filters: GlobalOptionsFilters = {}) {
-    return this.getPaperStocks(filters);
-  },
-  async create(data: TablesInsert<'paper_stocks'>) {
-    return this.createPaperStock(data);
-  },
-  async update(id: string, data: TablesUpdate<'paper_stocks'>) {
-    return this.updatePaperStock(id, data);
-  },
-  async delete(id: string) {
-    return this.deletePaperStock(id);
   }
 };
 
