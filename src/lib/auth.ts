@@ -27,7 +27,6 @@ export const auth = {
       
       if (error) {
         // Don't throw for auth errors - just return null
-        console.warn('Auth error getting current user:', error.message);
         return null;
       }
 
