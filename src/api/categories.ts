@@ -21,6 +21,32 @@ export interface CategoryFilters {
 
 // Product Categories API - Rebuilt for reliability
 export const categoriesApi = {
+  // Get all categories - simple method for React Query
+  async getAll(): Promise<ApiResponse<Tables<'product_categories'>[]>> {
+    console.log('Categories API: Starting request');
+    
+    try {
+      // Simple query without filters
+      const { data, error } = await supabase
+        .from('product_categories')
+        .select('*')
+        .order('sort_order', { ascending: true });
+
+      console.log('Categories API: Query completed', { dataCount: data?.length, error });
+
+      if (error) {
+        console.error('Categories API: Database error:', error);
+        return { error: error.message };
+      }
+
+      console.log('Categories API: Success!', data?.length || 0, 'categories');
+      return { data: data || [] };
+    } catch (error) {
+      console.error('Categories API: Unexpected error:', error);
+      return { error: 'Failed to fetch categories' };
+    }
+  },
+
   // Get all categories - simplified and reliable
   async getCategories(filters: CategoryFilters = {}): Promise<ApiResponse<Tables<'product_categories'>[]>> {
     console.log('Categories API: Starting request');
@@ -84,6 +110,21 @@ export const categoriesApi = {
     }
   },
 
+  // Create new category - for React Query mutations
+  async create(category: TablesInsert<'product_categories'>): Promise<Tables<'product_categories'>> {
+    const { data, error } = await supabase
+      .from('product_categories')
+      .insert(category)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data;
+  },
+
   // Create new category
   async createCategory(category: TablesInsert<'product_categories'>): Promise<ApiResponse<Tables<'product_categories'>>> {
     try {
@@ -100,6 +141,34 @@ export const categoriesApi = {
       return { data };
     } catch (error) {
       return { error: 'Failed to create category' };
+    }
+  },
+
+  // Update category - for React Query mutations
+  async update(id: string, updates: Partial<TablesUpdate<'product_categories'>>): Promise<Tables<'product_categories'>> {
+    const { data, error } = await supabase
+      .from('product_categories')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data;
+  },
+
+  // Delete category - for React Query mutations
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('product_categories')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw new Error(error.message);
     }
   },
 
