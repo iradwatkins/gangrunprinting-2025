@@ -69,18 +69,11 @@ export function PaperStockList() {
     setLoading(true);
     
     try {
-      // Add 10-second timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Request timed out after 10 seconds')), 10000)
-      );
-
       // Direct Supabase query - no auth check needed
-      const queryPromise = supabase
+      const { data, error } = await supabase
         .from('paper_stocks')
         .select('*')
         .order('name');
-
-      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
       
       if (error) {
         throw new Error(`Database error: ${error.message}`);
@@ -176,7 +169,7 @@ export function PaperStockList() {
             Loading Paper Stocks...
           </CardTitle>
           <CardDescription>
-            Please wait while we load your paper stock data (timeout: 10s)
+            Please wait while we load your paper stock data
           </CardDescription>
         </CardHeader>
         <CardContent>
