@@ -66,13 +66,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         // Get initial session
+        console.log('🔍 AUTH: Getting initial session...');
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('Session error:', error);
+          console.error('❌ AUTH: Session error:', error);
+          console.error('❌ AUTH: Error details:', {
+            message: error.message,
+            status: error.status,
+            statusText: error.statusText
+          });
           setLoading(false);
           return;
         }
+        
+        console.log('✅ AUTH: Initial session retrieved:', {
+          hasSession: !!session,
+          userId: session?.user?.id,
+          userEmail: session?.user?.email,
+          expiresAt: session?.expires_at
+        });
 
         setSession(session);
         
@@ -95,7 +108,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change:', event, session?.user?.email);
+        console.log('🔄 AUTH: State change detected:', event, {
+          userEmail: session?.user?.email,
+          userId: session?.user?.id,
+          hasSession: !!session,
+          timestamp: new Date().toISOString()
+        });
         
         setSession(session);
         
@@ -126,7 +144,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Simplified, reliable profile loading function
   const loadUserProfile = async (authUser: User, shouldRedirect = false) => {
     try {
-      console.log('Loading profile for user:', authUser.email);
+      console.log('👤 AUTH: Loading profile for user:', {
+        email: authUser.email,
+        id: authUser.id,
+        shouldRedirect,
+        metadata: authUser.user_metadata
+      });
       
       // Get or create user profile
       const { data: profile, error } = await supabase
@@ -139,7 +162,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error && error.code === 'PGRST116') {
         // Profile doesn't exist, create it with essential fields only
-        console.log('Creating new profile for:', authUser.email);
+        console.log('🆕 AUTH: Creating new profile for:', authUser.email);
         
         const newProfile = {
           user_id: authUser.id,

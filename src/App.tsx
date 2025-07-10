@@ -10,6 +10,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AdminModeContextWrapper } from "@/components/AdminModeContextWrapper";
 import { AdminModeWrapper } from "@/components/AdminModeWrapper";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { AuthenticationDebugger } from "@/components/admin/AuthenticationDebugger";
 import Index from "./pages/Index";
 import { ProductCatalog } from "./pages/ProductCatalog";
 import ProductDetail from "./pages/ProductDetail";
@@ -49,6 +50,7 @@ import InvoicePaymentPage from "./pages/InvoicePaymentPage";
 // Import cleanup utilities to make them available
 import "./utils/cleanup-auth";
 import "./utils/clean-url";
+import "./utils/debug-auth-simple";
 
 const queryClient = new QueryClient();
 
@@ -105,6 +107,9 @@ const App = () => (
                   <div className="fixed bottom-6 right-6 z-50">
                     <FloatingCart />
                   </div>
+                  
+                  {/* Authentication Debugger - Available on all pages for debugging */}
+                  <AuthenticationDebugger />
                 </div>
               </ErrorBoundary>
               </TooltipProvider>

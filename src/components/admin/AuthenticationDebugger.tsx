@@ -1,448 +1,357 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { RefreshCw, Trash2, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAdminMode } from '@/contexts/AdminModeContext';
-import { useToast } from '@/hooks/use-toast';
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../../integrations/supabase/client';
+import { useAuth } from '../../contexts/AuthContext';
+import { Shield, Database, Network, Code, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 
-interface AuthState {
-  hasUser: boolean;
-  userId?: string;
-  userEmail?: string;
-  userRole?: string;
-  hasSession: boolean;
-  sessionExpiry?: string;
-  isAdminMode: boolean;
-  canUseAdminMode: boolean;
+interface AuthDebugInfo {
+  // Authentication State
+  authState: {
+    isAuthenticated: boolean;
+    user: any;
+    profile: any;
+    loading: boolean;
+    error: string | null;
+  };
+  
+  // Supabase Session
+  supabaseSession: any;
+  
+  // Local Storage
+  localStorage: {
+    authToken: string | null;
+    refreshToken: string | null;
+    expiresAt: string | null;
+  };
+  
+  // Network Status
+  networkStatus: {
+    online: boolean;
+    supabaseConnected: boolean;
+    lastAuthCheck: string | null;
+  };
+  
+  // Environment
+  environment: {
+    supabaseUrl: string;
+    supabaseKey: string;
+    nodeEnv: string;
+    isDevelopment: boolean;
+  };
+  
+  // Recent Auth Events
+  authEvents: Array<{
+    timestamp: string;
+    event: string;
+    details: any;
+  }>;
 }
 
-interface StorageData {
-  localStorage: Record<string, any>;
-  sessionStorage: Record<string, any>;
-}
+export const AuthenticationDebugger: React.FC = () => {
+  const { user, profile, loading, isAuthenticated } = useAuth();
+  const [debugInfo, setDebugInfo] = useState<AuthDebugInfo | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [authEvents, setAuthEvents] = useState<AuthDebugInfo['authEvents']>([]);
 
-interface DeploymentInfo {
-  url: string;
-  type: 'production' | 'preview' | 'development' | 'unknown';
-  name: string;
-  isPrimary: boolean;
-}
-
-export function AuthenticationDebugger() {
-  const [authState, setAuthState] = useState<AuthState | null>(null);
-  const [storageData, setStorageData] = useState<StorageData>({ localStorage: {}, sessionStorage: {} });
-  const [deploymentInfo, setDeploymentInfo] = useState<DeploymentInfo | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const { user, isAuthenticated } = useAuth();
-  const { isAdminMode, canUseAdminMode } = useAdminMode();
-  const { toast } = useToast();
-
-  const collectDeploymentInfo = () => {
-    const url = window.location.origin;
-    let type: DeploymentInfo['type'] = 'unknown';
-    let name = 'Unknown';
-    let isPrimary = false;
-
-    if (url.includes('localhost') || url.includes('127.0.0.1')) {
-      type = 'development';
-      name = 'Local Development';
-    } else if (url === 'https://gangrunprinting.com') {
-      type = 'production';
-      name = 'Production (Primary)';
-      isPrimary = true;
-    } else if (url === 'https://www.gangrunprinting.com') {
-      type = 'production';
-      name = 'Production (WWW)';
-    } else if (url.includes('test-seven-liard-6nrp8uaf3b.vercel.app')) {
-      type = 'preview';
-      name = 'Preview (Test)';
-    } else if (url.includes('gangrunprinting-v10-git-main')) {
-      type = 'preview';
-      name = 'Preview (Main Branch)';
-    } else if (url.includes('gangrunprinting-v10-ira-watkins-projects')) {
-      type = 'preview';
-      name = 'Preview (Project)';
-    } else if (url.includes('vercel.app')) {
-      type = 'preview';
-      name = 'Vercel Preview';
-    }
-
-    setDeploymentInfo({ url, type, name, isPrimary });
+  const addAuthEvent = (event: string, details: any) => {
+    const newEvent = {
+      timestamp: new Date().toISOString(),
+      event,
+      details
+    };
+    setAuthEvents(prev => [newEvent, ...prev].slice(0, 10)); // Keep last 10 events
   };
 
-  const collectAuthState = async () => {
+  const checkSupabaseConnection = async () => {
     try {
-      const { data: { user: supabaseUser, session } } = await supabase.auth.getUser();
-      
-      setAuthState({
-        hasUser: !!supabaseUser,
-        userId: supabaseUser?.id,
-        userEmail: supabaseUser?.email,
-        userRole: user?.profile?.role,
-        hasSession: !!session,
-        sessionExpiry: session?.expires_at ? new Date(session.expires_at * 1000).toLocaleString() : undefined,
-        isAdminMode,
-        canUseAdminMode
-      });
-    } catch (error) {
-      console.error('Error collecting auth state:', error);
+      const { data, error } = await supabase.from('profiles').select('count').limit(1);
+      return !error;
+    } catch {
+      return false;
     }
   };
 
-  const collectStorageData = () => {
-    const storage: StorageData = { localStorage: {}, sessionStorage: {} };
-    
-    // Collect localStorage
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key) {
+  const gatherDebugInfo = async () => {
+    try {
+      // Get Supabase session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        addAuthEvent('session_error', sessionError);
+      } else {
+        addAuthEvent('session_check', { hasSession: !!session });
+      }
+
+      // Check localStorage
+      const authTokenKey = 'sb-dprvugzbsqcufitbxkda-auth-token';
+      const authToken = localStorage.getItem(authTokenKey);
+      let parsedAuthToken = null;
+      
+      if (authToken) {
         try {
-          const value = localStorage.getItem(key);
-          storage.localStorage[key] = value;
-        } catch (error) {
-          storage.localStorage[key] = '[Error reading value]';
+          parsedAuthToken = JSON.parse(authToken);
+        } catch {
+          parsedAuthToken = authToken;
         }
       }
-    }
-    
-    // Collect sessionStorage
-    for (let i = 0; i < sessionStorage.length; i++) {
-      const key = sessionStorage.key(i);
-      if (key) {
-        try {
-          const value = sessionStorage.getItem(key);
-          storage.sessionStorage[key] = value;
-        } catch (error) {
-          storage.sessionStorage[key] = '[Error reading value]';
-        }
-      }
-    }
-    
-    setStorageData(storage);
-  };
 
-  const refreshAll = async () => {
-    setIsRefreshing(true);
-    try {
-      collectDeploymentInfo();
-      await collectAuthState();
-      collectStorageData();
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
+      // Check Supabase connection
+      const isConnected = await checkSupabaseConnection();
 
-  const clearAllBrowserData = async () => {
-    if (!confirm('This will clear ALL browser data (localStorage, sessionStorage, cookies) and sign you out. Continue?')) {
-      return;
-    }
+      // Gather all debug info
+      const info: AuthDebugInfo = {
+        authState: {
+          isAuthenticated,
+          user: user ? {
+            id: user.id,
+            email: user.email,
+            created_at: user.created_at,
+            last_sign_in_at: user.last_sign_in_at,
+            role: user.role,
+            user_metadata: user.user_metadata
+          } : null,
+          profile: profile ? {
+            id: profile.id,
+            email: profile.email,
+            full_name: profile.full_name,
+            is_admin: profile.is_admin,
+            created_at: profile.created_at
+          } : null,
+          loading,
+          error: null
+        },
+        supabaseSession: session ? {
+          access_token: session.access_token ? '***' + session.access_token.slice(-10) : null,
+          refresh_token: session.refresh_token ? '***' + session.refresh_token.slice(-10) : null,
+          expires_at: session.expires_at,
+          expires_in: session.expires_in,
+          user: session.user ? {
+            id: session.user.id,
+            email: session.user.email,
+            role: session.user.role
+          } : null
+        } : null,
+        localStorage: {
+          authToken: parsedAuthToken ? JSON.stringify(parsedAuthToken, null, 2) : null,
+          refreshToken: parsedAuthToken?.refresh_token ? '***' + parsedAuthToken.refresh_token.slice(-10) : null,
+          expiresAt: parsedAuthToken?.expires_at || null
+        },
+        networkStatus: {
+          online: navigator.onLine,
+          supabaseConnected: isConnected,
+          lastAuthCheck: new Date().toISOString()
+        },
+        environment: {
+          supabaseUrl: import.meta.env.VITE_SUPABASE_URL || 'Not set',
+          supabaseKey: import.meta.env.VITE_SUPABASE_ANON_KEY ? '***' + import.meta.env.VITE_SUPABASE_ANON_KEY.slice(-10) : 'Not set',
+          nodeEnv: import.meta.env.NODE_ENV || 'Not set',
+          isDevelopment: import.meta.env.DEV || false
+        },
+        authEvents
+      };
 
-    try {
-      // Sign out from Supabase
-      await supabase.auth.signOut();
-      
-      // Clear all storage
-      localStorage.clear();
-      sessionStorage.clear();
-      
-      // Clear cookies (what we can access)
-      document.cookie.split(";").forEach((c) => {
-        const eqPos = c.indexOf("=");
-        const name = eqPos > -1 ? c.substr(0, eqPos) : c;
-        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=" + window.location.hostname;
-      });
-      
-      toast({ 
-        title: 'Browser Data Cleared', 
-        description: 'All authentication data cleared. Page will reload...',
-        duration: 2000
-      });
-      
-      // Reload page after a short delay
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
-      
+      setDebugInfo(info);
     } catch (error) {
-      console.error('Error clearing browser data:', error);
-      toast({ 
-        title: 'Error', 
-        description: 'Failed to clear all data. Try manual browser clear.',
-        variant: 'destructive'
-      });
+      console.error('Error gathering debug info:', error);
+      addAuthEvent('debug_error', error);
     }
   };
 
-  const clearSupabaseSession = async () => {
-    try {
-      await supabase.auth.signOut();
-      toast({ title: 'Success', description: 'Supabase session cleared' });
-      await refreshAll();
-    } catch (error) {
-      toast({ title: 'Error', description: 'Failed to clear session', variant: 'destructive' });
-    }
-  };
-
-  const clearAuthStorage = () => {
-    // Clear Supabase-related items
-    const supabaseKeys = Object.keys(localStorage).filter(key => 
-      key.includes('supabase') || key.includes('auth') || key.includes('admin')
-    );
-    
-    supabaseKeys.forEach(key => localStorage.removeItem(key));
-    
-    toast({ title: 'Success', description: `Cleared ${supabaseKeys.length} auth-related items` });
-    collectStorageData();
-  };
-
+  // Listen for auth state changes
   useEffect(() => {
-    refreshAll();
-  }, [isAuthenticated, isAdminMode]);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      addAuthEvent(event, {
+        hasSession: !!session,
+        userId: session?.user?.id
+      });
+      
+      // Refresh debug info on auth state change
+      setTimeout(gatherDebugInfo, 100);
+    });
 
-  const getStatusIcon = (status: boolean) => {
-    return status ? (
-      <CheckCircle className="h-4 w-4 text-green-600" />
-    ) : (
-      <XCircle className="h-4 w-4 text-red-600" />
-    );
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  // Initial load and periodic refresh
+  useEffect(() => {
+    gatherDebugInfo();
+    const interval = setInterval(gatherDebugInfo, 5000); // Refresh every 5 seconds
+    return () => clearInterval(interval);
+  }, [user, profile, loading, isAuthenticated]);
+
+  const getStatusIcon = (status: boolean | null) => {
+    if (status === null) return <AlertCircle className="w-4 h-4 text-gray-400" />;
+    return status ? 
+      <CheckCircle className="w-4 h-4 text-green-500" /> : 
+      <XCircle className="w-4 h-4 text-red-500" />;
   };
+
+  const formatJson = (obj: any) => {
+    if (!obj) return 'null';
+    if (typeof obj === 'string') return obj;
+    return JSON.stringify(obj, null, 2);
+  };
+
+  if (!debugInfo) return null;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Authentication Debugger</h2>
-          <p className="text-gray-600">Debug authentication state and clear browser cache conflicts</p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={refreshAll} disabled={isRefreshing} variant="outline">
-            <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          <Button onClick={clearAllBrowserData} variant="destructive">
-            <Trash2 className="mr-2 h-4 w-4" />
-            Clear All Data
-          </Button>
-        </div>
-      </div>
+    <div className="fixed bottom-4 right-4 z-50 max-w-2xl">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 hover:bg-gray-800 transition-colors"
+      >
+        <Shield className="w-5 h-5" />
+        Auth Debug
+        {getStatusIcon(debugInfo.authState.isAuthenticated)}
+      </button>
 
-      {/* Deployment Information */}
-      {deploymentInfo && (
-        <Card className={`border-2 ${
-          deploymentInfo.type === 'production' ? 'border-green-200 bg-green-50' :
-          deploymentInfo.type === 'preview' ? 'border-yellow-200 bg-yellow-50' :
-          'border-blue-200 bg-blue-50'
-        }`}>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-lg">{deploymentInfo.name}</h3>
-                <p className="text-sm text-gray-600">{deploymentInfo.url}</p>
-              </div>
-              <div className="flex gap-2">
-                <Badge variant={deploymentInfo.isPrimary ? 'default' : 'secondary'}>
-                  {deploymentInfo.type}
-                </Badge>
-                {deploymentInfo.isPrimary && <Badge variant="default">Primary</Badge>}
-              </div>
-            </div>
-            {!deploymentInfo.isPrimary && (
-              <Alert className="mt-3">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Multi-Deployment Notice:</strong> You're on a {deploymentInfo.type} deployment. 
-                  If you've used other deployment URLs, you may have authentication conflicts. 
-                  Clear browser data if categories aren't loading.
-                </AlertDescription>
-              </Alert>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      {isExpanded && (
+        <div className="mt-2 bg-white rounded-lg shadow-xl border border-gray-200 p-4 max-h-[80vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Authentication Debugger</h3>
+            <button
+              onClick={() => setIsExpanded(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              ×
+            </button>
+          </div>
 
-      {/* Quick Fix Alert */}
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          <strong>Common Fix:</strong> If categories aren't loading, try "Clear All Data" button above. 
-          This fixes authentication conflicts between multiple deployment URLs.
-        </AlertDescription>
-      </Alert>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Authentication State */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              Authentication State
-              {authState?.hasUser ? (
-                <Badge variant="default">Authenticated</Badge>
-              ) : (
-                <Badge variant="destructive">Not Authenticated</Badge>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {authState ? (
-              <>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Has User</span>
-                  {getStatusIcon(authState.hasUser)}
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Has Session</span>
-                  {getStatusIcon(authState.hasSession)}
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Admin Mode</span>
-                  {getStatusIcon(authState.isAdminMode)}
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Can Use Admin</span>
-                  {getStatusIcon(authState.canUseAdminMode)}
-                </div>
-                {authState.userEmail && (
-                  <div>
-                    <p className="text-sm font-medium">Email</p>
-                    <p className="text-xs text-gray-600">{authState.userEmail}</p>
-                  </div>
-                )}
-                {authState.userRole && (
-                  <div>
-                    <p className="text-sm font-medium">Role</p>
-                    <Badge variant="outline">{authState.userRole}</Badge>
-                  </div>
-                )}
-                {authState.sessionExpiry && (
-                  <div>
-                    <p className="text-sm font-medium">Session Expires</p>
-                    <p className="text-xs text-gray-600">{authState.sessionExpiry}</p>
-                  </div>
-                )}
-              </>
-            ) : (
-              <p className="text-sm text-gray-500">Loading...</p>
-            )}
-            <div className="pt-2 border-t">
-              <Button onClick={clearSupabaseSession} variant="outline" size="sm">
-                Clear Session
-              </Button>
+          {/* Quick Status */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="flex items-center gap-2">
+              {getStatusIcon(debugInfo.authState.isAuthenticated)}
+              <span className="text-sm">
+                Authentication: {debugInfo.authState.isAuthenticated ? 'Active' : 'Inactive'}
+              </span>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Browser Storage */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Browser Storage</CardTitle>
-            <CardDescription>Local and session storage contents</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm">localStorage Items</span>
-              <Badge variant="outline">{Object.keys(storageData.localStorage).length}</Badge>
+            <div className="flex items-center gap-2">
+              {getStatusIcon(debugInfo.supabaseSession !== null)}
+              <span className="text-sm">
+                Session: {debugInfo.supabaseSession ? 'Valid' : 'None'}
+              </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm">sessionStorage Items</span>
-              <Badge variant="outline">{Object.keys(storageData.sessionStorage).length}</Badge>
+            <div className="flex items-center gap-2">
+              {getStatusIcon(debugInfo.networkStatus.online)}
+              <span className="text-sm">
+                Network: {debugInfo.networkStatus.online ? 'Online' : 'Offline'}
+              </span>
             </div>
-            
-            {/* Show key localStorage items */}
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Key Items:</p>
-              {Object.keys(storageData.localStorage)
-                .filter(key => key.includes('supabase') || key.includes('auth') || key.includes('admin'))
-                .slice(0, 5)
-                .map(key => (
-                  <p key={key} className="text-xs text-gray-600 truncate">
-                    {key}: {String(storageData.localStorage[key]).substring(0, 30)}...
-                  </p>
-                ))
-              }
-            </div>
-            
-            <div className="pt-2 border-t">
-              <Button onClick={clearAuthStorage} variant="outline" size="sm">
-                Clear Auth Storage
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Detailed Storage View */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Complete Storage Contents</CardTitle>
-          <CardDescription>Full browser storage for debugging</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h4 className="font-medium mb-2">localStorage</h4>
-              <pre className="text-xs bg-gray-50 p-4 rounded overflow-auto max-h-64">
-                {JSON.stringify(storageData.localStorage, null, 2)}
-              </pre>
-            </div>
-            <div>
-              <h4 className="font-medium mb-2">sessionStorage</h4>
-              <pre className="text-xs bg-gray-50 p-4 rounded overflow-auto max-h-64">
-                {JSON.stringify(storageData.sessionStorage, null, 2)}
-              </pre>
+            <div className="flex items-center gap-2">
+              {getStatusIcon(debugInfo.networkStatus.supabaseConnected)}
+              <span className="text-sm">
+                Supabase: {debugInfo.networkStatus.supabaseConnected ? 'Connected' : 'Disconnected'}
+              </span>
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Supabase OAuth Configuration */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Supabase OAuth Configuration</CardTitle>
-          <CardDescription>Required settings for all deployment URLs</CardDescription>
-        </CardHeader>
-        <CardContent>
+          {/* Detailed Sections */}
           <div className="space-y-4">
-            <div>
-              <h4 className="font-medium mb-2">Required JavaScript Origins:</h4>
-              <div className="bg-gray-50 p-3 rounded text-xs font-mono space-y-1">
-                <div>https://gangrunprinting.com</div>
-                <div>https://www.gangrunprinting.com</div>
-                <div>https://test-seven-liard-6nrp8uaf3b.vercel.app</div>
-                <div>https://gangrunprinting-v10-ira-watkins-projects.vercel.app</div>
-                <div>https://gangrunprinting-v10-git-main-ira-watkins-projects.vercel.app</div>
-                <div>http://localhost:3000</div>
+            {/* Auth State */}
+            <div className="border rounded-lg p-3">
+              <h4 className="font-medium mb-2 flex items-center gap-2">
+                <Shield className="w-4 h-4" />
+                Auth Context State
+              </h4>
+              <pre className="text-xs bg-gray-50 p-2 rounded overflow-x-auto">
+                {formatJson(debugInfo.authState)}
+              </pre>
+            </div>
+
+            {/* Supabase Session */}
+            <div className="border rounded-lg p-3">
+              <h4 className="font-medium mb-2 flex items-center gap-2">
+                <Database className="w-4 h-4" />
+                Supabase Session
+              </h4>
+              <pre className="text-xs bg-gray-50 p-2 rounded overflow-x-auto">
+                {formatJson(debugInfo.supabaseSession)}
+              </pre>
+            </div>
+
+            {/* Local Storage */}
+            <div className="border rounded-lg p-3">
+              <h4 className="font-medium mb-2 flex items-center gap-2">
+                <Code className="w-4 h-4" />
+                Local Storage
+              </h4>
+              <pre className="text-xs bg-gray-50 p-2 rounded overflow-x-auto">
+                {formatJson(debugInfo.localStorage)}
+              </pre>
+            </div>
+
+            {/* Environment */}
+            <div className="border rounded-lg p-3">
+              <h4 className="font-medium mb-2 flex items-center gap-2">
+                <Network className="w-4 h-4" />
+                Environment
+              </h4>
+              <pre className="text-xs bg-gray-50 p-2 rounded overflow-x-auto">
+                {formatJson(debugInfo.environment)}
+              </pre>
+            </div>
+
+            {/* Recent Auth Events */}
+            <div className="border rounded-lg p-3">
+              <h4 className="font-medium mb-2 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4" />
+                Recent Auth Events
+              </h4>
+              <div className="space-y-1 max-h-40 overflow-y-auto">
+                {debugInfo.authEvents.map((event, index) => (
+                  <div key={index} className="text-xs border-b pb-1">
+                    <div className="flex justify-between">
+                      <span className="font-medium">{event.event}</span>
+                      <span className="text-gray-500">
+                        {new Date(event.timestamp).toLocaleTimeString()}
+                      </span>
+                    </div>
+                    {event.details && (
+                      <pre className="text-xs bg-gray-50 p-1 rounded mt-1">
+                        {formatJson(event.details)}
+                      </pre>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
-            
-            <div>
-              <h4 className="font-medium mb-2">Supabase Site URL (Primary):</h4>
-              <div className="bg-gray-50 p-3 rounded text-xs font-mono">
-                https://gangrunprinting.com
-              </div>
-            </div>
-            
-            <div>
-              <h4 className="font-medium mb-2">OAuth Redirect URI:</h4>
-              <div className="bg-gray-50 p-3 rounded text-xs font-mono">
-                https://dprvugzbsqcufitbxkda.supabase.co/auth/v1/callback
-              </div>
-            </div>
-            
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="text-xs">
-                If any of these URLs are missing from your Google OAuth or Supabase settings, 
-                authentication may fail on that deployment. Add all URLs to ensure consistent behavior.
-              </AlertDescription>
-            </Alert>
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Actions */}
+          <div className="mt-4 flex gap-2">
+            <button
+              onClick={gatherDebugInfo}
+              className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
+            >
+              Refresh
+            </button>
+            <button
+              onClick={() => {
+                console.log('Full Debug Info:', debugInfo);
+                alert('Debug info logged to console');
+              }}
+              className="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm"
+            >
+              Log to Console
+            </button>
+            <button
+              onClick={async () => {
+                const { error } = await supabase.auth.signOut();
+                if (error) {
+                  console.error('Sign out error:', error);
+                  alert('Error signing out: ' + error.message);
+                } else {
+                  alert('Signed out successfully');
+                }
+              }}
+              className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+            >
+              Force Sign Out
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+};
