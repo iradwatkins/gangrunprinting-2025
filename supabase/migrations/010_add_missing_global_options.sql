@@ -25,10 +25,12 @@ CREATE TABLE IF NOT EXISTS public.sides (
 );
 
 -- Create updated_at triggers
+DROP TRIGGER IF EXISTS quantities_updated_at ON public.quantities;
 CREATE TRIGGER quantities_updated_at
     BEFORE UPDATE ON public.quantities
     FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
+DROP TRIGGER IF EXISTS sides_updated_at ON public.sides;
 CREATE TRIGGER sides_updated_at
     BEFORE UPDATE ON public.sides
     FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
@@ -38,13 +40,16 @@ ALTER TABLE public.quantities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.sides ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for quantities (public read access for active items)
+DROP POLICY IF EXISTS "Public can view active quantities" ON public.quantities;
 CREATE POLICY "Public can view active quantities" ON public.quantities
     FOR SELECT USING (is_active = true);
 
+DROP POLICY IF EXISTS "Public can view active sides" ON public.sides;
 CREATE POLICY "Public can view active sides" ON public.sides
     FOR SELECT USING (is_active = true);
 
 -- Admin-only write access for quantities
+DROP POLICY IF EXISTS "Admin can manage quantities" ON public.quantities;
 CREATE POLICY "Admin can manage quantities" ON public.quantities
     FOR ALL USING (
         EXISTS (
@@ -57,6 +62,7 @@ CREATE POLICY "Admin can manage quantities" ON public.quantities
     );
 
 -- Admin-only write access for sides
+DROP POLICY IF EXISTS "Admin can manage sides" ON public.sides;
 CREATE POLICY "Admin can manage sides" ON public.sides
     FOR ALL USING (
         EXISTS (

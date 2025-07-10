@@ -45,14 +45,18 @@ CREATE TRIGGER update_vendor_email_log_updated_at
 -- Enable RLS (Row Level Security) for vendor_email_log
 ALTER TABLE vendor_email_log ENABLE ROW LEVEL SECURITY;
 
+-- Ensure is_admin column exists on user_profiles
+ALTER TABLE public.user_profiles ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT false;
+
 -- Create RLS policies for vendor_email_log
 -- Admin users can access all vendor email logs
+DROP POLICY IF EXISTS "Admin users can access vendor email logs" ON vendor_email_log;
 CREATE POLICY "Admin users can access vendor email logs" ON vendor_email_log
     FOR ALL USING (
         EXISTS (
             SELECT 1 FROM user_profiles 
             WHERE user_profiles.user_id = auth.uid() 
-            AND user_profiles.role = 'admin'
+            AND user_profiles.is_admin = true
         )
     );
 
@@ -72,7 +76,7 @@ BEGIN
                 EXISTS (
                     SELECT 1 FROM user_profiles 
                     WHERE user_profiles.user_id = auth.uid() 
-                    AND user_profiles.role = 'admin'
+                    AND user_profiles.is_admin = true
                 )
             );
     END IF;

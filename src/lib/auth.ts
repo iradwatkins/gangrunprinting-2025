@@ -23,7 +23,9 @@ export const auth = {
       const { data: { user }, error } = await supabase.auth.getUser();
       
       if (error) {
-        throw new AuthError(error.message);
+        // Don't throw for auth errors - just return null
+        console.warn('Auth error getting current user:', error.message);
+        return null;
       }
 
       if (!user) {
