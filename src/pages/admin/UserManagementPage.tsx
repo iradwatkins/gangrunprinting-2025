@@ -15,8 +15,9 @@ interface UserProfile {
   id: string;
   user_id: string;
   email: string | null;
-  is_admin: boolean;
-  is_broker: boolean;
+  is_admin?: boolean;
+  role?: 'admin' | 'customer' | 'broker';
+  is_broker?: boolean;
   company_name: string | null;
   phone: string | null;
   created_at: string;
@@ -40,13 +41,21 @@ export function UserManagementPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Special check for iradwatkins@gmail.com
+      if (user.email === 'iradwatkins@gmail.com') {
+        setCurrentUserIsAdmin(true);
+        return;
+      }
+
       const { data: profile } = await supabase
         .from('user_profiles')
-        .select('is_admin')
+        .select('*')
         .eq('user_id', user.id)
         .single();
 
-      setCurrentUserIsAdmin(profile?.is_admin || false);
+      // Check both is_admin and role fields for compatibility
+      const isAdmin = profile?.is_admin || profile?.role === 'admin' || false;
+      setCurrentUserIsAdmin(isAdmin);
     } catch (error) {
       console.error('Error checking admin status:', error);
     }
