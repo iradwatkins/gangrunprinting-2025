@@ -554,34 +554,78 @@ export const quantitiesApi = {
   // Get all quantity groups - simple method for React Query
   async getAll(): Promise<ApiResponse<Tables<'quantities'>[]>> {
     try {
+      console.log('🔄 quantitiesApi.getAll called...');
       const { data, error } = await supabase
         .from('quantities')
         .select('*')
         .order('name');
 
+      console.log('📊 getAll response - data count:', data?.length);
+      console.log('📊 getAll response - error:', error);
+
       if (error) {
+        console.error('❌ getAll error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         return { error: error.message };
       }
 
+      console.log('✅ Successfully fetched quantity groups:', data);
       return { data: data || [] };
     } catch (error) {
+      console.error('❌ Exception in quantitiesApi.getAll:', error);
       return { error: 'Failed to fetch quantity groups' };
     }
   },
 
   // Create new quantity group - for React Query mutations
   async create(quantityGroup: TablesInsert<'quantities'>): Promise<Tables<'quantities'>> {
-    const { data, error } = await supabase
-      .from('quantities')
-      .insert(quantityGroup)
-      .select()
-      .single();
-
-    if (error) {
-      throw new Error(error.message);
+    console.log('🔄 quantitiesApi.create called with:', quantityGroup);
+    console.log('🔄 quantityGroup type:', typeof quantityGroup);
+    console.log('🔄 quantityGroup keys:', Object.keys(quantityGroup));
+    
+    // Validate required fields
+    if (!quantityGroup.name || !quantityGroup.values) {
+      const error = 'Missing required fields: name and values are required';
+      console.error('❌ Validation error:', error);
+      throw new Error(error);
     }
+    
+    try {
+      console.log('🔄 Making supabase.from("quantities").insert call...');
+      const { data, error } = await supabase
+        .from('quantities')
+        .insert(quantityGroup)
+        .select()
+        .single();
 
-    return data;
+      console.log('✅ Supabase response - data:', data);
+      console.log('❌ Supabase response - error:', error);
+
+      if (error) {
+        console.error('❌ Supabase error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      if (!data) {
+        console.error('❌ No data returned from insert');
+        throw new Error('No data returned from database');
+      }
+
+      console.log('✅ Successfully created quantity group:', data);
+      return data;
+    } catch (err) {
+      console.error('❌ Exception in quantitiesApi.create:', err);
+      throw err;
+    }
   },
 
   // Update quantity group - for React Query mutations

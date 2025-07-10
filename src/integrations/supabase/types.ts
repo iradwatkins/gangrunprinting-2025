@@ -1278,35 +1278,32 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          increment_value: number | null
-          is_active: boolean
-          is_custom: boolean
-          min_custom_value: number | null
           name: string
+          values: string
+          default_value: number | null
+          has_custom: boolean
+          is_active: boolean
           updated_at: string
-          value: number | null
         }
         Insert: {
           created_at?: string
           id?: string
-          increment_value?: number | null
-          is_active?: boolean
-          is_custom?: boolean
-          min_custom_value?: number | null
           name: string
+          values: string
+          default_value?: number | null
+          has_custom?: boolean
+          is_active?: boolean
           updated_at?: string
-          value?: number | null
         }
         Update: {
           created_at?: string
           id?: string
-          increment_value?: number | null
-          is_active?: boolean
-          is_custom?: boolean
-          min_custom_value?: number | null
           name?: string
+          values?: string
+          default_value?: number | null
+          has_custom?: boolean
+          is_active?: boolean
           updated_at?: string
-          value?: number | null
         }
         Relationships: []
       }
