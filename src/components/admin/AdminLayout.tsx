@@ -36,7 +36,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { UserButton } from '@/components/auth/UserButton';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { getShortBuildTime } from '@/utils/buildInfo';
+import { getShortBuildTime, buildInfo } from '@/utils/buildInfo';
 
 const navigation = [
   // Main Dashboard
@@ -208,9 +208,20 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const SidebarContent = () => (
     <div className="flex h-full flex-col">
       <div className="flex h-16 shrink-0 items-center px-6">
-        <div>
+        <div className="flex-1">
           <h1 className="text-lg font-semibold">Admin Panel</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">Updated: {getShortBuildTime()}</p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <p className="text-xs text-muted-foreground">Updated: {getShortBuildTime()}</p>
+            <Badge 
+              variant={buildInfo.deployment.color === 'green' ? 'default' : 'secondary'}
+              className={`text-xs ${
+                buildInfo.deployment.color === 'yellow' ? 'bg-yellow-100 text-yellow-800' :
+                buildInfo.deployment.color === 'blue' ? 'bg-blue-100 text-blue-800' : ''
+              }`}
+            >
+              {buildInfo.deployment.displayName}
+            </Badge>
+          </div>
         </div>
       </div>
       <Separator />

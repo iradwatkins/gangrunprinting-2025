@@ -24,10 +24,28 @@ export const categoriesApi = {
   // Get all categories - simple method for React Query
   async getAll(): Promise<ApiResponse<Tables<'product_categories'>[]>> {
     try {
+      // Debug: Get current user and session info
+      const { data: { user, session } } = await supabase.auth.getUser();
+      console.log('Categories API - Auth Debug:', {
+        hasUser: !!user,
+        userId: user?.id,
+        userEmail: user?.email,
+        hasSession: !!session,
+        deploymentUrl: window.location.origin,
+        timestamp: new Date().toISOString()
+      });
+
       const { data, error } = await supabase
         .from('product_categories')
         .select('*')
         .order('sort_order', { ascending: true });
+
+      console.log('Categories API - Query Debug:', {
+        querySuccess: !error,
+        dataCount: data?.length || 0,
+        error: error?.message,
+        deploymentUrl: window.location.origin
+      });
 
       if (error) {
         return { error: error.message };
@@ -35,6 +53,10 @@ export const categoriesApi = {
 
       return { data: data || [] };
     } catch (error) {
+      console.error('Categories API - Unexpected Error:', {
+        error,
+        deploymentUrl: window.location.origin
+      });
       return { error: 'Failed to fetch categories' };
     }
   },

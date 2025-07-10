@@ -83,10 +83,45 @@ export function getRelativeBuildTime(): string {
   }
 }
 
+/**
+ * Get deployment environment information
+ */
+export function getDeploymentInfo() {
+  const url = typeof window !== 'undefined' ? window.location.origin : '';
+  const isVercel = url.includes('vercel.app');
+  const isProduction = url.includes('gangrunprinting.com');
+  const isLocal = url.includes('localhost') || url.includes('127.0.0.1');
+  
+  let environment = 'unknown';
+  let color = 'gray';
+  
+  if (isLocal) {
+    environment = 'development';
+    color = 'blue';
+  } else if (isVercel) {
+    environment = 'preview';
+    color = 'yellow';
+  } else if (isProduction) {
+    environment = 'production';
+    color = 'green';
+  }
+  
+  return {
+    url,
+    environment,
+    color,
+    isVercel,
+    isProduction,
+    isLocal,
+    displayName: isVercel ? 'Vercel Preview' : isProduction ? 'Production' : isLocal ? 'Development' : 'Unknown'
+  };
+}
+
 // Export all functions
 export const buildInfo = {
   timestamp: BUILD_TIMESTAMP,
   formatted: getFormattedBuildTime(),
   short: getShortBuildTime(),
-  relative: getRelativeBuildTime()
+  relative: getRelativeBuildTime(),
+  deployment: getDeploymentInfo()
 };
