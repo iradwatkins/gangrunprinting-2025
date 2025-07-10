@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { FloatingCart } from "@/components/cart/FloatingCart";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { AdminModeContextWrapper } from "@/components/AdminModeContextWrapper";
 import { AdminModeWrapper } from "@/components/AdminModeWrapper";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
@@ -52,8 +53,9 @@ const App = () => (
     <ThemeProvider>
       <BrowserRouter>
         <AuthProvider>
-          <AdminModeWrapper>
-            <TooltipProvider>
+          <AdminModeContextWrapper>
+            <AdminModeWrapper>
+              <TooltipProvider>
               <ErrorBoundary>
                 <Toaster />
                 <Sonner />
@@ -101,8 +103,9 @@ const App = () => (
                   </div>
                 </div>
               </ErrorBoundary>
-            </TooltipProvider>
-          </AdminModeWrapper>
+              </TooltipProvider>
+            </AdminModeWrapper>
+          </AdminModeContextWrapper>
         </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>
