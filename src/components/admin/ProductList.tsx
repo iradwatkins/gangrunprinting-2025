@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   MoreHorizontal, 
@@ -51,62 +50,77 @@ type Category = Tables<'product_categories'>;
 type Vendor = Tables<'vendors'>;
 
 export function ProductList() {
-  const queryClient = useQueryClient();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [vendorFilter, setVendorFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const { toast } = useToast();
 
-  const { data: products, isLoading, error } = useQuery({
-    queryKey: ['admin-products'],
-    queryFn: async () => {
-      const response = await productsApi.getAll();
-      if (response.error) {
-        throw new Error(response.error);
-      }
-      return response.data;
-    },
-    retry: 1, // Only retry once
-    staleTime: 30000 // Cache for 30 seconds
-  });
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  const { data: categories } = useQuery({
-    queryKey: ['admin-categories'],
-    queryFn: async () => {
-      const response = await categoriesApi.getAll();
-      if (response.error) {
-        throw new Error(response.error);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch all data in parallel
+      const [productsResponse, categoriesResponse, vendorsResponse] = await Promise.all([
+        productsApi.getAll(),
+        categoriesApi.getAll(),
+        vendorsApi.getAll()
+      ]);
+      
+      if (productsResponse.error) {
+        console.error('Products fetch error:', productsResponse.error);
+        setError(productsResponse.error);
+        setProducts([]);
+      } else {
+        setProducts(productsResponse.data || []);
       }
-      return response.data;
+      
+      if (categoriesResponse.error) {
+        console.error('Categories fetch error:', categoriesResponse.error);
+        setCategories([]);
+      } else {
+        setCategories(categoriesResponse.data || []);
+      }
+      
+      if (vendorsResponse.error) {
+        console.error('Vendors fetch error:', vendorsResponse.error);
+        setVendors([]);
+      } else {
+        setVendors(vendorsResponse.data || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch data:', err);
+      setError('Failed to load data');
+    } finally {
+      setLoading(false);
     }
-  });
+  };
 
-  const { data: vendors } = useQuery({
-    queryKey: ['admin-vendors'],
-    queryFn: async () => {
-      const response = await vendorsApi.getAll();
-      if (response.error) {
-        throw new Error(response.error);
+  const handleDeleteProduct = async (productId: string) => {
+    try {
+      const result = await productsApi.delete(productId);
+      if (result.error) {
+        throw new Error(result.error);
       }
-      return response.data;
-    }
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: productsApi.delete,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       toast({ title: 'Success', description: 'Product deleted successfully' });
-    },
-    onError: (error: any) => {
+      await fetchData(); // Refresh data
+    } catch (error: any) {
       toast({ title: 'Error', description: error.message || 'Failed to delete product', variant: 'destructive' });
     }
-  });
+  };
 
   const handleDelete = (productId: string) => {
     if (confirm('Are you sure you want to delete this product?')) {
-      deleteMutation.mutate(productId);
+      handleDeleteProduct(productId);
     }
   };
 
@@ -151,7 +165,7 @@ export function ProductList() {
     });
   }
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -285,7 +299,7 @@ export function ProductList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
+              {loading ? (
                 // Loading skeleton
                 Array.from({ length: 3 }).map((_, index) => (
                   <TableRow key={index}>

@@ -79,6 +79,49 @@
 - ✅ Fixed type mismatches and import inconsistencies
 - ✅ Authentication system fully functional and tested
 
+## 🚨 CRITICAL FRONTEND PATTERNS - LOADING LOOP PREVENTION
+
+**ISSUE RESOLVED (2025-07-11):** Admin pages experiencing loading loops due to React Query + Auth Context conflicts
+
+**ROOT CAUSE:**
+- React Query `useQuery` hooks causing infinite re-renders
+- Auth context changes triggering query invalidation cycles
+- Complex Supabase queries with auth checks in API functions
+
+**SOLUTION IMPLEMENTED:**
+- ✅ Convert all admin pages from React Query to useState + useEffect pattern
+- ✅ Follow email pages structure (working example)
+- ✅ Keep database integration but simplify query patterns
+- ✅ Remove complex auth checks from API query functions
+
+**MANDATORY PATTERN FOR ALL ADMIN PAGES:**
+```typescript
+// ✅ USE THIS PATTERN
+const [data, setData] = useState([]);
+const [loading, setLoading] = useState(true);
+
+useEffect(() => {
+  fetchData();
+}, []);
+
+const fetchData = async () => {
+  try {
+    setLoading(true);
+    const response = await api.getData();
+    setData(response.data || []);
+  } finally {
+    setLoading(false);
+  }
+};
+
+// ❌ DON'T USE React Query in admin pages
+```
+
+**REFERENCE WORKING EXAMPLES:**
+- src/pages/email/EmailDashboard.tsx - Perfect loading pattern
+- src/components/email/EmailTemplateList.tsx - State management example
+- src/components/email/CampaignManager.tsx - CRUD operations pattern
+
 ### BMad Agent Personas - STRICT ROLE ADHERENCE
 
 **John (PM Agent):** Product requirements, business logic, user stories

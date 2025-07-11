@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -121,11 +120,45 @@ const HeroCarousel = () => {
 };
 
 export default function Homepage() {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const [categories, setCategories] = useState<Tables<'product_categories'>[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<Tables<'products'>[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Temporarily disable API calls to test loading
-  const categories = [];
-  const featuredProducts = [];
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch categories
+      const categoriesResponse = await categoriesApi.getCategories();
+      if (categoriesResponse.error) {
+        console.error('Failed to fetch categories:', categoriesResponse.error);
+        setCategories([]);
+      } else {
+        setCategories(categoriesResponse.data || []);
+      }
+
+      // Fetch featured products (you can add a filter for featured products)
+      const productsResponse = await productsApi.getProducts();
+      if (productsResponse.error) {
+        console.error('Failed to fetch products:', productsResponse.error);
+        setFeaturedProducts([]);
+      } else {
+        // For now, just take the first 6 products as featured
+        setFeaturedProducts((productsResponse.data || []).slice(0, 6));
+      }
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+      setCategories([]);
+      setFeaturedProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Icon mapping for categories
   const getIconForCategory = (categoryName: string) => {
@@ -177,7 +210,7 @@ export default function Homepage() {
     }
   ];
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
@@ -200,31 +233,72 @@ export default function Homepage() {
             </p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-            {categories.map((category, index) => {
-              const IconComponent = getIconForCategory(category.name);
-              const color = getColorForCategory(index);
-              return (
-                <Link 
-                  key={category.id} 
-                  to={`/products?category=${category.slug}`}
-                  className="group"
-                >
-                  <Card className="group-hover:shadow-lg transition-shadow cursor-pointer">
-                    <CardContent className="p-6 text-center">
-                      <IconComponent className={`h-12 w-12 mx-auto mb-4 ${color} group-hover:scale-110 transition-transform`} />
-                      <h3 className="font-semibold text-gray-900">{category.name}</h3>
-                    </CardContent>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
+          {categories.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+              {categories.map((category, index) => {
+                const IconComponent = getIconForCategory(category.name);
+                const color = getColorForCategory(index);
+                return (
+                  <Link 
+                    key={category.id} 
+                    to={`/products?category=${category.slug}`}
+                    className="group"
+                  >
+                    <Card className="group-hover:shadow-lg transition-shadow cursor-pointer">
+                      <CardContent className="p-6 text-center">
+                        <IconComponent className={`h-12 w-12 mx-auto mb-4 ${color} group-hover:scale-110 transition-transform`} />
+                        <h3 className="font-semibold text-gray-900">{category.name}</h3>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-500">No categories available at the moment.</p>
+            </div>
+          )}
         </div>
       </section>
 
+      {/* Featured Products */}
+      {featuredProducts.length > 0 && (
+        <section className="py-16 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Featured Products</h2>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Popular choices for businesses like yours
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {featuredProducts.slice(0, 3).map((product) => (
+                <Link 
+                  key={product.id} 
+                  to={`/products/${product.slug}`}
+                  className="group"
+                >
+                  <Card className="group-hover:shadow-lg transition-shadow cursor-pointer h-full">
+                    <CardContent className="p-6">
+                      <h3 className="font-semibold text-lg text-gray-900 mb-2">{product.name}</h3>
+                      <p className="text-gray-600 mb-4 line-clamp-2">{product.description}</p>
+                      <div className="flex justify-between items-center">
+                        <span className="text-blue-600 font-semibold">View Details</span>
+                        <ChevronRight className="w-5 h-5 text-blue-600 group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Value Propositions */}
-      <section className="py-16 bg-white">
+      <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-3 gap-8">
             {valueProps.map((prop, index) => {
