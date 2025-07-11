@@ -54,26 +54,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initializeAuth = async () => {
       try {
         // Get initial session
-        console.log('🔍 AUTH: Getting initial session...');
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('❌ AUTH: Session error:', error);
-          console.error('❌ AUTH: Error details:', {
-            message: error.message,
-            status: error.status,
-            statusText: error.statusText
-          });
           setLoading(false);
           return;
         }
-        
-        console.log('✅ AUTH: Initial session retrieved:', {
-          hasSession: !!session,
-          userId: session?.user?.id,
-          userEmail: session?.user?.email,
-          expiresAt: session?.expires_at
-        });
 
         setSession(session);
         
@@ -96,13 +82,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔄 AUTH: State change detected:', event, {
-          userEmail: session?.user?.email,
-          userId: session?.user?.id,
-          hasSession: !!session,
-          timestamp: new Date().toISOString()
-        });
-        
         setSession(session);
         
         if (session?.user) {
@@ -132,13 +111,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Simplified, reliable profile loading function
   const loadUserProfile = async (authUser: User, shouldRedirect = false) => {
     try {
-      console.log('👤 AUTH: Loading profile for user:', {
-        email: authUser.email,
-        id: authUser.id,
-        shouldRedirect,
-        metadata: authUser.user_metadata
-      });
-      
       // Get or create user profile
       const { data: profile, error } = await supabase
         .from('user_profiles')
@@ -150,8 +122,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error && error.code === 'PGRST116') {
         // Profile doesn't exist, create it with essential fields only
-        console.log('🆕 AUTH: Creating new profile for:', authUser.email);
-        
         const newProfile = {
           user_id: authUser.id,
           email: authUser.email || '',
@@ -168,12 +138,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .single();
 
         if (createError) {
-          console.error('Profile creation failed:', createError);
           toast.error('Failed to create user profile. Please try again.');
-          // Set user without profile for now - they can retry
           setUser({ ...authUser, profile: undefined });
         } else {
-          console.log('Profile created successfully:', createdProfile);
           finalProfile = {
             ...createdProfile,
             broker_category_discounts: createdProfile.broker_category_discounts || {}
@@ -185,11 +152,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           toast.success('Profile created successfully!');
         }
       } else if (error) {
-        console.error('Profile fetch error:', error);
         toast.error('Failed to load user profile. Please try refreshing.');
         setUser({ ...authUser, profile: undefined });
       } else {
-        console.log('Profile loaded successfully:', profile);
         finalProfile = {
           ...profile,
           broker_category_discounts: profile.broker_category_discounts || {}
@@ -209,7 +174,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch (error) {
-      console.error('Unexpected error loading profile:', error);
       toast.error('An unexpected error occurred. Please try again.');
       setUser({ ...authUser, profile: undefined });
     } finally {

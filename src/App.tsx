@@ -108,8 +108,6 @@ const App = () => (
                     <FloatingCart />
                   </div>
                   
-                  {/* Authentication Debugger - Available on all pages for debugging */}
-                  <AuthenticationDebugger />
                 </div>
               </ErrorBoundary>
               </TooltipProvider>
