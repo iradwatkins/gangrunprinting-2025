@@ -29,18 +29,18 @@ ALTER TABLE public.user_profiles ENABLE ROW LEVEL SECURITY;
 -- Allow users to view their own profile
 CREATE POLICY "Users can view own profile" 
 ON public.user_profiles FOR SELECT 
-USING (auth.uid() = id);
+USING (auth.uid() = user_id);
 
 -- Allow users to insert their own profile
 CREATE POLICY "Users can insert own profile" 
 ON public.user_profiles FOR INSERT 
-WITH CHECK (auth.uid() = id);
+WITH CHECK (auth.uid() = user_id);
 
 -- Allow users to update their own profile
 CREATE POLICY "Users can update own profile" 
 ON public.user_profiles FOR UPDATE 
-USING (auth.uid() = id)
-WITH CHECK (auth.uid() = id);
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
 
 -- Allow service role full access (for admin operations)
 CREATE POLICY "Service role bypass" 
@@ -63,12 +63,12 @@ BEGIN
   -- Try to get existing profile
   SELECT * INTO profile_record
   FROM public.user_profiles
-  WHERE id = auth.uid();
+  WHERE user_id = auth.uid();
   
   -- If not found, create one
   IF NOT FOUND THEN
     INSERT INTO public.user_profiles (
-      id,
+      user_id,
       email,
       role,
       is_broker,
@@ -79,7 +79,10 @@ BEGIN
     VALUES (
       auth.uid(),
       auth.jwt()->>'email',
-      'customer',
+      CASE 
+        WHEN auth.jwt()->>'email' = 'iradwatkins@gmail.com' THEN 'admin'
+        ELSE 'customer'
+      END,
       false,
       '{}',
       NOW(),
@@ -107,7 +110,7 @@ SET search_path = public
 AS $$
 BEGIN
   INSERT INTO public.user_profiles (
-    id,
+    user_id,
     email,
     full_name,
     role,
@@ -125,7 +128,7 @@ BEGIN
     false,
     '{}'
   )
-  ON CONFLICT (id) DO NOTHING;
+  ON CONFLICT (user_id) DO NOTHING;
   
   RETURN new;
 END;
@@ -140,7 +143,7 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- 9. Ensure all existing auth users have profiles
-INSERT INTO public.user_profiles (id, email, role, is_broker, broker_category_discounts)
+INSERT INTO public.user_profiles (user_id, email, role, is_broker, broker_category_discounts)
 SELECT 
   id,
   email,
@@ -151,8 +154,8 @@ SELECT
   false,
   '{}'
 FROM auth.users
-WHERE id NOT IN (SELECT id FROM public.user_profiles)
-ON CONFLICT (id) DO NOTHING;
+WHERE id NOT IN (SELECT user_id FROM public.user_profiles)
+ON CONFLICT (user_id) DO NOTHING;
 
 -- 10. Grant necessary permissions
 GRANT ALL ON public.user_profiles TO authenticated;

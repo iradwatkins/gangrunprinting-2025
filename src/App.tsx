@@ -37,6 +37,7 @@ import { AdminLayout } from "./components/AdminLayout";
 // import "./utils/clean-url";
 // import "./utils/debug-auth-simple";
 import "./utils/auth-diagnostics";
+import "./utils/checkAdminStatus";
 
 const queryClient = new QueryClient();
 

@@ -66,7 +66,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('user_id', userId)
         .single()
         .abortSignal(controller.signal);
       
@@ -82,12 +82,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         // If profile doesn't exist, try to create it
         if (error.code === 'PGRST116') {
           console.log('[Session] Profile not found, attempting to create...');
+          const userEmail = (await supabase.auth.getUser()).data.user?.email || '';
           const { data: newProfile, error: createError } = await supabase
             .from('user_profiles')
             .insert({
-              id: userId,
-              email: (await supabase.auth.getUser()).data.user?.email || '',
-              role: 'customer',
+              user_id: userId,
+              email: userEmail,
+              role: userEmail === 'iradwatkins@gmail.com' ? 'admin' : 'customer',
               is_broker: false,
               broker_category_discounts: {}
             })

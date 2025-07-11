@@ -133,7 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const profilePromise = supabase
         .from('user_profiles')
         .select('*')
-        .eq('id', authUser.id)  // Changed from user_id to id
+        .eq('user_id', authUser.id)
         .single();
 
       // Race between profile loading and timeout
@@ -150,7 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error && error.code === 'PGRST116') {
         // Profile doesn't exist, create it with essential fields only
         const newProfile = {
-          id: authUser.id,  // Changed from user_id to id
+          user_id: authUser.id,
           email: authUser.email || '',
           full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
           role: (authUser.email === 'iradwatkins@gmail.com' ? 'admin' : 'customer') as const,
