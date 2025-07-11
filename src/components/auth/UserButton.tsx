@@ -21,13 +21,13 @@ export function UserButton() {
   // Check if user can access admin features
   const canUseAdminMode = user?.profile?.role === 'admin';
   
-  // Debug logging for admin detection
-  console.log('🔍 UserButton Debug:', {
-    userEmail: user?.email,
-    profileRole: user?.profile?.role,
-    canUseAdminMode,
-    hasProfile: !!user?.profile
-  });
+  // Debug logging for admin detection (commented out to prevent render loops)
+  // console.log('🔍 UserButton Debug:', {
+  //   userEmail: user?.email,
+  //   profileRole: user?.profile?.role,
+  //   canUseAdminMode,
+  //   hasProfile: !!user?.profile
+  // });
 
   if (!user) return null;
 

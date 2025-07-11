@@ -212,15 +212,10 @@ export default function Homepage() {
 
   return (
     <Layout>
-      {/* Debug Banner - show on production too for debugging */}
+      {/* Simplified Debug Banner */}
       {user && (
-        <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-2 text-sm flex items-center justify-between">
-          <span>🔍 Admin Debug: {user.email} | Role: {user.profile?.role || 'No role'} | Can Access Admin: {user.profile?.role === 'admin' ? 'YES' : 'NO'}</span>
-          {user.profile?.role === 'admin' && (
-            <Link to="/admin" className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">
-              Go to Admin Panel
-            </Link>
-          )}
+        <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-2 text-sm">
+          ✅ Logged in: {user.email} {user.profile?.role === 'admin' && '| 👑 ADMIN'}
         </div>
       )}
 
