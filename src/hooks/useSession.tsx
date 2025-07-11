@@ -42,13 +42,24 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('[Session] Fetching profile for user:', userId);
       
+      // Add timeout to prevent hanging - 10 seconds
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .single()
+        .abortSignal(controller.signal);
+      
+      clearTimeout(timeoutId);
 
       if (error) {
+        if (error.message?.includes('aborted')) {
+          console.error('[Session] Profile fetch timed out');
+          return null;
+        }
         console.error('[Session] Error fetching user profile:', error);
         // Don't throw - return null to handle gracefully
         return null;

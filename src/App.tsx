@@ -8,6 +8,7 @@ import { FloatingCart } from "@/components/cart/FloatingCart";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { SessionProvider } from "@/hooks/useSession";
 import Index from "./pages/Index";
 import { ProductCatalog } from "./pages/ProductCatalog";
 import ProductDetail from "./pages/ProductDetail";
@@ -42,12 +43,13 @@ const App = () => (
     <ThemeProvider>
       <BrowserRouter>
         <AuthProvider>
-          <TooltipProvider>
-            <ErrorBoundary>
-                <Toaster />
-                <Sonner />
-                <div className="relative">
-                  <Routes>
+          <SessionProvider>
+            <TooltipProvider>
+              <ErrorBoundary>
+                  <Toaster />
+                  <Sonner />
+                  <div className="relative">
+                    <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/auth" element={<AuthPage />} />
                     <Route path="/products" element={<ProductCatalog />} />
@@ -78,6 +80,7 @@ const App = () => (
                 </div>
             </ErrorBoundary>
           </TooltipProvider>
+          </SessionProvider>
         </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>

@@ -123,9 +123,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Simplified, reliable profile loading function
   const loadUserProfile = async (authUser: User, shouldRedirect = false) => {
     try {
-      // Add timeout to prevent hanging
+      // Add timeout to prevent hanging - increased to 10 seconds
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Profile loading timeout')), 3000)
+        setTimeout(() => reject(new Error('Profile loading timeout')), 10000)
       );
 
       // Get or create user profile
@@ -133,7 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const profilePromise = supabase
         .from('user_profiles')
         .select('*')
-        .eq('user_id', authUser.id)
+        .eq('id', authUser.id)  // Changed from user_id to id
         .single();
 
       // Race between profile loading and timeout
@@ -150,7 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error && error.code === 'PGRST116') {
         // Profile doesn't exist, create it with essential fields only
         const newProfile = {
-          user_id: authUser.id,
+          id: authUser.id,  // Changed from user_id to id
           email: authUser.email || '',
           full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
           role: (authUser.email === 'iradwatkins@gmail.com' ? 'admin' : 'customer') as const,
