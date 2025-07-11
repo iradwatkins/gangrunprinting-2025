@@ -29,6 +29,8 @@ export function OrderAnalyticsChart({
   type = 'line',
   height = 300
 }: OrderAnalyticsChartProps) {
+  // Ensure data is an array
+  const chartData = Array.isArray(data) ? data : [];
   const colors = [
     '#8884d8',
     '#82ca9d',
@@ -71,7 +73,7 @@ export function OrderAnalyticsChart({
       <ResponsiveContainer width="100%" height={height}>
         <PieChart>
           <Pie
-            data={data}
+            data={chartData}
             cx="50%"
             cy="50%"
             outerRadius={100}
@@ -79,7 +81,7 @@ export function OrderAnalyticsChart({
             nameKey="status"
             label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
           >
-            {data.map((entry, index) => (
+            {chartData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
             ))}
           </Pie>
@@ -93,7 +95,7 @@ export function OrderAnalyticsChart({
   if (type === 'area') {
     return (
       <ResponsiveContainer width="100%" height={height}>
-        <AreaChart data={data}>
+        <AreaChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
             dataKey="date"
@@ -121,7 +123,7 @@ export function OrderAnalyticsChart({
   // Default line chart
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <LineChart data={data}>
+      <LineChart data={chartData}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis
           dataKey="date"
