@@ -26,6 +26,15 @@ export class ErrorBoundary extends Component<Props, State> {
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     
+    // Check if this is an authentication error
+    if (error.message && (error.message.includes('useSession must be used within') || error.message.includes('Profile loading timeout'))) {
+      console.error('Authentication error detected:', error.message);
+      sessionStorage.setItem('auth_error', error.message);
+      // Don't render error UI for auth errors - let AuthErrorBoundary handle it
+      window.location.reload();
+      return;
+    }
+    
     // Check if this is the vendor address rendering error
     if (error.message && (error.message.includes('object with keys') || error.message.includes('Objects are not valid as a React child'))) {
       console.error('Detected object rendering error. This often happens when trying to render an address object directly.');

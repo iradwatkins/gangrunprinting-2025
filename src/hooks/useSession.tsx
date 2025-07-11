@@ -42,7 +42,24 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('[Session] Fetching profile for user:', userId);
       
-      // Add timeout to prevent hanging - 10 seconds
+      // First try the RPC function which bypasses RLS
+      try {
+        const { data: rpcProfile, error: rpcError } = await supabase
+          .rpc('get_or_create_profile');
+        
+        if (!rpcError && rpcProfile) {
+          console.log('[Session] Profile fetched via RPC:', {
+            userId: rpcProfile.id,
+            role: rpcProfile.role,
+            email: rpcProfile.email
+          });
+          return rpcProfile;
+        }
+      } catch (rpcErr) {
+        console.log('[Session] RPC method not available, falling back to direct query');
+      }
+      
+      // Fallback to direct query with timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
       
@@ -61,7 +78,28 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
           return null;
         }
         console.error('[Session] Error fetching user profile:', error);
-        // Don't throw - return null to handle gracefully
+        
+        // If profile doesn't exist, try to create it
+        if (error.code === 'PGRST116') {
+          console.log('[Session] Profile not found, attempting to create...');
+          const { data: newProfile, error: createError } = await supabase
+            .from('user_profiles')
+            .insert({
+              id: userId,
+              email: (await supabase.auth.getUser()).data.user?.email || '',
+              role: 'customer',
+              is_broker: false,
+              broker_category_discounts: {}
+            })
+            .select()
+            .single();
+          
+          if (!createError && newProfile) {
+            console.log('[Session] Profile created successfully');
+            return newProfile;
+          }
+        }
+        
         return null;
       }
 

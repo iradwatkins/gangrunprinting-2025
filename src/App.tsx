@@ -9,6 +9,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SessionProvider } from "@/hooks/useSession";
+import { AuthErrorBoundary } from "@/components/auth/AuthErrorBoundary";
 import Index from "./pages/Index";
 import { ProductCatalog } from "./pages/ProductCatalog";
 import ProductDetail from "./pages/ProductDetail";
@@ -35,6 +36,7 @@ import { AdminLayout } from "./components/AdminLayout";
 // import "./utils/cleanup-auth";
 // import "./utils/clean-url";
 // import "./utils/debug-auth-simple";
+import "./utils/auth-diagnostics";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +48,7 @@ const App = () => (
           <SessionProvider>
             <TooltipProvider>
               <ErrorBoundary>
+                <AuthErrorBoundary>
                   <Toaster />
                   <Sonner />
                   <div className="relative">
@@ -78,6 +81,7 @@ const App = () => (
                   </div> */}
                   
                 </div>
+                </AuthErrorBoundary>
             </ErrorBoundary>
           </TooltipProvider>
           </SessionProvider>
