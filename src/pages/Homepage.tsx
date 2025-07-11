@@ -212,10 +212,15 @@ export default function Homepage() {
 
   return (
     <Layout>
-      {/* Debug Banner - only in development */}
-      {typeof window !== 'undefined' && window.location.hostname === 'localhost' && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-2 text-sm">
-          🔍 Auth: {loading ? 'Loading...' : user ? `✅ ${user.email}` : '❌ Not logged in'}
+      {/* Debug Banner - show on production too for debugging */}
+      {user && (
+        <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-2 text-sm flex items-center justify-between">
+          <span>🔍 Admin Debug: {user.email} | Role: {user.profile?.role || 'No role'} | Can Access Admin: {user.profile?.role === 'admin' ? 'YES' : 'NO'}</span>
+          {user.profile?.role === 'admin' && (
+            <Link to="/admin" className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">
+              Go to Admin Panel
+            </Link>
+          )}
         </div>
       )}
 
