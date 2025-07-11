@@ -46,53 +46,79 @@ export function VendorsPage() {
     notes: ''
   });
 
-  const { data: vendors, isLoading, error } = useQuery({
-    queryKey: ['admin-vendors'],
+  // Fetch vendors with React Query
+  const { data: vendors = [], isLoading, error } = useQuery({
+    queryKey: ['vendors'],
     queryFn: async () => {
       const response = await vendorsApi.getAll();
-      if (response.error) {
-        throw new Error(response.error);
-      }
-      return response.data;
-    }
+      if (response.error) throw new Error(response.error);
+      return response.data || [];
+    },
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false
   });
 
+  // Create mutation
   const createMutation = useMutation({
-    mutationFn: vendorsApi.create,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-vendors'] });
+    mutationFn: (data: VendorFormData) => vendorsApi.create(data),
+    onSuccess: (result) => {
+      if (result.error) throw new Error(result.error);
       toast({ title: 'Success', description: 'Vendor created successfully' });
+      queryClient.invalidateQueries({ queryKey: ['vendors'] });
       resetForm();
       setIsFormOpen(false);
     },
     onError: (error: any) => {
-      toast({ title: 'Error', description: error.message || 'Failed to create vendor', variant: 'destructive' });
+      toast({ 
+        title: 'Error', 
+        description: error.message || 'Failed to create vendor', 
+        variant: 'destructive' 
+      });
     }
   });
 
+  // Update mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<VendorFormData> }) => vendorsApi.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-vendors'] });
+    mutationFn: ({ id, data }: { id: string; data: Partial<VendorFormData> }) => 
+      vendorsApi.update(id, data),
+    onSuccess: (result) => {
+      if (result.error) throw new Error(result.error);
       toast({ title: 'Success', description: 'Vendor updated successfully' });
+      queryClient.invalidateQueries({ queryKey: ['vendors'] });
       resetForm();
       setIsFormOpen(false);
     },
     onError: (error: any) => {
-      toast({ title: 'Error', description: error.message || 'Failed to update vendor', variant: 'destructive' });
+      toast({ 
+        title: 'Error', 
+        description: error.message || 'Failed to update vendor', 
+        variant: 'destructive' 
+      });
     }
   });
 
+  // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: vendorsApi.delete,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-vendors'] });
+    mutationFn: (id: string) => vendorsApi.delete(id),
+    onSuccess: (result) => {
+      if (result.error) throw new Error(result.error);
       toast({ title: 'Success', description: 'Vendor deleted successfully' });
+      queryClient.invalidateQueries({ queryKey: ['vendors'] });
     },
     onError: (error: any) => {
-      toast({ title: 'Error', description: error.message || 'Failed to delete vendor', variant: 'destructive' });
+      toast({ 
+        title: 'Error', 
+        description: error.message || 'Failed to delete vendor', 
+        variant: 'destructive' 
+      });
     }
   });
+
+  const handleDelete = (id: string) => {
+    if (!confirm('Are you sure you want to delete this vendor?')) return;
+    deleteMutation.mutate(id);
+  };
 
   const resetForm = () => {
     setFormData({ 
@@ -134,17 +160,11 @@ export function VendorsPage() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this vendor?')) {
-      deleteMutation.mutate(id);
-    }
-  };
-
-  const filteredVendors = vendors?.filter(vendor =>
+  const filteredVendors = vendors.filter(vendor =>
     vendor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     vendor.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     vendor.specialty?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  );
 
   if (error) {
     return (

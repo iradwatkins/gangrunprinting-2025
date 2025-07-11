@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Search, Edit, Trash2, AlertCircle, Tags, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,9 +26,7 @@ interface CategoryFormData {
 
 export function CategoriesPage() {
   const { toast } = useToast();
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -39,76 +38,81 @@ export function CategoriesPage() {
     is_active: true
   });
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  const fetchCategories = async () => {
-    try {
-      setLoading(true);
-      console.log('CategoriesPage: Starting fetch...');
+  // Fetch categories with React Query - properly configured to prevent loading loops
+  const { data: categories = [], isLoading: loading, error } = useQuery({
+    queryKey: ['admin-categories'],
+    queryFn: async () => {
+      console.log('CategoriesPage: Starting query...');
       const response = await categoriesApi.getAll();
       console.log('CategoriesPage: API response:', response);
       if (response.error) {
         console.error('CategoriesPage: API error:', response.error);
-        setError(response.error);
-        setCategories([]);
-        return;
+        throw new Error(response.error);
       }
-      console.log('CategoriesPage: Success, setting data:', response.data);
-      setCategories(response.data || []);
-      setError(null);
-    } catch (err) {
-      console.error('CategoriesPage: Fetch error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch categories');
-      setCategories([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      console.log('CategoriesPage: Success, returning data:', response.data);
+      return response.data || [];
+    },
+    staleTime: 30 * 1000, // Consider data fresh for 30 seconds
+    cacheTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    retry: 1,
+    refetchOnWindowFocus: false, // Prevent refetch on window focus - key to preventing loops
+    refetchOnMount: false // Don't refetch if we have cached data
+  });
 
-  const handleCreate = async (data: CategoryFormData) => {
-    try {
+  const createMutation = useMutation({
+    mutationFn: async (data: CategoryFormData) => {
       const result = await categoriesApi.create(data);
       if (result.error) {
         throw new Error(result.error);
       }
+      return result.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
       toast({ title: 'Success', description: 'Category created successfully' });
-      await fetchCategories();
       resetForm();
       setIsFormOpen(false);
-    } catch (error: any) {
+    },
+    onError: (error: any) => {
       toast({ title: 'Error', description: error.message || 'Failed to create category', variant: 'destructive' });
     }
-  };
+  });
 
-  const handleUpdate = async (id: string, data: Partial<CategoryFormData>) => {
-    try {
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<CategoryFormData> }) => {
       const result = await categoriesApi.update(id, data);
       if (result.error) {
         throw new Error(result.error);
       }
+      return result.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
       toast({ title: 'Success', description: 'Category updated successfully' });
-      await fetchCategories();
       resetForm();
       setIsFormOpen(false);
-    } catch (error: any) {
+    },
+    onError: (error: any) => {
       toast({ title: 'Error', description: error.message || 'Failed to update category', variant: 'destructive' });
     }
-  };
+  });
 
-  const handleDeleteCategory = async (id: string) => {
-    try {
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
       const result = await categoriesApi.delete(id);
       if (result.error) {
         throw new Error(result.error);
       }
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
       toast({ title: 'Success', description: 'Category deleted successfully' });
-      await fetchCategories();
-    } catch (error: any) {
+    },
+    onError: (error: any) => {
       toast({ title: 'Error', description: error.message || 'Failed to delete category', variant: 'destructive' });
     }
-  };
+  });
 
   const resetForm = () => {
     setFormData({ name: '', slug: '', description: '', sort_order: 0, is_active: true });
@@ -127,12 +131,12 @@ export function CategoriesPage() {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingCategory) {
-      await handleUpdate(editingCategory.id, formData);
+      updateMutation.mutate({ id: editingCategory.id, data: formData });
     } else {
-      await handleCreate(formData);
+      createMutation.mutate(formData);
     }
   };
 
@@ -151,20 +155,20 @@ export function CategoriesPage() {
 
   const handleDelete = (id: string) => {
     if (confirm('Are you sure you want to delete this category?')) {
-      handleDeleteCategory(id);
+      deleteMutation.mutate(id);
     }
   };
 
-  const filteredCategories = categories?.filter(category =>
+  const filteredCategories = categories.filter(category =>
     category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     category.slug.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
   console.log('CategoriesPage render - State:', { 
-    categoriesCount: categories?.length, 
+    categoriesCount: categories.length, 
     loading, 
     hasError: !!error,
-    errorMessage: error 
+    errorMessage: error?.message 
   });
 
   if (error) {
@@ -172,11 +176,11 @@ export function CategoriesPage() {
       <AdminLayout>
         <Alert>
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>Failed to load categories: {error}</AlertDescription>
+          <AlertDescription>Failed to load categories: {(error as Error).message}</AlertDescription>
         </Alert>
         <div className="mt-4 p-4 bg-gray-100 rounded">
           <h3 className="font-bold">Debug Info:</h3>
-          <pre className="text-xs">{JSON.stringify({ error }, null, 2)}</pre>
+          <pre className="text-xs">{JSON.stringify({ error: error?.message }, null, 2)}</pre>
         </div>
       </AdminLayout>
     );
@@ -281,7 +285,7 @@ export function CategoriesPage() {
                 </div>
                 
                 <div className="flex gap-2">
-                  <Button type="submit">
+                  <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
                     {editingCategory ? 'Update' : 'Create'}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>
@@ -346,7 +350,7 @@ export function CategoriesPage() {
               <div className="mt-4 p-4 bg-gray-100 rounded text-left">
                 <h3 className="font-bold text-sm">Debug Info:</h3>
                 <pre className="text-xs">{JSON.stringify({ 
-                  totalCategories: categories?.length || 0,
+                  totalCategories: categories.length,
                   filteredCount: filteredCategories.length,
                   searchTerm,
                   loading,

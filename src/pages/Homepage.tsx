@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,6 +37,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { categoriesApi } from '@/api/categories';
 import { productsApi } from '@/api/products';
 import type { Tables } from '@/integrations/supabase/types';
+import { insertTestData } from '@/utils/insert-test-data';
 
 const HeroCarousel = () => {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [Autoplay()]);
@@ -121,44 +123,51 @@ const HeroCarousel = () => {
 
 export default function Homepage() {
   const { user, loading: authLoading } = useAuth();
-  const [categories, setCategories] = useState<Tables<'product_categories'>[]>([]);
-  const [featuredProducts, setFeaturedProducts] = useState<Tables<'products'>[]>([]);
-  const [loading, setLoading] = useState(true);
-
+  
+  // Make insertTestData available in development
   useEffect(() => {
-    fetchData();
+    if (process.env.NODE_ENV === 'development') {
+      (window as any).insertTestData = insertTestData;
+      console.log('💡 Test data insertion available: run insertTestData() in console');
+    }
   }, []);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      
-      // Fetch categories
-      const categoriesResponse = await categoriesApi.getCategories();
-      if (categoriesResponse.error) {
-        console.error('Failed to fetch categories:', categoriesResponse.error);
-        setCategories([]);
-      } else {
-        setCategories(categoriesResponse.data || []);
+  // Fetch categories with React Query - proper configuration to prevent loading loops
+  const { data: categories = [], isLoading: categoriesLoading, error: categoriesError } = useQuery({
+    queryKey: ['categories-homepage'],
+    queryFn: async () => {
+      const response = await categoriesApi.getCategories();
+      if (response.error) {
+        throw new Error(response.error);
       }
+      return response.data || [];
+    },
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    cacheTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    retry: 1,
+    refetchOnWindowFocus: false, // Prevent refetch on window focus
+    refetchOnMount: false // Prevent refetch on component mount if data exists
+  });
 
-      // Fetch featured products (you can add a filter for featured products)
-      const productsResponse = await productsApi.getProducts();
-      if (productsResponse.error) {
-        console.error('Failed to fetch products:', productsResponse.error);
-        setFeaturedProducts([]);
-      } else {
-        // For now, just take the first 6 products as featured
-        setFeaturedProducts((productsResponse.data || []).slice(0, 6));
+  // Fetch featured products with React Query
+  const { data: featuredProducts = [], isLoading: productsLoading, error: productsError } = useQuery({
+    queryKey: ['featured-products-homepage'],
+    queryFn: async () => {
+      const response = await productsApi.getProducts();
+      if (response.error) {
+        throw new Error(response.error);
       }
-    } catch (error) {
-      console.error('Failed to fetch data:', error);
-      setCategories([]);
-      setFeaturedProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      // For now, just take the first 6 products as featured
+      return (response.data || []).slice(0, 6);
+    },
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
+    retry: 1,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false
+  });
+
+  const loading = categoriesLoading || productsLoading;
 
   // Icon mapping for categories
   const getIconForCategory = (categoryName: string) => {
@@ -233,7 +242,7 @@ export default function Homepage() {
             </p>
           </div>
           
-          {categories.length > 0 ? (
+          {!categoriesLoading && categories.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
               {categories.map((category, index) => {
                 const IconComponent = getIconForCategory(category.name);
@@ -263,7 +272,7 @@ export default function Homepage() {
       </section>
 
       {/* Featured Products */}
-      {featuredProducts.length > 0 && (
+      {!productsLoading && featuredProducts.length > 0 && (
         <section className="py-16 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">

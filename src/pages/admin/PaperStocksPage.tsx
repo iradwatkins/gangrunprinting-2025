@@ -44,22 +44,26 @@ export function PaperStocksPage() {
     is_active: true
   });
 
-  const { data: paperStocks, isLoading, error } = useQuery({
-    queryKey: ['admin-paper-stocks'],
+  // Fetch paper stocks with React Query
+  const { data: paperStocks = [], isLoading: loading, error } = useQuery({
+    queryKey: ['paperStocks'],
     queryFn: async () => {
       const response = await paperStocksApi.getAll();
-      if (response.error) {
-        throw new Error(response.error);
-      }
-      return response.data;
-    }
+      if (response.error) throw new Error(response.error);
+      return response.data || [];
+    },
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false
   });
 
+  // Create mutation
   const createMutation = useMutation({
-    mutationFn: paperStocksApi.create,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-paper-stocks'] });
+    mutationFn: (data: PaperStockFormData) => paperStocksApi.create(data),
+    onSuccess: (result) => {
+      if (result.error) throw new Error(result.error);
       toast({ title: 'Success', description: 'Paper stock created successfully' });
+      queryClient.invalidateQueries({ queryKey: ['paperStocks'] });
       resetForm();
       setIsFormOpen(false);
     },
@@ -68,11 +72,14 @@ export function PaperStocksPage() {
     }
   });
 
+  // Update mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<PaperStockFormData> }) => paperStocksApi.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-paper-stocks'] });
+    mutationFn: ({ id, data }: { id: string; data: Partial<PaperStockFormData> }) => 
+      paperStocksApi.update(id, data),
+    onSuccess: (result) => {
+      if (result.error) throw new Error(result.error);
       toast({ title: 'Success', description: 'Paper stock updated successfully' });
+      queryClient.invalidateQueries({ queryKey: ['paperStocks'] });
       resetForm();
       setIsFormOpen(false);
     },
@@ -81,11 +88,13 @@ export function PaperStocksPage() {
     }
   });
 
+  // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: paperStocksApi.delete,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-paper-stocks'] });
+    mutationFn: (id: string) => paperStocksApi.delete(id),
+    onSuccess: (result) => {
+      if (result.error) throw new Error(result.error);
       toast({ title: 'Success', description: 'Paper stock deleted successfully' });
+      queryClient.invalidateQueries({ queryKey: ['paperStocks'] });
     },
     onError: (error: any) => {
       toast({ title: 'Error', description: error.message || 'Failed to delete paper stock', variant: 'destructive' });
@@ -106,7 +115,7 @@ export function PaperStocksPage() {
     setEditingPaperStock(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingPaperStock) {
       updateMutation.mutate({ id: editingPaperStock.id, data: formData });
@@ -147,7 +156,7 @@ export function PaperStocksPage() {
       <AdminLayout>
         <Alert>
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>Failed to load paper stocks: {(error as Error).message}</AlertDescription>
+          <AlertDescription>Failed to load paper stocks: {error instanceof Error ? error.message : 'Unknown error'}</AlertDescription>
         </Alert>
       </AdminLayout>
     );
@@ -279,7 +288,7 @@ export function PaperStocksPage() {
                 </div>
                 
                 <div className="flex gap-2">
-                  <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                  <Button type="submit">
                     {editingPaperStock ? 'Update' : 'Create'}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>
@@ -301,7 +310,7 @@ export function PaperStocksPage() {
           />
         </div>
 
-        {isLoading ? (
+        {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
               <Card key={i} className="animate-pulse">

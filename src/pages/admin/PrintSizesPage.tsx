@@ -41,19 +41,26 @@ export function PrintSizesPage() {
     is_active: true
   });
 
-  const { data: printSizes, isLoading, error } = useQuery({
-    queryKey: ['admin-print-sizes'],
+  // Fetch print sizes with React Query
+  const { data: printSizes = [], isLoading, error } = useQuery({
+    queryKey: ['printSizes'],
     queryFn: async () => {
       const response = await printSizesApi.getAll();
-      return response.data;
-    }
+      if (response.error) throw new Error(response.error);
+      return response.data || [];
+    },
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false
   });
 
+  // Create mutation
   const createMutation = useMutation({
-    mutationFn: printSizesApi.create,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-print-sizes'] });
+    mutationFn: (data: PrintSizeFormData) => printSizesApi.create(data),
+    onSuccess: (result) => {
+      if (result.error) throw new Error(result.error);
       toast({ title: 'Success', description: 'Print size created successfully' });
+      queryClient.invalidateQueries({ queryKey: ['printSizes'] });
       resetForm();
       setIsFormOpen(false);
     },
@@ -62,11 +69,14 @@ export function PrintSizesPage() {
     }
   });
 
+  // Update mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<PrintSizeFormData> }) => printSizesApi.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-print-sizes'] });
+    mutationFn: ({ id, data }: { id: string; data: Partial<PrintSizeFormData> }) => 
+      printSizesApi.update(id, data),
+    onSuccess: (result) => {
+      if (result.error) throw new Error(result.error);
       toast({ title: 'Success', description: 'Print size updated successfully' });
+      queryClient.invalidateQueries({ queryKey: ['printSizes'] });
       resetForm();
       setIsFormOpen(false);
     },
@@ -75,11 +85,13 @@ export function PrintSizesPage() {
     }
   });
 
+  // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: printSizesApi.delete,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-print-sizes'] });
+    mutationFn: (id: string) => printSizesApi.delete(id),
+    onSuccess: (result) => {
+      if (result.error) throw new Error(result.error);
       toast({ title: 'Success', description: 'Print size deleted successfully' });
+      queryClient.invalidateQueries({ queryKey: ['printSizes'] });
     },
     onError: (error: any) => {
       toast({ title: 'Error', description: error.message || 'Failed to delete print size', variant: 'destructive' });
@@ -126,9 +138,9 @@ export function PrintSizesPage() {
     return (width * height).toFixed(2);
   };
 
-  const filteredSizes = printSizes?.filter(size =>
+  const filteredSizes = printSizes.filter(size =>
     size.name.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  );
 
   if (error) {
     return (

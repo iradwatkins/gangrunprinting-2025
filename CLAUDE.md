@@ -79,48 +79,61 @@
 - ✅ Fixed type mismatches and import inconsistencies
 - ✅ Authentication system fully functional and tested
 
-## 🚨 CRITICAL FRONTEND PATTERNS - LOADING LOOP PREVENTION
+## 🚨 CRITICAL FRONTEND PATTERNS - REACT QUERY CONFIGURATION
 
-**ISSUE RESOLVED (2025-07-11):** Admin pages experiencing loading loops due to React Query + Auth Context conflicts
+**ISSUE RESOLVED (2025-07-11):** Admin pages experiencing loading loops - FIXED with proper React Query configuration
 
 **ROOT CAUSE:**
-- React Query `useQuery` hooks causing infinite re-renders
+- Missing `refetchOnWindowFocus: false` causing infinite refetch loops
+- Missing `staleTime` causing unnecessary API calls
 - Auth context changes triggering query invalidation cycles
-- Complex Supabase queries with auth checks in API functions
 
 **SOLUTION IMPLEMENTED:**
-- ✅ Convert all admin pages from React Query to useState + useEffect pattern
-- ✅ Follow email pages structure (working example)
-- ✅ Keep database integration but simplify query patterns
-- ✅ Remove complex auth checks from API query functions
+- ✅ Keep React Query as per Technical Preferences document
+- ✅ Configure all queries with `refetchOnWindowFocus: false`
+- ✅ Add proper `staleTime` to prevent unnecessary refetches
+- ✅ Use proper error handling in queryFn
 
-**MANDATORY PATTERN FOR ALL ADMIN PAGES:**
+**MANDATORY REACT QUERY CONFIGURATION:**
 ```typescript
-// ✅ USE THIS PATTERN
-const [data, setData] = useState([]);
-const [loading, setLoading] = useState(true);
-
-useEffect(() => {
-  fetchData();
-}, []);
-
-const fetchData = async () => {
-  try {
-    setLoading(true);
+// ✅ USE THIS PATTERN FOR ALL QUERIES
+const { data, isLoading, error } = useQuery({
+  queryKey: ['unique-key'],
+  queryFn: async () => {
     const response = await api.getData();
-    setData(response.data || []);
-  } finally {
-    setLoading(false);
-  }
-};
-
-// ❌ DON'T USE React Query in admin pages
+    if (response.error) {
+      throw new Error(response.error);
+    }
+    return response.data || [];
+  },
+  staleTime: 30 * 1000, // 30 seconds
+  cacheTime: 5 * 60 * 1000, // 5 minutes
+  retry: 1,
+  refetchOnWindowFocus: false, // CRITICAL: Prevents loading loops
+  refetchOnMount: false // Don't refetch if we have cached data
+});
 ```
 
-**REFERENCE WORKING EXAMPLES:**
-- src/pages/email/EmailDashboard.tsx - Perfect loading pattern
-- src/components/email/EmailTemplateList.tsx - State management example
-- src/components/email/CampaignManager.tsx - CRUD operations pattern
+**MUTATION PATTERN:**
+```typescript
+const mutation = useMutation({
+  mutationFn: async (data) => {
+    const result = await api.operation(data);
+    if (result.error) throw new Error(result.error);
+    return result;
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['unique-key'] });
+    toast({ title: 'Success' });
+  }
+});
+```
+
+**KEY CONFIGURATION POINTS:**
+- Always set `refetchOnWindowFocus: false` to prevent loops
+- Use `staleTime` to control refetch frequency
+- Throw errors in queryFn for proper error handling
+- Invalidate queries after mutations
 
 ### BMad Agent Personas - STRICT ROLE ADHERENCE
 

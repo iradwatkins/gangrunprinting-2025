@@ -38,19 +38,26 @@ export function TurnaroundTimesPage() {
     is_active: true
   });
 
-  const { data: turnaroundTimes, isLoading, error } = useQuery({
-    queryKey: ['admin-turnaround-times'],
+  // Fetch turnaround times with React Query
+  const { data: turnaroundTimes = [], isLoading, error } = useQuery({
+    queryKey: ['turnaroundTimes'],
     queryFn: async () => {
       const response = await turnaroundTimesApi.getAll();
-      return response.data;
-    }
+      if (response.error) throw new Error(response.error);
+      return response.data || [];
+    },
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false
   });
 
+  // Create mutation
   const createMutation = useMutation({
-    mutationFn: turnaroundTimesApi.create,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-turnaround-times'] });
+    mutationFn: (data: TurnaroundTimeFormData) => turnaroundTimesApi.create(data),
+    onSuccess: (result) => {
+      if (result.error) throw new Error(result.error);
       toast({ title: 'Success', description: 'Turnaround time created successfully' });
+      queryClient.invalidateQueries({ queryKey: ['turnaroundTimes'] });
       resetForm();
       setIsFormOpen(false);
     },
@@ -59,11 +66,14 @@ export function TurnaroundTimesPage() {
     }
   });
 
+  // Update mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<TurnaroundTimeFormData> }) => turnaroundTimesApi.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-turnaround-times'] });
+    mutationFn: ({ id, data }: { id: string; data: Partial<TurnaroundTimeFormData> }) => 
+      turnaroundTimesApi.update(id, data),
+    onSuccess: (result) => {
+      if (result.error) throw new Error(result.error);
       toast({ title: 'Success', description: 'Turnaround time updated successfully' });
+      queryClient.invalidateQueries({ queryKey: ['turnaroundTimes'] });
       resetForm();
       setIsFormOpen(false);
     },
@@ -72,11 +82,13 @@ export function TurnaroundTimesPage() {
     }
   });
 
+  // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: turnaroundTimesApi.delete,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-turnaround-times'] });
+    mutationFn: (id: string) => turnaroundTimesApi.delete(id),
+    onSuccess: (result) => {
+      if (result.error) throw new Error(result.error);
       toast({ title: 'Success', description: 'Turnaround time deleted successfully' });
+      queryClient.invalidateQueries({ queryKey: ['turnaroundTimes'] });
     },
     onError: (error: any) => {
       toast({ title: 'Error', description: error.message || 'Failed to delete turnaround time', variant: 'destructive' });
@@ -123,9 +135,9 @@ export function TurnaroundTimesPage() {
     return { variant: 'outline' as const, text: 'Extended' };
   };
 
-  const filteredTimes = turnaroundTimes?.filter(time =>
+  const filteredTimes = turnaroundTimes.filter(time =>
     time.name.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  );
 
   if (error) {
     return (

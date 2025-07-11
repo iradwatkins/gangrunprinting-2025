@@ -49,50 +49,79 @@ export function AddOnsPage() {
     is_active: true
   });
 
-  const { data: addOns, isLoading, error } = useQuery({
-    queryKey: ['admin-add-ons'],
+  // Fetch add-ons with React Query
+  const { data: addOns = [], isLoading, error } = useQuery({
+    queryKey: ['addOns'],
     queryFn: async () => {
       const response = await addOnsApi.getAll();
-      return response.data;
-    }
+      if (response.error) throw new Error(response.error);
+      return response.data || [];
+    },
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false
   });
 
+  // Create mutation
   const createMutation = useMutation({
-    mutationFn: addOnsApi.create,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-add-ons'] });
+    mutationFn: (data: AddOnFormData) => addOnsApi.create(data),
+    onSuccess: (result) => {
+      if (result.error) throw new Error(result.error);
       toast({ title: 'Success', description: 'Add-on created successfully' });
+      queryClient.invalidateQueries({ queryKey: ['addOns'] });
       resetForm();
       setIsFormOpen(false);
     },
     onError: (error: any) => {
-      toast({ title: 'Error', description: error.message || 'Failed to create add-on', variant: 'destructive' });
+      toast({ 
+        title: 'Error', 
+        description: error.message || 'Failed to create add-on', 
+        variant: 'destructive' 
+      });
     }
   });
 
+  // Update mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<AddOnFormData> }) => addOnsApi.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-add-ons'] });
+    mutationFn: ({ id, data }: { id: string; data: Partial<AddOnFormData> }) => 
+      addOnsApi.update(id, data),
+    onSuccess: (result) => {
+      if (result.error) throw new Error(result.error);
       toast({ title: 'Success', description: 'Add-on updated successfully' });
+      queryClient.invalidateQueries({ queryKey: ['addOns'] });
       resetForm();
       setIsFormOpen(false);
     },
     onError: (error: any) => {
-      toast({ title: 'Error', description: error.message || 'Failed to update add-on', variant: 'destructive' });
+      toast({ 
+        title: 'Error', 
+        description: error.message || 'Failed to update add-on', 
+        variant: 'destructive' 
+      });
     }
   });
 
+  // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: addOnsApi.delete,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-add-ons'] });
+    mutationFn: (id: string) => addOnsApi.delete(id),
+    onSuccess: (result) => {
+      if (result.error) throw new Error(result.error);
       toast({ title: 'Success', description: 'Add-on deleted successfully' });
+      queryClient.invalidateQueries({ queryKey: ['addOns'] });
     },
     onError: (error: any) => {
-      toast({ title: 'Error', description: error.message || 'Failed to delete add-on', variant: 'destructive' });
+      toast({ 
+        title: 'Error', 
+        description: error.message || 'Failed to delete add-on', 
+        variant: 'destructive' 
+      });
     }
   });
+
+  const handleDelete = (id: string) => {
+    if (!confirm('Are you sure you want to delete this add-on?')) return;
+    deleteMutation.mutate(id);
+  };
 
   const resetForm = () => {
     setFormData({
@@ -133,12 +162,6 @@ export function AddOnsPage() {
       is_active: addOn.is_active
     });
     setIsFormOpen(true);
-  };
-
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this add-on?')) {
-      deleteMutation.mutate(id);
-    }
   };
 
   const renderPricingConfiguration = () => {
@@ -277,10 +300,10 @@ export function AddOnsPage() {
     return badges[model as keyof typeof badges] || { variant: 'default' as const, text: model };
   };
 
-  const filteredAddOns = addOns?.filter(addOn =>
+  const filteredAddOns = addOns.filter(addOn =>
     addOn.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     addOn.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  );
 
   if (error) {
     return (

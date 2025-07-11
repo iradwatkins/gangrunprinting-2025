@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   MoreHorizontal, 
   Plus, 
@@ -50,93 +51,103 @@ type Category = Tables<'product_categories'>;
 type Vendor = Tables<'vendors'>;
 
 export function ProductList() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [vendorFilter, setVendorFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // Query for products with proper configuration
+  const { data: products = [], isLoading: productsLoading, error: productsError } = useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      const response = await productsApi.getAll();
+      if (response.error) {
+        throw new Error(response.error);
+      }
+      return response.data || [];
+    },
+    staleTime: 30000, // 30 seconds
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      
-      // Fetch all data in parallel
-      const [productsResponse, categoriesResponse, vendorsResponse] = await Promise.all([
-        productsApi.getAll(),
-        categoriesApi.getAll(),
-        vendorsApi.getAll()
-      ]);
-      
-      if (productsResponse.error) {
-        console.error('Products fetch error:', productsResponse.error);
-        setError(productsResponse.error);
-        setProducts([]);
-      } else {
-        setProducts(productsResponse.data || []);
+  // Query for categories with proper configuration
+  const { data: categories = [], isLoading: categoriesLoading, error: categoriesError } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const response = await categoriesApi.getAll();
+      if (response.error) {
+        throw new Error(response.error);
       }
-      
-      if (categoriesResponse.error) {
-        console.error('Categories fetch error:', categoriesResponse.error);
-        setCategories([]);
-      } else {
-        setCategories(categoriesResponse.data || []);
-      }
-      
-      if (vendorsResponse.error) {
-        console.error('Vendors fetch error:', vendorsResponse.error);
-        setVendors([]);
-      } else {
-        setVendors(vendorsResponse.data || []);
-      }
-    } catch (err) {
-      console.error('Failed to fetch data:', err);
-      setError('Failed to load data');
-    } finally {
-      setLoading(false);
-    }
-  };
+      return response.data || [];
+    },
+    staleTime: 30000, // 30 seconds
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
 
-  const handleDeleteProduct = async (productId: string) => {
-    try {
+  // Query for vendors with proper configuration
+  const { data: vendors = [], isLoading: vendorsLoading, error: vendorsError } = useQuery({
+    queryKey: ['vendors'],
+    queryFn: async () => {
+      const response = await vendorsApi.getAll();
+      if (response.error) {
+        throw new Error(response.error);
+      }
+      return response.data || [];
+    },
+    staleTime: 30000, // 30 seconds
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+
+  // Delete mutation
+  const deleteProductMutation = useMutation({
+    mutationFn: async (productId: string) => {
       const result = await productsApi.delete(productId);
       if (result.error) {
         throw new Error(result.error);
       }
+      return result;
+    },
+    onSuccess: () => {
       toast({ title: 'Success', description: 'Product deleted successfully' });
-      await fetchData(); // Refresh data
-    } catch (error: any) {
-      toast({ title: 'Error', description: error.message || 'Failed to delete product', variant: 'destructive' });
-    }
-  };
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: 'Error', 
+        description: error.message || 'Failed to delete product', 
+        variant: 'destructive' 
+      });
+    },
+  });
 
   const handleDelete = (productId: string) => {
     if (confirm('Are you sure you want to delete this product?')) {
-      handleDeleteProduct(productId);
+      deleteProductMutation.mutate(productId);
     }
   };
 
+  // Combine loading states
+  const loading = productsLoading || categoriesLoading || vendorsLoading;
+  const error = productsError || categoriesError || vendorsError;
+
   // Helper functions to get category and vendor names
   const getCategoryName = (categoryId: string) => {
-    const category = categories?.find(c => c.id === categoryId);
+    const category = categories.find(c => c.id === categoryId);
     return category?.name || 'Unknown Category';
   };
 
   const getVendorName = (vendorId: string) => {
-    const vendor = vendors?.find(v => v.id === vendorId);
+    const vendor = vendors.find(v => v.id === vendorId);
     return vendor?.name || 'Unknown Vendor';
   };
 
   // Filter products locally
-  const filteredProducts = products?.filter(product => {
+  const filteredProducts = products.filter(product => {
     const matchesSearch = !searchTerm || 
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -152,18 +163,7 @@ export function ProductList() {
       (statusFilter === 'inactive' && !product.is_active);
     
     return matchesSearch && matchesCategory && matchesVendor && matchesStatus;
-  }) || [];
-
-  // For errors, we'll show them in console but still show the normal UI with empty state
-  if (error) {
-    console.error('Products loading error:', error);
-    // Show toast notification but don't block the UI
-    toast({
-      title: 'Products Loading Issue',
-      description: 'Unable to load products. Showing empty state.',
-      variant: 'destructive',
-    });
-  }
+  });
 
   if (loading) {
     return (
@@ -241,7 +241,7 @@ export function ProductList() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
-                  {(categories || []).map((category) => (
+                  {categories.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
                     </SelectItem>
@@ -255,7 +255,7 @@ export function ProductList() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Vendors</SelectItem>
-                  {(vendors || []).map((vendor) => (
+                  {vendors.map((vendor) => (
                     <SelectItem key={vendor.id} value={vendor.id}>
                       {vendor.name}
                     </SelectItem>

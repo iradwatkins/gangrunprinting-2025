@@ -37,11 +37,12 @@ export function QuantitiesPage() {
     has_custom: false,
     is_active: true
   });
+  const [operationError, setOperationError] = useState<string | null>(null);
 
-  const { data: quantityGroups, isLoading, error } = useQuery({
-    queryKey: ['admin-quantity-groups'],
+  // Fetch quantity groups with React Query
+  const { data: quantityGroups = [], isLoading: loading, error } = useQuery({
+    queryKey: ['quantities'],
     queryFn: async () => {
-      // Add immediate schema check
       console.log('🔍 QuantitiesPage: Starting to fetch quantity groups...');
       const response = await quantitiesApi.getAll();
       if (response.error) {
@@ -49,57 +50,74 @@ export function QuantitiesPage() {
         throw new Error(response.error);
       }
       console.log('✅ QuantitiesPage: Successfully fetched quantity groups:', response.data);
-      return response.data;
-    }
+      return response.data || [];
+    },
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false
   });
 
+  // Create mutation
   const createMutation = useMutation({
     mutationFn: async (data: QuantityGroupFormData) => {
-      console.log('🚀 Starting create mutation with data:', data);
-      try {
-        const result = await quantitiesApi.create(data);
-        console.log('✅ Create mutation success:', result);
-        return result;
-      } catch (error) {
-        console.error('❌ Create mutation failed:', error);
-        throw error;
-      }
+      console.log('🚀 Starting create with data:', data);
+      const result = await quantitiesApi.create(data);
+      if (result.error) throw new Error(result.error);
+      console.log('✅ Create success:', result);
+      return result;
     },
-    onSuccess: (data) => {
-      console.log('🎉 onSuccess called with data:', data);
-      queryClient.invalidateQueries({ queryKey: ['admin-quantity-groups'] });
+    onSuccess: () => {
       toast({ title: 'Success', description: 'Quantity group created successfully' });
+      queryClient.invalidateQueries({ queryKey: ['quantities'] });
       resetForm();
       setIsFormOpen(false);
+      setOperationError(null);
     },
     onError: (error: any) => {
-      console.error('💥 onError called:', error);
-      console.error('Error stack:', error.stack);
-      toast({ title: 'Error', description: error.message || 'Failed to create quantity group', variant: 'destructive' });
+      console.error('💥 Create failed:', error);
+      const errorMessage = error.message || 'Failed to create quantity group';
+      setOperationError(errorMessage);
+      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
     }
   });
 
+  // Update mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<QuantityGroupFormData> }) => quantitiesApi.update(id, data),
+    mutationFn: async ({ id, data }: { id: string; data: Partial<QuantityGroupFormData> }) => {
+      const result = await quantitiesApi.update(id, data);
+      if (result.error) throw new Error(result.error);
+      return result;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-quantity-groups'] });
       toast({ title: 'Success', description: 'Quantity group updated successfully' });
+      queryClient.invalidateQueries({ queryKey: ['quantities'] });
       resetForm();
       setIsFormOpen(false);
+      setOperationError(null);
     },
     onError: (error: any) => {
-      toast({ title: 'Error', description: error.message || 'Failed to update quantity group', variant: 'destructive' });
+      const errorMessage = error.message || 'Failed to update quantity group';
+      setOperationError(errorMessage);
+      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
     }
   });
 
+  // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: quantitiesApi.delete,
+    mutationFn: async (id: string) => {
+      const result = await quantitiesApi.delete(id);
+      if (result.error) throw new Error(result.error);
+      return result;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-quantity-groups'] });
       toast({ title: 'Success', description: 'Quantity group deleted successfully' });
+      queryClient.invalidateQueries({ queryKey: ['quantities'] });
+      setOperationError(null);
     },
     onError: (error: any) => {
-      toast({ title: 'Error', description: error.message || 'Failed to delete quantity group', variant: 'destructive' });
+      const errorMessage = error.message || 'Failed to delete quantity group';
+      setOperationError(errorMessage);
+      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
     }
   });
 
@@ -114,7 +132,7 @@ export function QuantitiesPage() {
     setEditingGroup(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('📝 Form submitted with data:', formData);
     
@@ -175,7 +193,7 @@ export function QuantitiesPage() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Failed to load quantity groups: {(error as Error).message}
+            Failed to load quantity groups: {error instanceof Error ? error.message : 'Unknown error'}
           </AlertDescription>
         </Alert>
       </AdminLayout>
@@ -201,7 +219,7 @@ export function QuantitiesPage() {
         </div>
 
         {/* Error Alerts */}
-        {(createMutation.isError || updateMutation.isError || deleteMutation.isError) && (
+        {operationError && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
@@ -209,14 +227,14 @@ export function QuantitiesPage() {
                 <strong>Operation Error:</strong>
               </div>
               <div className="mt-1">
-                {createMutation.error?.message || updateMutation.error?.message || deleteMutation.error?.message}
+                {operationError}
               </div>
-              {(createMutation.error?.message || updateMutation.error?.message || deleteMutation.error?.message || '').includes('admin') && (
+              {operationError.includes('admin') && (
                 <div className="mt-2">
                   <p>Please ensure you are logged in as an admin user.</p>
                 </div>
               )}
-              {(createMutation.error?.message || updateMutation.error?.message || deleteMutation.error?.message || '').includes('Authentication') && (
+              {operationError.includes('Authentication') && (
                 <div className="mt-2">
                   <p>You must be logged in to perform this action.</p>
                 </div>
@@ -299,7 +317,7 @@ export function QuantitiesPage() {
                 </div>
                 
                 <div className="flex gap-2">
-                  <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                  <Button type="submit">
                     {editingGroup ? 'Update Group' : 'Create Group'}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>
@@ -321,7 +339,7 @@ export function QuantitiesPage() {
           />
         </div>
 
-        {isLoading ? (
+        {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
               <Card key={i} className="animate-pulse">

@@ -2,58 +2,57 @@
 
 ## 5. Frontend Data Management Best Practices
 
-### 5.1 Loading Pattern Standards
-**CRITICAL**: To prevent infinite loading loops and render cycles, follow these patterns:
+### 5.1 React Query Configuration Standards
+**CRITICAL**: To prevent infinite loading loops and render cycles when using React Query (TanStack Query), follow these configuration patterns:
 
-#### ✅ WORKING PATTERN (Email Pages Example):
+#### ✅ CORRECT REACT QUERY PATTERN:
 ```typescript
-const [data, setData] = useState([]);
-const [loading, setLoading] = useState(true);
-
-useEffect(() => {
-  fetchData();
-}, []);
-
-const fetchData = async () => {
-  try {
-    setLoading(true);
+const { data, isLoading, error } = useQuery({
+  queryKey: ['data-key'],
+  queryFn: async () => {
     const response = await api.getData();
     if (response.error) {
-      console.error('Failed to fetch:', response.error);
-      setData([]);
-      return;
+      throw new Error(response.error);
     }
-    setData(response.data || []);
-  } catch (error) {
-    console.error('Failed to fetch:', error);
-  } finally {
-    setLoading(false);
-  }
-};
+    return response.data || [];
+  },
+  staleTime: 30 * 1000, // 30 seconds - prevents unnecessary refetches
+  cacheTime: 5 * 60 * 1000, // 5 minutes - keeps data in cache
+  retry: 1, // Limit retries
+  refetchOnWindowFocus: false, // KEY: Prevents refetch loops on focus
+  refetchOnMount: false // Prevents refetch if cached data exists
+});
 ```
 
-#### ❌ PROBLEMATIC PATTERN (Causes Loading Loops):
+#### ✅ MUTATION PATTERN:
 ```typescript
-// DON'T USE: React Query with complex auth context interactions
-const { data, isLoading } = useQuery({
-  queryKey: ['data'],
-  queryFn: async () => {
-    const response = await api.getData(); // Can trigger auth context changes
-    return response.data;
+const mutation = useMutation({
+  mutationFn: async (data) => {
+    const result = await api.create(data);
+    if (result.error) throw new Error(result.error);
+    return result.data;
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['data-key'] });
+    toast({ title: 'Success' });
+  },
+  onError: (error) => {
+    toast({ title: 'Error', description: error.message });
   }
 });
 ```
 
 ### 5.2 Admin Page Requirements
 
-- Use simple state management with useState + useEffect
-- Avoid React Query in admin pages to prevent context conflicts
-- Implement proper loading states and error handling
-- Follow email page structure for consistency
+- Use React Query (TanStack Query) as specified in Technical Preferences
+- Configure with proper staleTime and refetchOnWindowFocus: false
+- Implement proper loading states using isLoading from React Query
+- Use mutations for all create, update, delete operations
+- Invalidate queries after successful mutations
 
 ### 5.3 API Layer Guidelines
 
-- Remove complex joins that cause performance issues
-- Avoid auth checks within API query functions
-- Keep API calls simple and direct
-- Add proper error boundaries 
+- Keep API functions pure - no side effects that trigger context updates
+- Throw errors in queryFn for React Query to handle
+- Return data in a consistent format
+- Avoid complex joins that cause performance issues 
