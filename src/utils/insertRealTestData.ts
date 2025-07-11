@@ -110,11 +110,13 @@ export async function insertRealTestData() {
         contact_email: 'orders@printpro.com', 
         phone: '555-0100',
         website: 'https://printpro.com',
-        address: '123 Print Street',
-        city: 'Los Angeles',
-        state: 'CA',
-        zip_code: '90001',
-        country: 'USA',
+        address: {
+          street: '123 Print Street',
+          city: 'Los Angeles',
+          state: 'CA',
+          zip: '90001',
+          country: 'USA'
+        },
         is_active: true,
         notes: 'Primary vendor for business cards and flyers'
       },
@@ -123,11 +125,13 @@ export async function insertRealTestData() {
         contact_email: 'support@quickprint.com',
         phone: '555-0200',
         website: 'https://quickprint.com',
-        address: '456 Fast Lane',
-        city: 'Chicago',
-        state: 'IL',
-        zip_code: '60601',
-        country: 'USA',
+        address: {
+          street: '456 Fast Lane',
+          city: 'Chicago',
+          state: 'IL',
+          zip: '60601',
+          country: 'USA'
+        },
         is_active: true,
         notes: 'Fast turnaround specialist'
       },
@@ -136,11 +140,13 @@ export async function insertRealTestData() {
         contact_email: 'hello@premiumprint.com',
         phone: '555-0300',
         website: 'https://premiumprint.com',
-        address: '789 Quality Ave',
-        city: 'New York',
-        state: 'NY',
-        zip_code: '10001',
-        country: 'USA',
+        address: {
+          street: '789 Quality Ave',
+          city: 'New York',
+          state: 'NY',
+          zip: '10001',
+          country: 'USA'
+        },
         is_active: true,
         notes: 'High-end printing services'
       }

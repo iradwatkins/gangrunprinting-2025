@@ -23,6 +23,7 @@ import { DatabaseDiagnostics } from '@/components/admin/DatabaseDiagnostics';
 import { AdminLogin } from '@/components/admin/AdminLogin';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { FixVendorAddresses } from '@/components/admin/FixVendorAddresses';
 
 export function AdminDashboard() {
   const { user, loading: authLoading } = useAuth();
@@ -350,6 +351,9 @@ export function AdminDashboard() {
 
         {/* Database Health Check */}
         <DatabaseHealthCheck />
+
+        {/* Temporary: Fix Vendor Addresses */}
+        <FixVendorAddresses />
 
       </div>
     </AdminLayout>

@@ -273,9 +273,12 @@ export function VendorList() {
     if (!address) return 'No address';
     if (typeof address === 'string') return address;
     
+    // Handle address object with all possible fields
     const parts = [
+      address.street,
       address.city,
       address.state,
+      address.zip,
       address.country
     ].filter(Boolean);
     

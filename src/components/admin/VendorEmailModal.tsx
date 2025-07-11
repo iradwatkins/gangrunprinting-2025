@@ -50,6 +50,23 @@ export function VendorEmailModal({ vendor, open, onOpenChange }: VendorEmailModa
   const [showPreview, setShowPreview] = useState(false);
   const [templates] = useState<EmailTemplate[]>(VendorEmailService.getEmailTemplates());
 
+  // Format address helper function
+  const formatAddress = (address: any): string => {
+    if (!address) return 'No address';
+    if (typeof address === 'string') return address;
+    
+    // Handle address object with all possible fields
+    const parts = [
+      address.street,
+      address.city,
+      address.state,
+      address.zip,
+      address.country
+    ].filter(Boolean);
+    
+    return parts.join(', ') || 'Address incomplete';
+  };
+
   useEffect(() => {
     if (!open) {
       // Reset form when modal closes
@@ -198,7 +215,7 @@ export function VendorEmailModal({ vendor, open, onOpenChange }: VendorEmailModa
                     <Label className="text-xs text-muted-foreground">Address</Label>
                     <div className="flex items-start gap-2">
                       <MapPin className="h-3 w-3 text-muted-foreground mt-0.5" />
-                      <p className="text-sm">{vendor.address}</p>
+                      <p className="text-sm">{formatAddress(vendor.address)}</p>
                     </div>
                   </div>
                 )}

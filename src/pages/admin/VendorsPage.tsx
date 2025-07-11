@@ -46,26 +46,56 @@ export function VendorsPage() {
     notes: ''
   });
 
-  // Fetch vendors with React Query
+  // Format address helper function
+  const formatAddress = (address: any): string => {
+    if (!address) return 'No address';
+    if (typeof address === 'string') return address;
+    
+    // Handle address object with all possible fields
+    const parts = [
+      address.street,
+      address.city,
+      address.state,
+      address.zip,
+      address.country
+    ].filter(Boolean);
+    
+    return parts.join(', ') || 'Address incomplete';
+  };
+
+  // Fetch vendors with React Query - properly configured to prevent loading loops
   const { data: vendors = [], isLoading, error } = useQuery({
-    queryKey: ['vendors'],
+    queryKey: ['admin-vendors'],
     queryFn: async () => {
+      console.log('VendorsPage: Starting query...');
       const response = await vendorsApi.getAll();
-      if (response.error) throw new Error(response.error);
+      console.log('VendorsPage: API response:', response);
+      if (response.error) {
+        console.error('VendorsPage: API error:', response.error);
+        throw new Error(response.error);
+      }
+      console.log('VendorsPage: Success, returning data:', response.data);
       return response.data || [];
     },
-    staleTime: 30000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false
+    staleTime: 30 * 1000, // Consider data fresh for 30 seconds
+    cacheTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    retry: 1,
+    refetchOnWindowFocus: false, // Prevent refetch on window focus - key to preventing loops
+    refetchOnMount: false // Don't refetch if we have cached data
   });
 
   // Create mutation
   const createMutation = useMutation({
-    mutationFn: (data: VendorFormData) => vendorsApi.create(data),
-    onSuccess: (result) => {
-      if (result.error) throw new Error(result.error);
+    mutationFn: async (data: VendorFormData) => {
+      const result = await vendorsApi.create(data);
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      return result.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-vendors'] });
       toast({ title: 'Success', description: 'Vendor created successfully' });
-      queryClient.invalidateQueries({ queryKey: ['vendors'] });
       resetForm();
       setIsFormOpen(false);
     },
@@ -80,12 +110,16 @@ export function VendorsPage() {
 
   // Update mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<VendorFormData> }) => 
-      vendorsApi.update(id, data),
-    onSuccess: (result) => {
-      if (result.error) throw new Error(result.error);
+    mutationFn: async ({ id, data }: { id: string; data: Partial<VendorFormData> }) => {
+      const result = await vendorsApi.update(id, data);
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      return result.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-vendors'] });
       toast({ title: 'Success', description: 'Vendor updated successfully' });
-      queryClient.invalidateQueries({ queryKey: ['vendors'] });
       resetForm();
       setIsFormOpen(false);
     },
@@ -100,11 +134,16 @@ export function VendorsPage() {
 
   // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => vendorsApi.delete(id),
-    onSuccess: (result) => {
-      if (result.error) throw new Error(result.error);
+    mutationFn: async (id: string) => {
+      const result = await vendorsApi.delete(id);
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      return result.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-vendors'] });
       toast({ title: 'Success', description: 'Vendor deleted successfully' });
-      queryClient.invalidateQueries({ queryKey: ['vendors'] });
     },
     onError: (error: any) => {
       toast({ 
@@ -150,7 +189,7 @@ export function VendorsPage() {
       name: vendor.name,
       email: vendor.email || '',
       phone: vendor.phone || '',
-      address: vendor.address || '',
+      address: formatAddress(vendor.address),
       contact_person: vendor.contact_person || '',
       specialty: vendor.specialty || '',
       rating: vendor.rating || 5,
@@ -403,7 +442,7 @@ export function VendorsPage() {
                     {vendor.address && (
                       <div className="flex items-center gap-2">
                         <MapPin className="h-3 w-3" />
-                        {vendor.address}
+                        {formatAddress(vendor.address)}
                       </div>
                     )}
                   </div>
