@@ -24,6 +24,14 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    
+    // Check if this is the vendor address rendering error
+    if (error.message && (error.message.includes('object with keys') || error.message.includes('Objects are not valid as a React child'))) {
+      console.error('Detected object rendering error. This often happens when trying to render an address object directly.');
+      console.error('Component stack:', errorInfo.componentStack);
+    }
+    
     // Log error to monitoring service in production
     if (process.env.NODE_ENV === 'production') {
       // Send to error tracking service
@@ -54,6 +62,23 @@ export class ErrorBoundary extends Component<Props, State> {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Show specific help for the vendor address error */}
+              {this.state.error?.message && (this.state.error.message.includes('object with keys') || this.state.error.message.includes('Objects are not valid')) && (
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-800 font-medium mb-2">
+                    Data formatting issue detected
+                  </p>
+                  <p className="text-sm text-yellow-800">
+                    This error typically occurs when vendor address data needs to be updated to the new format.
+                  </p>
+                  {process.env.NODE_ENV === 'development' && (
+                    <p className="text-sm text-yellow-800 mt-2">
+                      <strong>Admin action needed:</strong> Visit <a href="/admin" className="underline">Admin Dashboard</a> and use the "Fix Vendor Addresses" tool.
+                    </p>
+                  )}
+                </div>
+              )}
+              
               {process.env.NODE_ENV === 'development' && this.state.error && (
                 <div className="p-3 bg-muted rounded-md">
                   <p className="text-sm font-mono text-muted-foreground">

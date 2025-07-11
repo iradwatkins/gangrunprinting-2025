@@ -127,7 +127,17 @@ export const OrderDetail: React.FC<OrderDetailProps> = ({ orderId, onBack }) => 
 
   const formatAddress = (address: any) => {
     if (!address) return 'N/A';
-    return `${address.street1}${address.street2 ? `, ${address.street2}` : ''}, ${address.city}, ${address.state} ${address.zip}`;
+    
+    // Handle both address formats (orders use street1/street2, vendors use street)
+    const street = address.street1 || address.street || '';
+    const street2 = address.street2 || '';
+    const city = address.city || '';
+    const state = address.state || '';
+    const zip = address.zip || address.postal_code || '';
+    
+    const streetPart = street2 ? `${street}, ${street2}` : street;
+    
+    return `${streetPart}, ${city}, ${state} ${zip}`.replace(/,\s*,/g, ',').trim();
   };
 
   if (loading) {
