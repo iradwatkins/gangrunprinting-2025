@@ -8,7 +8,8 @@ import {
   LogOut, 
   Shield,
   ChevronDown,
-  Bell
+  Bell,
+  LayoutDashboard
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -32,6 +33,9 @@ export function UserMenu({ className }: UserMenuProps) {
   
   // Check if user has broker privileges
   const isBroker = user?.profile?.is_broker || false;
+  
+  // Check if user is admin
+  const isAdmin = user?.profile?.role === 'admin';
 
   if (!user) {
     return null;
@@ -106,6 +110,15 @@ export function UserMenu({ className }: UserMenuProps) {
             <span>Profile Settings</span>
           </Link>
         </DropdownMenuItem>
+
+        {isAdmin && (
+          <DropdownMenuItem asChild>
+            <Link to="/admin/dashboard" className="flex items-center">
+              <LayoutDashboard className="mr-2 h-4 w-4" />
+              <span>Admin Dashboard</span>
+            </Link>
+          </DropdownMenuItem>
+        )}
 
         <DropdownMenuItem asChild>
           <Link to="/account/orders" className="flex items-center">
