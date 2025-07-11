@@ -17,13 +17,13 @@ export function Header() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  // Debug logging
-  console.log('🔍 HEADER: Render state:', {
-    hasUser: !!user,
-    userEmail: user?.email,
-    loading,
-    userProfile: user?.profile
-  });
+  // Debug logging (commented out to prevent console spam)
+  // console.log('🔍 HEADER: Render state:', {
+  //   hasUser: !!user,
+  //   userEmail: user?.email,
+  //   loading,
+  //   userProfile: user?.profile
+  // });
 
   const navigation = [
     { name: 'All Products', href: '/products' },

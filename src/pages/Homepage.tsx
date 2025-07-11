@@ -123,13 +123,13 @@ const HeroCarousel = () => {
 export default function Homepage() {
   const { user, loading } = useAuth();
   
-  // Debug logging for Homepage
-  console.log('🏠 HOMEPAGE: Render state:', {
-    hasUser: !!user,
-    userEmail: user?.email,
-    loading,
-    userProfile: user?.profile
-  });
+  // Debug logging for Homepage (commented out)
+  // console.log('🏠 HOMEPAGE: Render state:', {
+  //   hasUser: !!user,
+  //   userEmail: user?.email,
+  //   loading,
+  //   userProfile: user?.profile
+  // });
 
   // Load real categories from database
   const { data: categories = [] } = useQuery({
@@ -202,7 +202,7 @@ export default function Homepage() {
     }
   ];
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
@@ -212,18 +212,12 @@ export default function Homepage() {
 
   return (
     <Layout>
-      {/* Temporary Debug Banner */}
-      <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4">
-        <div className="flex">
-          <div className="ml-3">
-            <p className="text-sm">
-              🔍 DEBUG: Auth State - 
-              {loading ? ' Loading...' : user ? ` Logged in as ${user.email}` : ' Not logged in'}
-              {user?.profile && ` (Role: ${user.profile.role})`}
-            </p>
-          </div>
+      {/* Debug Banner - only in development */}
+      {typeof window !== 'undefined' && window.location.hostname === 'localhost' && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-2 text-sm">
+          🔍 Auth: {loading ? 'Loading...' : user ? `✅ ${user.email}` : '❌ Not logged in'}
         </div>
-      </div>
+      )}
 
       {/* Hero Carousel */}
       <HeroCarousel />
