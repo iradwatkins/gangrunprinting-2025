@@ -36,6 +36,7 @@ export function DatabaseHealthCheck() {
     'turnaround_times',
     'print_sizes',
     'quantities',
+    'sides',
     'add_ons',
     'product_paper_stocks',
     'product_print_sizes',

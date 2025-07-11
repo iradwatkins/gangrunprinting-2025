@@ -35,12 +35,14 @@ export const productsApi = {
         .order('created_at', { ascending: false });
 
       if (error) {
+        console.error('Products getAll error:', error);
         return { error: error.message };
       }
 
       return { data: data || [] };
-    } catch (error) {
-      return { error: 'Failed to fetch products' };
+    } catch (error: any) {
+      console.error('Products getAll exception:', error);
+      return { error: error.message || 'Failed to fetch products' };
     }
   },
 

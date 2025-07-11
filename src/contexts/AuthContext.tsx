@@ -53,6 +53,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Initialize authentication
     const initializeAuth = async () => {
       try {
+        // Check if we should skip auth
+        if (localStorage.getItem('skipAuth') === 'true') {
+          console.log('Skipping auth as requested');
+          setLoading(false);
+          return;
+        }
+
         // Get initial session
         const { data: { session }, error } = await supabase.auth.getSession();
         
@@ -111,12 +118,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Simplified, reliable profile loading function
   const loadUserProfile = async (authUser: User, shouldRedirect = false) => {
     try {
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Profile loading timeout')), 3000)
+      );
+
       // Get or create user profile
-      const { data: profile, error } = await supabase
+      console.log('Loading user profile for:', authUser.id);
+      const profilePromise = supabase
         .from('user_profiles')
         .select('*')
         .eq('user_id', authUser.id)
         .single();
+
+      // Race between profile loading and timeout
+      const { data: profile, error } = await Promise.race([
+        profilePromise,
+        timeoutPromise
+      ]).catch(err => {
+        console.error('Profile loading failed:', err);
+        return { data: null, error: err };
+      }) as any;
 
       let finalProfile = null;
 
@@ -152,8 +174,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           toast.success('Profile created successfully!');
         }
       } else if (error) {
-        toast.error('Failed to load user profile. Please try refreshing.');
-        setUser({ ...authUser, profile: undefined });
+        console.error('Error loading user profile:', error);
+        // If it's an RLS error, still set the user but without profile
+        if (error.message.includes('permission denied') || error.message.includes('policy')) {
+          console.warn('RLS policy issue - setting user without profile');
+          setUser({ ...authUser, profile: undefined });
+        } else {
+          toast.error('Failed to load user profile. Please try refreshing.');
+          setUser({ ...authUser, profile: undefined });
+        }
       } else {
         finalProfile = {
           ...profile,

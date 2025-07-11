@@ -546,7 +546,7 @@ export const quantitiesApi = {
       const { data, error } = await supabase
         .from('quantities')
         .select('*')
-        .order('quantity');
+        .order('name');
 
       if (error) {
         console.error('❌ Database error:', error);

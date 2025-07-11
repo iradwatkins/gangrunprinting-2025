@@ -38,6 +38,7 @@ import { categoriesApi } from '@/api/categories';
 import { productsApi } from '@/api/products';
 import type { Tables } from '@/integrations/supabase/types';
 import { insertRealTestData } from '@/utils/insertRealTestData';
+import { QuickAuthFix } from '@/components/QuickAuthFix';
 
 const HeroCarousel = () => {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [Autoplay()]);
@@ -158,11 +159,17 @@ export default function Homepage() {
   const { data: categories = [], isLoading: categoriesLoading, error: categoriesError } = useQuery({
     queryKey: ['categories-homepage'],
     queryFn: async () => {
-      const response = await categoriesApi.getCategories();
-      if (response.error) {
-        throw new Error(response.error);
+      try {
+        const response = await categoriesApi.getCategories();
+        if (response.error) {
+          console.error('Categories error:', response.error);
+          return []; // Return empty array on error instead of throwing
+        }
+        return response.data || [];
+      } catch (error) {
+        console.error('Categories fetch error:', error);
+        return []; // Return empty array on error
       }
-      return response.data || [];
     },
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
     cacheTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
@@ -175,12 +182,18 @@ export default function Homepage() {
   const { data: featuredProducts = [], isLoading: productsLoading, error: productsError } = useQuery({
     queryKey: ['featured-products-homepage'],
     queryFn: async () => {
-      const response = await productsApi.getProducts();
-      if (response.error) {
-        throw new Error(response.error);
+      try {
+        const response = await productsApi.getAll();
+        if (response.error) {
+          console.error('Products error:', response.error);
+          return []; // Return empty array on error instead of throwing
+        }
+        // For now, just take the first 6 products as featured
+        return (response.data || []).slice(0, 6);
+      } catch (error) {
+        console.error('Products fetch error:', error);
+        return []; // Return empty array on error
       }
-      // For now, just take the first 6 products as featured
-      return (response.data || []).slice(0, 6);
     },
     staleTime: 5 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,
@@ -190,6 +203,18 @@ export default function Homepage() {
   });
 
   const loading = categoriesLoading || productsLoading;
+
+  // Debug logging
+  useEffect(() => {
+    console.log('Homepage loading states:', {
+      authLoading,
+      categoriesLoading,
+      productsLoading,
+      categoriesError,
+      productsError,
+      user
+    });
+  }, [authLoading, categoriesLoading, productsLoading, categoriesError, productsError, user]);
 
   // Icon mapping for categories
   const getIconForCategory = (categoryName: string) => {
@@ -241,11 +266,52 @@ export default function Homepage() {
     }
   ];
 
-  if (authLoading || loading) {
+  // Add a timeout to prevent infinite loading
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoadingTimeout(true);
+    }, 5000); // 5 second timeout
+    return () => clearTimeout(timer);
+  }, []);
+
+  if ((authLoading || loading) && !loadingTimeout) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
+    );
+  }
+
+  // If loading timed out, show error state
+  if (loadingTimeout && (authLoading || loading)) {
+    return (
+      <Layout>
+        <div className="max-w-7xl mx-auto px-4 py-16">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Loading Taking Too Long</h2>
+            <p className="text-gray-600 mb-8">The page is having trouble loading. This might be due to:</p>
+            <ul className="text-left max-w-md mx-auto mb-8 space-y-2">
+              <li>• Database connection issues</li>
+              <li>• Authentication problems</li>
+              <li>• Network connectivity</li>
+            </ul>
+            <div className="space-x-4">
+              <Button onClick={() => window.location.reload()}>
+                Refresh Page
+              </Button>
+              <Button variant="outline" onClick={() => {
+                console.log('Current state:', { authLoading, loading, categoriesError, productsError });
+              }}>
+                Log Debug Info
+              </Button>
+            </div>
+          </div>
+          
+          {/* Show auth fix component */}
+          <QuickAuthFix />
+        </div>
+      </Layout>
     );
   }
 

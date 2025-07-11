@@ -20,9 +20,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { CreateOrderForCustomer } from '@/components/admin/CreateOrderForCustomer';
 import { DatabaseHealthCheck } from '@/components/admin/DatabaseHealthCheck';
 import { DatabaseDiagnostics } from '@/components/admin/DatabaseDiagnostics';
+import { AdminLogin } from '@/components/admin/AdminLogin';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function AdminDashboard() {
+  const { user, loading: authLoading } = useAuth();
   const [stats, setStats] = useState([
     {
       title: 'Total Products',
@@ -338,6 +341,9 @@ export function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Admin Login - Show if not authenticated */}
+        {!user && <AdminLogin />}
 
         {/* Database Diagnostics */}
         <DatabaseDiagnostics />

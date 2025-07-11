@@ -235,31 +235,59 @@ export async function insertRealTestData() {
       });
     }
 
-    // 7. QUANTITIES
-    console.log('\n━━━ 7. QUANTITIES ━━━');
+    // 7. QUANTITIES (Quantity Groups)
+    console.log('\n━━━ 7. QUANTITIES (Quantity Groups) ━━━');
     const quantities = [
-      { quantity: 25, is_active: true, sort_order: 1 },
-      { quantity: 50, is_active: true, sort_order: 2 },
-      { quantity: 100, is_active: true, sort_order: 3 },
-      { quantity: 250, is_active: true, sort_order: 4 },
-      { quantity: 500, is_active: true, sort_order: 5 },
-      { quantity: 1000, is_active: true, sort_order: 6 },
-      { quantity: 2500, is_active: true, sort_order: 7 },
-      { quantity: 5000, is_active: true, sort_order: 8 },
-      { quantity: 10000, is_active: true, sort_order: 9 }
+      { 
+        name: 'Standard Quantities',
+        values: JSON.stringify([25, 50, 100, 250, 500, 1000]),
+        default_value: 500,
+        has_custom: false,
+        is_active: true
+      },
+      { 
+        name: 'Large Format Quantities',
+        values: JSON.stringify([100, 250, 500, 1000, 2500, 5000, 10000]),
+        default_value: 1000,
+        has_custom: true,
+        is_active: true
+      },
+      { 
+        name: 'Small Run Quantities',
+        values: JSON.stringify([10, 25, 50, 100]),
+        default_value: 50,
+        has_custom: false,
+        is_active: true
+      }
     ];
 
-    const qtyResult = await insertAndVerify('quantities', quantities, 'quantity');
+    const qtyResult = await insertAndVerify('quantities', quantities, 'name');
     results.push(qtyResult);
     
     if (qtyResult.data) {
       qtyResult.data.forEach(qty => {
-        createdIds.quantities[qty.quantity.toString()] = qty.id;
+        createdIds.quantities[qty.name] = qty.id;
       });
     }
 
-    // Skip SIDES table as it doesn't exist in the current schema
-    console.log('\n━━━ 8. SIDES (SKIPPED - Table not in schema) ━━━');
+    // 8. SIDES
+    console.log('\n━━━ 8. SIDES ━━━');
+    const sides = [
+      { name: 'Single Sided (4/0)', multiplier: 1.0, tooltip_text: 'Full color front, blank back', is_active: true },
+      { name: 'Double Sided (4/4)', multiplier: 1.6, tooltip_text: 'Full color both sides', is_active: true },
+      { name: 'Front Color, Back B&W (4/1)', multiplier: 1.3, tooltip_text: 'Full color front, black & white back', is_active: true },
+      { name: 'Black & White (1/0)', multiplier: 0.7, tooltip_text: 'Black & white front only', is_active: true },
+      { name: 'Black & White Both Sides (1/1)', multiplier: 1.0, tooltip_text: 'Black & white both sides', is_active: true }
+    ];
+
+    const sidesResult = await insertAndVerify('sides', sides, 'name');
+    results.push(sidesResult);
+    
+    if (sidesResult.data) {
+      sidesResult.data.forEach(side => {
+        createdIds.sides[side.name] = side.id;
+      });
+    }
 
     // 9. ADD-ONS
     console.log('\n━━━ 9. ADD-ONS ━━━');
@@ -470,11 +498,8 @@ export async function insertRealTestData() {
     const pttResult = await insertAndVerify('product_turnaround_times', productTurnaroundTimes);
     results.push(pttResult);
 
-    // Skip linking products to quantities if table doesn't exist
-    console.log('\n━━━ SKIPPING product_quantities (May not exist in schema) ━━━');
-
-    // Skip linking products to sides and coatings as these tables don't exist
-    console.log('\n━━━ SKIPPING product_sides and product_coatings (Tables not in schema) ━━━');
+    // Note: No product_quantities, product_sides, or product_coatings junction tables exist
+    console.log('\n━━━ NOTE: No junction tables for quantities, sides, or coatings ━━━');
 
     // Link products to add-ons
     const productAddOns = [];
