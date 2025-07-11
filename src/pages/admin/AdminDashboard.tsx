@@ -18,9 +18,6 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateOrderForCustomer } from '@/components/admin/CreateOrderForCustomer';
-import { DatabaseTestPanel } from '@/components/admin/DatabaseTestPanel';
-import { DeploymentComparison } from '@/components/admin/DeploymentComparison';
-import { AuthenticationDebugger } from '@/components/admin/AuthenticationDebugger';
 import { supabase } from '@/integrations/supabase/client';
 
 export function AdminDashboard() {
@@ -340,14 +337,6 @@ export function AdminDashboard() {
           </Card>
         </div>
 
-        {/* Authentication Debugger - For fixing browser cache conflicts */}
-        <AuthenticationDebugger />
-
-        {/* Deployment Comparison - For debugging deployment differences */}
-        <DeploymentComparison />
-
-        {/* Database Test Panel - For debugging save/load issues */}
-        <DatabaseTestPanel />
       </div>
     </AdminLayout>
   );
