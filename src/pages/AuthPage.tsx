@@ -6,14 +6,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/contexts/AuthContext';
-import { LogIn, UserPlus, Loader2, AlertCircle } from 'lucide-react';
+import { LogIn, UserPlus, Loader2, AlertCircle, Mail, Chrome, ChevronDown } from 'lucide-react';
+import { toast } from 'sonner';
 
 export function AuthPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signUp, loading, error, clearError } = useAuth() as any;
+  const { signIn, signUp, signInWithMagicLink, signInWithGoogle, loading, error, clearError } = useAuth() as any;
   
   // Form states
   const [loginEmail, setLoginEmail] = useState('');
@@ -22,9 +25,41 @@ export function AuthPage() {
   const [signupPassword, setSignupPassword] = useState('');
   const [signupFullName, setSignupFullName] = useState('');
   const [localLoading, setLocalLoading] = useState(false);
+  const [magicLinkEmail, setMagicLinkEmail] = useState('');
+  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
 
   // Get redirect path from location state or default to home
   const from = (location.state as any)?.from?.pathname || '/';
+
+  const handleMagicLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLocalLoading(true);
+    
+    try {
+      const { error } = await signInWithMagicLink(magicLinkEmail);
+      if (!error) {
+        toast.success('Check your email for the login link!');
+        setMagicLinkEmail('');
+      } else {
+        toast.error(error);
+      }
+    } finally {
+      setLocalLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setLocalLoading(true);
+    
+    try {
+      const { error } = await signInWithGoogle();
+      if (error) {
+        toast.error(error);
+      }
+    } finally {
+      setLocalLoading(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,55 +113,130 @@ export function AuthPage() {
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="login">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
-                    <Input
-                      id="login-email"
-                      type="email"
-                      placeholder="your@email.com"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      required
-                      disabled={isLoading}
-                    />
-                  </div>
+              <TabsContent value="login" className="space-y-6">
+                {/* Magic Link Login - Primary Option */}
+                <div className="space-y-4">
+                  <form onSubmit={handleMagicLink} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="magic-email">Email Address</Label>
+                      <Input
+                        id="magic-email"
+                        type="email"
+                        placeholder="your@email.com"
+                        value={magicLinkEmail}
+                        onChange={(e) => setMagicLinkEmail(e.target.value)}
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Sending link...
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="mr-2 h-4 w-4" />
+                          Continue with Email Link
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password">Password</Label>
-                    <Input
-                      id="login-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      required
-                      disabled={isLoading}
-                    />
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <Separator />
                   </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-white px-2 text-muted-foreground">Or continue with</span>
+                  </div>
+                </div>
 
-                  {error && (
-                    <Alert variant="destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>{error}</AlertDescription>
-                    </Alert>
+                {/* Google Login - Secondary Option */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  size="lg"
+                  onClick={handleGoogleLogin}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <Chrome className="mr-2 h-4 w-4" />
+                      Continue with Google
+                    </>
                   )}
+                </Button>
 
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Signing in...
-                      </>
-                    ) : (
-                      <>
-                        <LogIn className="mr-2 h-4 w-4" />
-                        Sign In
-                      </>
-                    )}
-                  </Button>
-                </form>
+                <Separator />
+
+                {/* Email/Password Login - Less Prominent Option */}
+                <Collapsible open={isPasswordOpen} onOpenChange={setIsPasswordOpen}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" className="w-full justify-between" type="button">
+                      <span className="text-sm text-muted-foreground">Sign in with password</span>
+                      <ChevronDown className={`h-4 w-4 transition-transform ${isPasswordOpen ? 'rotate-180' : ''}`} />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pt-4">
+                    <form onSubmit={handleLogin} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="login-email">Email</Label>
+                        <Input
+                          id="login-email"
+                          type="email"
+                          placeholder="your@email.com"
+                          value={loginEmail}
+                          onChange={(e) => setLoginEmail(e.target.value)}
+                          required
+                          disabled={isLoading}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="login-password">Password</Label>
+                        <Input
+                          id="login-password"
+                          type="password"
+                          placeholder="••••••••"
+                          value={loginPassword}
+                          onChange={(e) => setLoginPassword(e.target.value)}
+                          required
+                          disabled={isLoading}
+                        />
+                      </div>
+
+                      <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Signing in...
+                          </>
+                        ) : (
+                          <>
+                            <LogIn className="mr-2 h-4 w-4" />
+                            Sign In
+                          </>
+                        )}
+                      </Button>
+                    </form>
+                  </CollapsibleContent>
+                </Collapsible>
+
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
               </TabsContent>
 
               <TabsContent value="signup">
@@ -197,10 +307,6 @@ export function AuthPage() {
               </TabsContent>
             </Tabs>
 
-            <div className="mt-6 text-center text-sm text-gray-500">
-              <p>Test credentials for demo:</p>
-              <p className="font-mono">admin@example.com / admin123</p>
-            </div>
           </CardContent>
         </Card>
       </div>

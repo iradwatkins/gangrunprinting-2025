@@ -49,10 +49,9 @@ export function AuthGuard({ children, requireAuth = false, requireAdmin = false 
   }
 
   // Check admin requirements
-  if (requireAdmin && user) {
-    // For now, check if email is admin email
-    const isAdmin = user.email === 'admin@example.com' || user.email === 'iradwatkins@gmail.com';
-    if (!isAdmin) {
+  if (requireAdmin) {
+    // Check if user exists and has admin role
+    if (!user || !user.profile || user.profile.role !== 'admin') {
       return <Navigate to="/" replace />;
     }
   }

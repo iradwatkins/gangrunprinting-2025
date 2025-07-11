@@ -28,6 +28,7 @@ import { OrdersPage } from "./pages/orders/OrdersPage";
 import InvoicePaymentPage from "./pages/InvoicePaymentPage";
 import { AuthPage } from "./pages/AuthPage";
 import { AuthGuard } from "./components/AuthGuard";
+import { AdminLayout } from "./components/AdminLayout";
 
 // Import cleanup utilities to make them available
 // import "./utils/cleanup-auth";
@@ -60,7 +61,9 @@ const App = () => (
                     <Route path="/my-account/profile" element={<AuthGuard requireAuth><ProfileSettings /></AuthGuard>} />
                     <Route path="/my-account/orders" element={<AuthGuard requireAuth><AccountOrdersPage /></AuthGuard>} />
                     <Route path="/my-account/broker-application" element={<AuthGuard requireAuth><BrokerApplication /></AuthGuard>} />
-                    <Route path="/admin/*" element={<AuthGuard requireAdmin><AdminApp /></AuthGuard>} />
+                    <Route element={<AdminLayout />}>
+                      <Route path="/admin/*" element={<AdminApp />} />
+                    </Route>
                     <Route path="/files" element={<FilesPage />} />
                     <Route path="/invoice/:invoiceNumber/pay" element={<InvoicePaymentPage />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
