@@ -39,6 +39,7 @@ import { productsApi } from '@/api/products';
 import type { Tables } from '@/integrations/supabase/types';
 import { insertRealTestData } from '@/utils/insertRealTestData';
 import { QuickAuthFix } from '@/components/QuickAuthFix';
+import '@/utils/fix-auth-loading';
 
 const HeroCarousel = () => {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [Autoplay()]);

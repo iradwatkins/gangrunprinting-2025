@@ -27,9 +27,13 @@ interface AuthContextType {
   session: Session | null;
   isAuthenticated: boolean;
   loading: boolean;
+  error?: string | null;
   signOut: () => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signUp: (email: string, password: string, fullName?: string) => Promise<{ success: boolean; error?: string }>;
   signInWithMagicLink: (email: string) => Promise<{ error: string | null }>;
   signInWithGoogle: () => Promise<{ error: string | null }>;
+  clearError?: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,6 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Initialize authentication
@@ -224,6 +229,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
 
+  const signIn = async (email: string, password: string) => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Sign in failed' };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signUp = async (email: string, password: string, fullName?: string) => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName
+          }
+        }
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      // Don't create profile here - let it happen on first login
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Sign up failed' };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const signInWithMagicLink = async (email: string) => {
     try {
       const { error } = await supabase.auth.signInWithOtp({
@@ -280,14 +331,20 @@ const getRedirectUrl = () => {
   return `${window.location.origin}/`;
 };
 
+  const clearError = () => setError(null);
+
   const value: AuthContextType = {
     user,
     session,
     isAuthenticated: !!user,
     loading,
+    error,
     signOut,
+    signIn,
+    signUp,
     signInWithMagicLink,
     signInWithGoogle,
+    clearError,
   };
 
   return (

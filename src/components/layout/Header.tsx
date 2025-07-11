@@ -4,7 +4,7 @@ import { Printer, ShoppingCart, User, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { UserButton } from '@/components/auth/UserButton';
+import { UserButtonSimple } from '@/components/UserButtonSimple';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/hooks/useCart';
@@ -95,11 +95,13 @@ export function Header() {
                   Loading...
                 </Button>
               ) : user ? (
-                <UserButton />
+                <UserButtonSimple />
               ) : (
-                <Button onClick={() => setAuthModalOpen(true)} variant="outline" size="sm">
-                  <User className="h-4 w-4 mr-2" />
-                  Sign In
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/auth">
+                    <User className="h-4 w-4 mr-2" />
+                    Sign In
+                  </Link>
                 </Button>
               )}
 

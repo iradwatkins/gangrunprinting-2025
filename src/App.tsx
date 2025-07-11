@@ -26,6 +26,8 @@ import UploadArtworkPage from "./pages/UploadArtworkPage";
 import EmailDashboard from "./pages/email/EmailDashboard";
 import { OrdersPage } from "./pages/orders/OrdersPage";
 import InvoicePaymentPage from "./pages/InvoicePaymentPage";
+import { AuthPage } from "./pages/AuthPage";
+import { AuthGuard } from "./components/AuthGuard";
 
 // Import cleanup utilities to make them available
 // import "./utils/cleanup-auth";
@@ -46,18 +48,19 @@ const App = () => (
                 <div className="relative">
                   <Routes>
                     <Route path="/" element={<Index />} />
+                    <Route path="/auth" element={<AuthPage />} />
                     <Route path="/products" element={<ProductCatalog />} />
                     <Route path="/products/:slug" element={<ProductDetail />} />
                     <Route path="/cart" element={<Cart />} />
                     <Route path="/upload-artwork" element={<UploadArtworkPage />} />
-                    <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/checkout" element={<AuthGuard requireAuth><Checkout /></AuthGuard>} />
                     <Route path="/checkout/confirmation/:referenceNumber" element={<OrderConfirmation />} />
-                    <Route path="/account" element={<DashboardRouter />} />
-                    <Route path="/my-account" element={<MyAccountPage />} />
-                    <Route path="/my-account/profile" element={<ProfileSettings />} />
-                    <Route path="/my-account/orders" element={<AccountOrdersPage />} />
-                    <Route path="/my-account/broker-application" element={<BrokerApplication />} />
-                    <Route path="/admin/*" element={<AdminApp />} />
+                    <Route path="/account" element={<AuthGuard requireAuth><DashboardRouter /></AuthGuard>} />
+                    <Route path="/my-account" element={<AuthGuard requireAuth><MyAccountPage /></AuthGuard>} />
+                    <Route path="/my-account/profile" element={<AuthGuard requireAuth><ProfileSettings /></AuthGuard>} />
+                    <Route path="/my-account/orders" element={<AuthGuard requireAuth><AccountOrdersPage /></AuthGuard>} />
+                    <Route path="/my-account/broker-application" element={<AuthGuard requireAuth><BrokerApplication /></AuthGuard>} />
+                    <Route path="/admin/*" element={<AuthGuard requireAdmin><AdminApp /></AuthGuard>} />
                     <Route path="/files" element={<FilesPage />} />
                     <Route path="/invoice/:invoiceNumber/pay" element={<InvoicePaymentPage />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
