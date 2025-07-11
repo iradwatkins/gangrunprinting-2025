@@ -38,6 +38,8 @@ import { categoriesApi } from '@/api/categories';
 import { productsApi } from '@/api/products';
 import type { Tables } from '@/integrations/supabase/types';
 import { insertTestData } from '@/utils/insert-test-data';
+import { insertCompleteTestData } from '@/utils/insert-complete-test-data';
+import { insertTestDataWithVerification } from '@/utils/insert-test-data-with-verification';
 
 const HeroCarousel = () => {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [Autoplay()]);
@@ -123,14 +125,36 @@ const HeroCarousel = () => {
 
 export default function Homepage() {
   const { user, loading: authLoading } = useAuth();
+  const [isInserting, setIsInserting] = useState(false);
+  const [insertResult, setInsertResult] = useState<any>(null);
   
   // Make insertTestData available in development
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
       (window as any).insertTestData = insertTestData;
-      console.log('💡 Test data insertion available: run insertTestData() in console');
+      (window as any).insertCompleteTestData = insertCompleteTestData;
+      (window as any).insertTestDataWithVerification = insertTestDataWithVerification;
+      console.log('💡 Test data functions available in console:');
+      console.log('   - insertTestData() - Basic test data');
+      console.log('   - insertTestDataWithVerification() - With verification');
+      console.log('   - insertCompleteTestData() - Complete dataset');
     }
   }, []);
+
+  const handleInsertTestData = async () => {
+    setIsInserting(true);
+    setInsertResult(null);
+    try {
+      const result = await insertCompleteTestData();
+      setInsertResult(result);
+      console.log('Test data insertion result:', result);
+    } catch (error) {
+      console.error('Error inserting test data:', error);
+      setInsertResult({ success: false, error: error.message });
+    } finally {
+      setIsInserting(false);
+    }
+  };
 
   // Fetch categories with React Query - proper configuration to prevent loading loops
   const { data: categories = [], isLoading: categoriesLoading, error: categoriesError } = useQuery({
@@ -231,6 +255,60 @@ export default function Homepage() {
     <Layout>
       {/* Hero Carousel */}
       <HeroCarousel />
+
+      {/* Test Data Section - Development Only */}
+      {process.env.NODE_ENV === 'development' && (
+        <section className="py-8 bg-yellow-50 border-y border-yellow-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-yellow-800 mb-4">Development Tools</h3>
+              <div className="space-y-4">
+                <div>
+                  <Button 
+                    onClick={handleInsertTestData}
+                    disabled={isInserting}
+                    className="bg-yellow-600 hover:bg-yellow-700"
+                  >
+                    {isInserting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Inserting Test Data...
+                      </>
+                    ) : (
+                      '🚀 Insert Complete Test Data'
+                    )}
+                  </Button>
+                  <p className="text-sm text-yellow-700 mt-2">
+                    This will insert comprehensive test data into all database tables
+                  </p>
+                </div>
+                
+                {insertResult && (
+                  <div className={`mt-4 p-4 rounded-lg ${insertResult.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {insertResult.success ? (
+                      <div>
+                        <p className="font-semibold">✅ Test data inserted successfully!</p>
+                        <div className="mt-2 text-sm">
+                          {insertResult.results?.map((r: any, i: number) => (
+                            <div key={i}>
+                              {r.table}: {r.inserted} inserted, {r.verified} verified
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="font-semibold">❌ Error inserting test data</p>
+                        <p className="text-sm mt-1">{insertResult.error}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Product Categories Grid */}
       <section className="py-16 bg-gray-50">
