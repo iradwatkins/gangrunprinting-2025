@@ -37,9 +37,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { categoriesApi } from '@/api/categories';
 import { productsApi } from '@/api/products';
 import type { Tables } from '@/integrations/supabase/types';
-import { insertTestData } from '@/utils/insert-test-data';
-import { insertCompleteTestData } from '@/utils/insert-complete-test-data';
-import { insertTestDataWithVerification } from '@/utils/insert-test-data-with-verification';
+import { insertRealTestData } from '@/utils/insertRealTestData';
 
 const HeroCarousel = () => {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [Autoplay()]);
@@ -128,16 +126,12 @@ export default function Homepage() {
   const [isInserting, setIsInserting] = useState(false);
   const [insertResult, setInsertResult] = useState<any>(null);
   
-  // Make insertTestData available in development
+  // Make insertRealTestData available in development
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
-      (window as any).insertTestData = insertTestData;
-      (window as any).insertCompleteTestData = insertCompleteTestData;
-      (window as any).insertTestDataWithVerification = insertTestDataWithVerification;
-      console.log('💡 Test data functions available in console:');
-      console.log('   - insertTestData() - Basic test data');
-      console.log('   - insertTestDataWithVerification() - With verification');
-      console.log('   - insertCompleteTestData() - Complete dataset');
+      (window as any).insertRealTestData = insertRealTestData;
+      console.log('💡 Test data function available in console:');
+      console.log('   - insertRealTestData() - Insert real test data with correct table names');
     }
   }, []);
 
@@ -145,10 +139,14 @@ export default function Homepage() {
     setIsInserting(true);
     setInsertResult(null);
     try {
-      const result = await insertCompleteTestData();
+      const result = await insertRealTestData();
       setInsertResult(result);
       console.log('Test data insertion result:', result);
-    } catch (error) {
+      // Refresh the page data after successful insertion
+      if (result.success) {
+        window.location.reload();
+      }
+    } catch (error: any) {
       console.error('Error inserting test data:', error);
       setInsertResult({ success: false, error: error.message });
     } finally {
@@ -275,11 +273,11 @@ export default function Homepage() {
                         Inserting Test Data...
                       </>
                     ) : (
-                      '🚀 Insert Complete Test Data'
+                      '🚀 Insert Real Test Data'
                     )}
                   </Button>
                   <p className="text-sm text-yellow-700 mt-2">
-                    This will insert comprehensive test data into all database tables
+                    This will insert real test data with correct table names into your Supabase database
                   </p>
                 </div>
                 

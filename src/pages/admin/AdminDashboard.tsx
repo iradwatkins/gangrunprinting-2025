@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateOrderForCustomer } from '@/components/admin/CreateOrderForCustomer';
 import { DatabaseHealthCheck } from '@/components/admin/DatabaseHealthCheck';
+import { DatabaseDiagnostics } from '@/components/admin/DatabaseDiagnostics';
 import { supabase } from '@/integrations/supabase/client';
 
 export function AdminDashboard() {
@@ -337,6 +338,9 @@ export function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Database Diagnostics */}
+        <DatabaseDiagnostics />
 
         {/* Database Health Check */}
         <DatabaseHealthCheck />
