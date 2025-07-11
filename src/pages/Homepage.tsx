@@ -38,8 +38,6 @@ import { categoriesApi } from '@/api/categories';
 import { productsApi } from '@/api/products';
 import type { Tables } from '@/integrations/supabase/types';
 import { insertRealTestData } from '@/utils/insertRealTestData';
-import { QuickAuthFix } from '@/components/QuickAuthFix';
-import '@/utils/fix-auth-loading';
 
 const HeroCarousel = () => {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [Autoplay()]);
@@ -267,52 +265,12 @@ export default function Homepage() {
     }
   ];
 
-  // Add a timeout to prevent infinite loading
-  const [loadingTimeout, setLoadingTimeout] = useState(false);
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoadingTimeout(true);
-    }, 5000); // 5 second timeout
-    return () => clearTimeout(timer);
-  }, []);
 
-  if ((authLoading || loading) && !loadingTimeout) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
-    );
-  }
-
-  // If loading timed out, show error state
-  if (loadingTimeout && (authLoading || loading)) {
-    return (
-      <Layout>
-        <div className="max-w-7xl mx-auto px-4 py-16">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Loading Taking Too Long</h2>
-            <p className="text-gray-600 mb-8">The page is having trouble loading. This might be due to:</p>
-            <ul className="text-left max-w-md mx-auto mb-8 space-y-2">
-              <li>• Database connection issues</li>
-              <li>• Authentication problems</li>
-              <li>• Network connectivity</li>
-            </ul>
-            <div className="space-x-4">
-              <Button onClick={() => window.location.reload()}>
-                Refresh Page
-              </Button>
-              <Button variant="outline" onClick={() => {
-                console.log('Current state:', { authLoading, loading, categoriesError, productsError });
-              }}>
-                Log Debug Info
-              </Button>
-            </div>
-          </div>
-          
-          {/* Show auth fix component */}
-          <QuickAuthFix />
-        </div>
-      </Layout>
     );
   }
 

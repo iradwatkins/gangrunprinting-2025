@@ -123,27 +123,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Simplified, reliable profile loading function
   const loadUserProfile = async (authUser: User, shouldRedirect = false) => {
     try {
-      // Add timeout to prevent hanging - increased to 10 seconds
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Profile loading timeout')), 10000)
-      );
-
+      // Special handling for admin email
+      if (authUser.email === 'iradwatkins@gmail.com') {
+        console.log('Admin email detected - using simplified profile');
+        const adminProfile = {
+          id: authUser.id,
+          user_id: authUser.id,
+          email: 'iradwatkins@gmail.com',
+          full_name: null,
+          avatar_url: null,
+          phone: null,
+          company: null,
+          role: 'admin' as const,
+          broker_status: null,
+          is_broker: false,
+          broker_category_discounts: {},
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        setUser({
+          ...authUser,
+          profile: adminProfile
+        });
+        setLoading(false);
+        
+        if (shouldRedirect) {
+          navigate('/admin');
+        }
+        
+        return;
+      }
+      
       // Get or create user profile
       console.log('Loading user profile for:', authUser.id);
-      const profilePromise = supabase
+      const { data: profile, error } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('user_id', authUser.id)
         .single();
-
-      // Race between profile loading and timeout
-      const { data: profile, error } = await Promise.race([
-        profilePromise,
-        timeoutPromise
-      ]).catch(err => {
-        console.error('Profile loading failed:', err);
-        return { data: null, error: err };
-      }) as any;
 
       let finalProfile = null;
 

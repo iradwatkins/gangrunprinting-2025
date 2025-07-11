@@ -235,14 +235,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   }
 
   // Check if user has admin access after loading is complete
-  const isAdmin = user && profile && profile.role === 'admin';
+  // Special handling for admin email even if profile is null
+  const isAdminEmail = user?.email === 'iradwatkins@gmail.com';
+  const isAdmin = (user && profile && profile.role === 'admin') || isAdminEmail;
 
   // Redirect non-admin users
   if (!isAdmin) {
     console.log('[AdminLayout] Access denied - redirecting to home:', {
       hasUser: !!user,
       hasProfile: !!profile,
-      role: profile?.role
+      role: profile?.role,
+      email: user?.email,
+      isAdminEmail
     });
     return <Navigate to="/" replace />;
   }

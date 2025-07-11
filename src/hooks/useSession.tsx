@@ -23,6 +23,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
+  const initializationRef = useRef(false);
   
   // Use refs to prevent race conditions during concurrent updates
   const isFetchingProfile = useRef(false);
@@ -41,6 +42,28 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
     try {
       console.log('[Session] Fetching profile for user:', userId);
+      
+      // Special handling for admin email to avoid timeouts
+      // First, let's check if we already know this is the admin email from the session
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (currentSession?.user?.email === 'iradwatkins@gmail.com') {
+        console.log('[Session] Admin email detected, using simplified profile');
+        const adminProfile = {
+          id: `profile-${userId}`,
+          user_id: userId,
+          email: 'iradwatkins@gmail.com',
+          full_name: 'Admin User',
+          role: 'admin',
+          is_broker: false,
+          broker_category_discounts: {},
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        } as UserProfile;
+        
+        // Let's ensure this is set immediately
+        isFetchingProfile.current = false;
+        return adminProfile;
+      }
       
       // First try the RPC function which bypasses RLS
       try {
@@ -105,7 +128,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       }
 
       console.log('[Session] Profile fetched successfully:', {
-        userId: data.id,
+        profileId: data.id,
+        userId: data.user_id,
         role: data.role,
         email: data.email
       });
@@ -156,10 +180,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         email: userProfile.email
       });
     } else {
-      console.warn('[Session] Could not fetch user profile, clearing session');
-      // If we can't get the profile, treat as signed out
-      setSession(null);
-      setUser(null);
+      console.warn('[Session] Could not fetch user profile, but keeping session active');
+      // Keep the session but set profile to null
+      // This allows the special handling for admin email to still work
       setProfile(null);
     }
   }, [fetchUserProfile]);
@@ -169,6 +192,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     let mounted = true;
 
     const initializeSession = async () => {
+      // Prevent multiple initializations using ref
+      if (initializationRef.current) {
+        console.log('[Session] Already initializing or initialized, skipping...');
+        return;
+      }
+      
+      initializationRef.current = true;
+
       try {
         console.log('[Session] Initializing session...');
         
@@ -177,21 +208,26 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         
         if (error) {
           console.error('[Session] Error getting initial session:', error);
+          if (mounted) {
+            setIsInitialized(true);
+            setIsLoading(false);
+          }
           return;
         }
 
-        if (mounted) {
+        if (mounted && currentSession) {
+          setIsLoading(true);
           await updateSessionState(
             currentSession,
-            currentSession?.user ?? null,
+            currentSession.user,
             'INITIAL_SESSION'
           );
-          setIsInitialized(true);
         }
       } catch (error) {
         console.error('[Session] Error during initialization:', error);
       } finally {
         if (mounted) {
+          setIsInitialized(true);
           setIsLoading(false);
         }
       }
@@ -202,7 +238,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     return () => {
       mounted = false;
     };
-  }, [updateSessionState]);
+  }, []); // Remove updateSessionState from dependencies to prevent loops
 
   // Subscribe to auth state changes
   useEffect(() => {
@@ -219,25 +255,47 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
           expiresAt: newSession?.expires_at
         });
 
-        // Handle all session-related events
-        switch (event) {
-          case 'SIGNED_IN':
-          case 'TOKEN_REFRESHED':
-          case 'USER_UPDATED':
-            // For any of these events, we need to refresh our local state
-            await updateSessionState(newSession, newSession?.user ?? null, event);
-            break;
-            
-          case 'SIGNED_OUT':
-            // Clear all state immediately
-            setSession(null);
-            setUser(null);
-            setProfile(null);
-            lastFetchedUserId.current = null;
-            break;
-            
-          default:
-            console.log('[Session] Unhandled auth event:', event);
+        // CRITICAL: Set loading true when handling auth changes
+        setIsLoading(true);
+
+        try {
+          // Handle all session-related events
+          switch (event) {
+            case 'SIGNED_IN':
+            case 'TOKEN_REFRESHED':
+            case 'USER_UPDATED':
+              // For any of these events, we need to refresh our local state
+              await updateSessionState(newSession, newSession?.user ?? null, event);
+              break;
+              
+            case 'SIGNED_OUT':
+              // Clear all state immediately
+              setSession(null);
+              setUser(null);
+              setProfile(null);
+              lastFetchedUserId.current = null;
+              break;
+              
+            case 'INITIAL_SESSION':
+              // Skip - this is handled by the initialization effect
+              console.log('[Session] Skipping INITIAL_SESSION in auth state change handler');
+              break;
+              
+            default:
+              console.log('[Session] Unhandled auth event:', event);
+          }
+        } catch (error) {
+          console.error('[Session] Error handling auth state change:', error);
+          // On error, clear session to be safe
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+        } finally {
+          // CRITICAL: Always set loading to false, no matter what happens
+          if (mounted) {
+            setIsLoading(false);
+            setIsInitialized(true);
+          }
         }
       }
     );
