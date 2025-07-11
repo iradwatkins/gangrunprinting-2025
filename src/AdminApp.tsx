@@ -16,7 +16,7 @@ import { TurnaroundTimesPage } from "./pages/admin/TurnaroundTimesPage";
 import { AddOnsPage } from "./pages/admin/AddOnsPage";
 import { QuantitiesPage } from "./pages/admin/QuantitiesPage";
 import { UserManagementPage } from "./pages/admin/UserManagementPage";
-import CheckoutSettingsPage from "./pages/admin/CheckoutSettingsPage";
+import { CheckoutSettingsPage } from "./pages/admin/CheckoutSettingsPage";
 import NotFound from "./pages/NotFound";
 
 const AdminApp = () => (

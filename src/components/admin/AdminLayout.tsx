@@ -170,7 +170,7 @@ const navigation = [
   
   // System
   {
-    name: 'Settings',
+    name: 'Checkout Settings',
     href: '/admin/checkout-settings',
     icon: Settings
   },

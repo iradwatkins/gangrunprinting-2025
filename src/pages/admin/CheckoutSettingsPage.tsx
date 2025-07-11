@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { AdminLayout } from '@/components/admin/AdminLayout';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,7 +20,7 @@ import {
   AlertTriangle,
   Save 
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 import type { CheckoutFlowConfig, PaymentGateway } from '@/types/payments';
 
 interface CheckoutSettings {
@@ -36,7 +38,8 @@ interface CheckoutSettings {
   };
 }
 
-export default function CheckoutSettingsPage() {
+export function CheckoutSettingsPage() {
+  const { toast } = useToast();
   const [settings, setSettings] = useState<CheckoutSettings>({
     flow_config: {
       type: 'multi_step',
@@ -120,10 +123,17 @@ export default function CheckoutSettingsPage() {
       // In a real app, this would make an API call to save settings
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      toast.success('Checkout settings saved successfully');
+      toast({ 
+        title: 'Success',
+        description: 'Checkout settings saved successfully'
+      });
       setHasChanges(false);
     } catch (error) {
-      toast.error('Failed to save settings');
+      toast({ 
+        title: 'Error',
+        description: 'Failed to save settings',
+        variant: 'destructive'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -148,8 +158,9 @@ export default function CheckoutSettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <AdminLayout>
+      <ErrorBoundary>
+        <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -541,6 +552,7 @@ export default function CheckoutSettingsPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
+      </ErrorBoundary>
+    </AdminLayout>
   );
 }
