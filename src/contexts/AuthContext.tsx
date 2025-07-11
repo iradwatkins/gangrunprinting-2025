@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Session } from '@supabase/supabase-js';
@@ -40,7 +39,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Helper function to clean OAuth fragments from URL
 const cleanOAuthFragments = () => {
-  // Remove hash if it contains OAuth tokens or if it's just an empty hash
   if (window.location.hash && (window.location.hash.includes('access_token') || window.location.hash === '#')) {
     const cleanUrl = window.location.href.split('#')[0];
     window.history.replaceState({}, document.title, cleanUrl);
@@ -48,68 +46,94 @@ const cleanOAuthFragments = () => {
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const navigate = useNavigate();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
+  // Clear any stored error on mount
   useEffect(() => {
-    // Initialize authentication
-    const initializeAuth = async () => {
-      try {
-        // Check if we should skip auth
-        if (localStorage.getItem('skipAuth') === 'true') {
-          console.log('Skipping auth as requested');
-          setLoading(false);
-          return;
-        }
+    sessionStorage.removeItem('auth_error');
+  }, []);
 
-        // Get initial session
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          setLoading(false);
-          return;
-        }
+  // Load user profile using RPC function
+  const loadUserProfile = async (authUser: User) => {
+    try {
+      console.log('Loading user profile for:', authUser.id);
+      
+      // Use the get_or_create_profile RPC function
+      const { data: profileData, error } = await supabase
+        .rpc('get_or_create_profile', { user_uuid: authUser.id });
 
-        setSession(session);
+      if (error) {
+        console.error('Error loading profile:', error);
+        toast.error('Failed to load user profile');
+        setUser({ ...authUser, profile: undefined });
+        return null;
+      }
+
+      if (profileData) {
+        const profile = {
+          ...profileData,
+          broker_category_discounts: profileData.broker_category_discounts || {}
+        };
         
-        if (session?.user) {
-          await loadUserProfile(session.user);
-        } else {
-          setLoading(false);
-        }
+        setUser({
+          ...authUser,
+          profile
+        });
         
-        // Always clean OAuth fragments and trailing hashes
-        cleanOAuthFragments();
-      } catch (error) {
-        console.error('Auth initialization error:', error);
+        return profile;
+      }
+
+      // This shouldn't happen with get_or_create_profile
+      console.error('No profile data returned');
+      setUser({ ...authUser, profile: undefined });
+      return null;
+    } catch (err) {
+      console.error('Unexpected error loading profile:', err);
+      toast.error('An unexpected error occurred');
+      setUser({ ...authUser, profile: undefined });
+      return null;
+    }
+  };
+
+  // Initialize auth state
+  useEffect(() => {
+    // Check active session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        loadUserProfile(session.user).finally(() => setLoading(false));
+      } else {
         setLoading(false);
       }
-    };
-
-    initializeAuth();
+    });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (_event, session) => {
         setSession(session);
         
         if (session?.user) {
-          const shouldRedirect = event === 'SIGNED_IN';
-          await loadUserProfile(session.user, shouldRedirect);
+          const profile = await loadUserProfile(session.user);
           
           // Clean URL fragments after OAuth
-          if (event === 'SIGNED_IN') {
+          if (_event === 'SIGNED_IN') {
             cleanOAuthFragments();
             toast.success('Successfully signed in!');
+            
+            // Redirect admins to admin panel on sign in
+            if (profile?.role === 'admin') {
+              navigate('/admin');
+            }
           }
         } else {
           setUser(null);
           setLoading(false);
           
-          if (event === 'SIGNED_OUT') {
+          if (_event === 'SIGNED_OUT') {
             toast.success('Successfully signed out!');
             navigate('/');
           }
@@ -120,176 +144,71 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Simplified, reliable profile loading function
-  const loadUserProfile = async (authUser: User, shouldRedirect = false) => {
+  const signOut = async () => {
     try {
-      // Special handling for admin email
-      if (authUser.email === 'iradwatkins@gmail.com') {
-        console.log('Admin email detected - using simplified profile');
-        const adminProfile = {
-          id: authUser.id,
-          user_id: authUser.id,
-          email: 'iradwatkins@gmail.com',
-          full_name: null,
-          avatar_url: null,
-          phone: null,
-          company: null,
-          role: 'admin' as const,
-          broker_status: null,
-          is_broker: false,
-          broker_category_discounts: {},
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        
-        setUser({
-          ...authUser,
-          profile: adminProfile
-        });
-        setLoading(false);
-        
-        if (shouldRedirect) {
-          navigate('/admin');
-        }
-        
-        return;
-      }
+      setLoading(true);
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
       
-      // Get or create user profile
-      console.log('Loading user profile for:', authUser.id);
-      const { data: profile, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', authUser.id)
-        .single();
-
-      let finalProfile = null;
-
-      if (error && error.code === 'PGRST116') {
-        // Profile doesn't exist, create it with essential fields only
-        const newProfile = {
-          user_id: authUser.id,
-          email: authUser.email || '',
-          full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
-          role: (authUser.email === 'iradwatkins@gmail.com' ? 'admin' : 'customer') as const,
-          is_broker: false,
-          broker_category_discounts: {}
-        };
-
-        const { data: createdProfile, error: createError } = await supabase
-          .from('user_profiles')
-          .insert(newProfile)
-          .select()
-          .single();
-
-        if (createError) {
-          toast.error('Failed to create user profile. Please try again.');
-          setUser({ ...authUser, profile: undefined });
-        } else {
-          finalProfile = {
-            ...createdProfile,
-            broker_category_discounts: createdProfile.broker_category_discounts || {}
-          };
-          setUser({ 
-            ...authUser, 
-            profile: finalProfile
-          });
-          toast.success('Profile created successfully!');
-        }
-      } else if (error) {
-        console.error('Error loading user profile:', error);
-        // If it's an RLS error, still set the user but without profile
-        if (error.message.includes('permission denied') || error.message.includes('policy')) {
-          console.warn('RLS policy issue - setting user without profile');
-          setUser({ ...authUser, profile: undefined });
-        } else {
-          toast.error('Failed to load user profile. Please try refreshing.');
-          setUser({ ...authUser, profile: undefined });
-        }
-      } else {
-        finalProfile = {
-          ...profile,
-          broker_category_discounts: profile.broker_category_discounts || {}
-        };
-        setUser({ 
-          ...authUser, 
-          profile: finalProfile
-        });
-      }
-
-      // Handle redirect after profile is loaded
-      if (shouldRedirect && finalProfile) {
-        if (finalProfile.role === 'admin') {
-          navigate('/admin');
-        } else {
-          navigate('/');
-        }
-      }
-    } catch (error) {
-      toast.error('An unexpected error occurred. Please try again.');
-      setUser({ ...authUser, profile: undefined });
+      setUser(null);
+      setSession(null);
+    } catch (error: any) {
+      console.error('Error signing out:', error);
+      toast.error('Failed to sign out');
     } finally {
       setLoading(false);
     }
   };
 
-
-  const signOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      // Clear any cached state and redirect to home
-      localStorage.removeItem('adminMode');
-      navigate('/');
-    } catch (error) {
-      toast.error('Error signing out');
-    }
-  };
-
-
   const signIn = async (email: string, password: string) => {
     try {
-      setLoading(true);
+      setError(null);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        password
+        password,
       });
 
       if (error) {
+        setError(error.message);
+        toast.error(error.message);
         return { success: false, error: error.message };
       }
 
       return { success: true };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Sign in failed' };
-    } finally {
-      setLoading(false);
+    } catch (error: any) {
+      const message = error.message || 'An error occurred during sign in';
+      setError(message);
+      toast.error(message);
+      return { success: false, error: message };
     }
   };
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     try {
-      setLoading(true);
+      setError(null);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            full_name: fullName
-          }
-        }
+            full_name: fullName,
+          },
+        },
       });
 
       if (error) {
+        setError(error.message);
+        toast.error(error.message);
         return { success: false, error: error.message };
       }
 
-      // Don't create profile here - let it happen on first login
+      toast.success('Account created! Please check your email to verify your account.');
       return { success: true };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Sign up failed' };
-    } finally {
-      setLoading(false);
+    } catch (error: any) {
+      const message = error.message || 'An error occurred during sign up';
+      setError(message);
+      toast.error(message);
+      return { success: false, error: message };
     }
   };
 
@@ -298,8 +217,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: getRedirectUrl()
-        }
+          emailRedirectTo: `${window.location.origin}/auth`,
+        },
       });
 
       if (error) {
@@ -307,8 +226,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       return { error: null };
-    } catch (error) {
-      return { error: 'An unexpected error occurred' };
+    } catch (error: any) {
+      return { error: error.message || 'Failed to send magic link' };
     }
   };
 
@@ -317,8 +236,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: getRedirectUrl()
-        }
+          redirectTo: `${window.location.origin}/auth`,
+        },
       });
 
       if (error) {
@@ -326,32 +245,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       return { error: null };
-    } catch (error) {
-      return { error: 'An unexpected error occurred' };
+    } catch (error: any) {
+      return { error: error.message || 'Failed to sign in with Google' };
     }
   };
 
-// Environment-aware redirect URL utility
-const getRedirectUrl = () => {
-  const hostname = window.location.hostname;
-  
-  // Development environment
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return `${window.location.origin}/`;
-  }
-  
-  // Production environment - always redirect to canonical domain
-  if (hostname === 'gangrunprinting.com' || hostname.includes('vercel.app')) {
-    return 'https://gangrunprinting.com/';
-  }
-  
-  // Fallback to current origin
-  return `${window.location.origin}/`;
-};
+  const clearError = () => {
+    setError(null);
+  };
 
-  const clearError = () => setError(null);
-
-  const value: AuthContextType = {
+  const value = {
     user,
     session,
     isAuthenticated: !!user,
@@ -365,11 +268,7 @@ const getRedirectUrl = () => {
     clearError,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

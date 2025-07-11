@@ -32,11 +32,7 @@ import { AuthPage } from "./pages/AuthPage";
 import { AuthGuard } from "./components/AuthGuard";
 import { AdminLayout } from "./components/AdminLayout";
 
-// Import cleanup utilities to make them available
-// import "./utils/cleanup-auth";
-// import "./utils/clean-url";
-// import "./utils/debug-auth-simple";
-import "./utils/auth-diagnostics";
+// Import utilities to make them available
 import "./utils/checkAdminStatus";
 
 const queryClient = new QueryClient();

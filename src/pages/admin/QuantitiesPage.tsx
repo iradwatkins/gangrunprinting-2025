@@ -9,7 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AdminLayout } from '@/components/admin/AdminLayout';
-import { AuthStatusDebug } from '@/components/admin/AuthStatusDebug';
 import { useToast } from '@/hooks/use-toast';
 import { quantitiesApi } from '@/api/global-options';
 import type { Tables } from '@/integrations/supabase/types';
@@ -243,8 +242,6 @@ export function QuantitiesPage() {
           </Alert>
         )}
 
-        {/* Show authentication status in development */}
-        {process.env.NODE_ENV === 'development' && <AuthStatusDebug />}
 
         {/* Inline Form */}
         {isFormOpen && (
