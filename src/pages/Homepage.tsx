@@ -123,26 +123,9 @@ const HeroCarousel = () => {
 export default function Homepage() {
   const { user, loading } = useAuth();
 
-  // Load real categories from database
-  const { data: categories = [] } = useQuery({
-    queryKey: ['categories', 'active'],
-    queryFn: async () => {
-      const response = await categoriesApi.getCategories({ is_active: true });
-      return response.data || [];
-    }
-  });
-
-  // Load featured products
-  const { data: featuredProducts = [] } = useQuery({
-    queryKey: ['products', 'featured'],
-    queryFn: async () => {
-      const response = await productsApi.getProducts({ 
-        is_active: true, 
-        limit: 6 
-      });
-      return response.data || [];
-    }
-  });
+  // Temporarily disable API calls to test loading
+  const categories = [];
+  const featuredProducts = [];
 
   // Icon mapping for categories
   const getIconForCategory = (categoryName: string) => {
