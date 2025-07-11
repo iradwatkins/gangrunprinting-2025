@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Outlet, useLocation, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Outlet, useLocation, Link, Navigate } from 'react-router-dom';
 import { 
   Package, 
   Tags, 
@@ -28,7 +28,8 @@ import {
   SendHorizontal,
   LayoutTemplate,
   UserCheck,
-  Bot
+  Bot,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -37,6 +38,7 @@ import { Badge } from '@/components/ui/badge';
 import { UserButton } from '@/components/auth/UserButton';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { getShortBuildTime, buildInfo } from '@/utils/buildInfo';
+import { useSession } from '@/hooks/useSession';
 
 const navigation = [
   // Main Dashboard
@@ -189,6 +191,21 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const location = useLocation();
+  
+  // Get session data from the useSession hook
+  const { user, profile, isLoading, isInitialized } = useSession();
+
+  // Log session state for debugging
+  useEffect(() => {
+    console.log('[AdminLayout] Session state:', {
+      isLoading,
+      isInitialized,
+      hasUser: !!user,
+      userId: user?.id,
+      hasProfile: !!profile,
+      role: profile?.role
+    });
+  }, [isLoading, isInitialized, user, profile]);
 
   const isActive = (href: string, exact?: boolean) => {
     if (exact) {
@@ -198,66 +215,148 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   };
 
   const toggleExpanded = (itemName: string) => {
-    setExpandedItems(prev => 
-      prev.includes(itemName) 
+    setExpandedItems(prev =>
+      prev.includes(itemName)
         ? prev.filter(name => name !== itemName)
         : [...prev, itemName]
     );
   };
 
-  const SidebarContent = () => (
-    <div className="flex h-full flex-col">
-      <div className="flex h-16 shrink-0 items-center px-6">
-        <div className="flex-1">
-          <h1 className="text-lg font-semibold">Admin Panel</h1>
-          <div className="flex items-center gap-2 mt-0.5">
-            <p className="text-xs text-muted-foreground">Updated: {getShortBuildTime()}</p>
-            <Badge 
-              variant={buildInfo.deployment.color === 'green' ? 'default' : 'secondary'}
-              className={`text-xs ${
-                buildInfo.deployment.color === 'yellow' ? 'bg-yellow-100 text-yellow-800' :
-                buildInfo.deployment.color === 'blue' ? 'bg-blue-100 text-blue-800' : ''
-              }`}
-            >
-              {buildInfo.deployment.displayName}
-            </Badge>
-          </div>
+  // CRITICAL: Show loading state while session is being initialized
+  if (isLoading || !isInitialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto" />
+          <p className="text-gray-600 dark:text-gray-400">Loading admin panel...</p>
         </div>
       </div>
-      <Separator />
-      <nav className="flex-1 space-y-1 px-3 py-4">
-        {navigation.map((item) => {
-          const Icon = item.icon;
-          const active = isActive(item.href, item.exact);
-          const isExpanded = expandedItems.includes(item.name);
-          const hasChildren = item.children && item.children.length > 0;
-          
-          return (
-            <div key={item.name}>
-              <div className="relative">
+    );
+  }
+
+  // Check if user has admin access after loading is complete
+  const isAdmin = user && profile && profile.role === 'admin';
+
+  // Redirect non-admin users
+  if (!isAdmin) {
+    console.log('[AdminLayout] Access denied - redirecting to home:', {
+      hasUser: !!user,
+      hasProfile: !!profile,
+      role: profile?.role
+    });
+    return <Navigate to="/" replace />;
+  }
+
+  // Render admin layout for authenticated admins
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Mobile sidebar */}
+      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <SheetContent side="left" className="w-64 p-0">
+          <nav className="h-full bg-white dark:bg-gray-800 border-r">
+            <div className="p-4">
+              <h2 className="text-lg font-semibold">Admin Panel</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                {profile?.full_name || profile?.email || 'Admin'}
+              </p>
+            </div>
+            <Separator />
+            <div className="px-2 py-4 space-y-1 overflow-y-auto">
+              {navigation.map((item) => (
+                <div key={item.name}>
+                  <Link
+                    to={item.href}
+                    onClick={() => !item.children && setSidebarOpen(false)}
+                    className={`flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
+                      isActive(item.href, item.exact)
+                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    <item.icon className="mr-3 h-5 w-5" />
+                    {item.name}
+                    {item.children && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          toggleExpanded(item.name);
+                        }}
+                        className="ml-auto"
+                      >
+                        {expandedItems.includes(item.name) ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </button>
+                    )}
+                  </Link>
+                  {item.children && expandedItems.includes(item.name) && (
+                    <div className="ml-8 mt-1 space-y-1">
+                      {item.children.map((child) => (
+                        <Link
+                          key={child.name}
+                          to={child.href}
+                          onClick={() => setSidebarOpen(false)}
+                          className={`flex items-center px-2 py-1.5 text-sm rounded-md transition-colors ${
+                            isActive(child.href)
+                              ? 'text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                          }`}
+                        >
+                          <child.icon className="mr-2 h-4 w-4" />
+                          {child.name}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 p-4 border-t">
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                Build: {getShortBuildTime()}
+                {buildInfo.isDevelopment && (
+                  <Badge variant="secondary" className="ml-2">Dev</Badge>
+                )}
+              </div>
+            </div>
+          </nav>
+        </SheetContent>
+      </Sheet>
+
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
+        <nav className="flex-1 bg-white dark:bg-gray-800 border-r">
+          <div className="p-4">
+            <h2 className="text-lg font-semibold">Admin Panel</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              {profile?.full_name || profile?.email || 'Admin'}
+            </p>
+          </div>
+          <Separator />
+          <div className="px-2 py-4 space-y-1 overflow-y-auto">
+            {navigation.map((item) => (
+              <div key={item.name}>
                 <Link
                   to={item.href}
-                  className={`group flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                    active
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  className={`flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
+                    isActive(item.href, item.exact)
+                      ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
-                  onClick={() => !hasChildren && setSidebarOpen(false)}
                 >
-                  <div className="flex items-center">
-                    <Icon className={`mr-3 h-4 w-4 shrink-0 ${active ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
-                    {item.name}
-                  </div>
-                  {hasChildren && (
+                  <item.icon className="mr-3 h-5 w-5" />
+                  {item.name}
+                  {item.children && (
                     <button
                       onClick={(e) => {
                         e.preventDefault();
-                        e.stopPropagation();
                         toggleExpanded(item.name);
                       }}
-                      className="p-1 rounded hover:bg-muted-foreground/20"
+                      className="ml-auto"
                     >
-                      {isExpanded ? (
+                      {expandedItems.includes(item.name) ? (
                         <ChevronDown className="h-4 w-4" />
                       ) : (
                         <ChevronRight className="h-4 w-4" />
@@ -265,86 +364,64 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     </button>
                   )}
                 </Link>
-              </div>
-              
-              {hasChildren && isExpanded && (
-                <div className="ml-4 mt-1 space-y-1">
-                  {item.children.map((child) => {
-                    const ChildIcon = child.icon;
-                    const childActive = isActive(child.href);
-                    
-                    return (
+                {item.children && expandedItems.includes(item.name) && (
+                  <div className="ml-8 mt-1 space-y-1">
+                    {item.children.map((child) => (
                       <Link
                         key={child.name}
                         to={child.href}
-                        className={`group flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                          childActive
-                            ? 'bg-primary/90 text-primary-foreground'
-                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                        className={`flex items-center px-2 py-1.5 text-sm rounded-md transition-colors ${
+                          isActive(child.href)
+                            ? 'text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                         }`}
-                        onClick={() => setSidebarOpen(false)}
                       >
-                        <ChildIcon className={`mr-3 h-3 w-3 shrink-0 ${childActive ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
+                        <child.icon className="mr-2 h-4 w-4" />
                         {child.name}
                       </Link>
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="p-4 border-t">
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              Build: {getShortBuildTime()}
+              {buildInfo.isDevelopment && (
+                <Badge variant="secondary" className="ml-2">Dev</Badge>
               )}
             </div>
-          );
-        })}
-      </nav>
-    </div>
-  );
+          </div>
+        </nav>
+      </aside>
 
-  return (
-    <div className="flex h-screen bg-background">
-      {/* Desktop Sidebar */}
-      <div className="hidden w-64 flex-col border-r bg-sidebar lg:flex">
-        <SidebarContent />
-      </div>
-
-      {/* Mobile Sidebar */}
-      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetTrigger asChild>
-          <Button variant="outline" size="icon" className="lg:hidden fixed top-4 left-4 z-40">
-            <Menu className="h-4 w-4" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-64 p-0">
-          <SidebarContent />
-        </SheetContent>
-      </Sheet>
-
-      {/* Main Content */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="border-b bg-card px-6 py-4 lg:px-6 pl-16 lg:pl-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <h2 className="text-2xl font-bold tracking-tight text-foreground">Business Management</h2>
-              <Badge variant="secondary" className="text-xs">
-                Admin Panel
-              </Badge>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Button variant="outline" size="sm" asChild>
-                <a href="/" target="_blank" rel="noopener noreferrer">
-                  View Store
-                </a>
-              </Button>
-              <Button size="sm" asChild>
-                <a href="/admin/products/new">
-                  Add Product
-                </a>
-              </Button>
-              <ThemeToggle />
-              <UserButton />
+      {/* Main content */}
+      <div className="md:pl-64">
+        {/* Header */}
+        <header className="bg-white dark:bg-gray-800 shadow-sm">
+          <div className="px-4 sm:px-6 md:px-8">
+            <div className="flex items-center justify-between h-16">
+              <div className="flex items-center">
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="md:hidden">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <h1 className="ml-2 text-xl font-semibold text-gray-900 dark:text-gray-100">
+                  {navigation.find(item => isActive(item.href, item.exact))?.name || 'Admin'}
+                </h1>
+              </div>
+              <div className="flex items-center space-x-4">
+                <ThemeToggle />
+                <UserButton />
+              </div>
             </div>
           </div>
         </header>
-        
-        <main className="flex-1 overflow-auto p-6">
+
+        {/* Page content */}
+        <main className="py-6 px-4 sm:px-6 md:px-8">
           {children || <Outlet />}
         </main>
       </div>
