@@ -17,6 +17,7 @@ import { AddOnsPage } from "./pages/admin/AddOnsPage";
 import { QuantitiesPage } from "./pages/admin/QuantitiesPage";
 import { UserManagementPage } from "./pages/admin/UserManagementPage";
 import { CheckoutSettingsPage } from "./pages/admin/CheckoutSettingsPage";
+import { DebugAuth } from "./pages/admin/DebugAuth";
 import NotFound from "./pages/NotFound";
 
 const AdminApp = () => (
@@ -39,6 +40,7 @@ const AdminApp = () => (
     <Route path="/users" element={<UserManagementPage />} />
     <Route path="/categories" element={<CategoriesPage />} />
     <Route path="/vendors" element={<VendorsPage />} />
+    <Route path="/debug-auth" element={<DebugAuth />} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
