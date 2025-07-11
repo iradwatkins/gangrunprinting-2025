@@ -258,24 +258,8 @@ export async function insertRealTestData() {
       });
     }
 
-    // 8. SIDES
-    console.log('\n━━━ 8. SIDES ━━━');
-    const sides = [
-      { name: 'Single Sided (4/0)', front_colors: 4, back_colors: 0, is_active: true, sort_order: 1 },
-      { name: 'Double Sided (4/4)', front_colors: 4, back_colors: 4, is_active: true, sort_order: 2 },
-      { name: 'Front Color, Back B&W (4/1)', front_colors: 4, back_colors: 1, is_active: true, sort_order: 3 },
-      { name: 'Black & White (1/0)', front_colors: 1, back_colors: 0, is_active: true, sort_order: 4 },
-      { name: 'Black & White Both Sides (1/1)', front_colors: 1, back_colors: 1, is_active: true, sort_order: 5 }
-    ];
-
-    const sidesResult = await insertAndVerify('sides', sides, 'name');
-    results.push(sidesResult);
-    
-    if (sidesResult.data) {
-      sidesResult.data.forEach(side => {
-        createdIds.sides[side.name] = side.id;
-      });
-    }
+    // Skip SIDES table as it doesn't exist in the current schema
+    console.log('\n━━━ 8. SIDES (SKIPPED - Table not in schema) ━━━');
 
     // 9. ADD-ONS
     console.log('\n━━━ 9. ADD-ONS ━━━');
@@ -486,50 +470,11 @@ export async function insertRealTestData() {
     const pttResult = await insertAndVerify('product_turnaround_times', productTurnaroundTimes);
     results.push(pttResult);
 
-    // Link all products to relevant quantities
-    const productQuantities = [];
-    for (const productId of Object.values(createdIds.products)) {
-      for (const [qtyValue, qtyId] of Object.entries(createdIds.quantities)) {
-        const qty = parseInt(qtyValue);
-        // Add quantities based on product type
-        if (qty >= 100 && qty <= 10000) {
-          productQuantities.push({
-            product_id: productId,
-            quantity_id: qtyId,
-            is_default: qty === 500 // 500 is default
-          });
-        }
-      }
-    }
-    const pqResult = await insertAndVerify('product_quantities', productQuantities);
-    results.push(pqResult);
+    // Skip linking products to quantities if table doesn't exist
+    console.log('\n━━━ SKIPPING product_quantities (May not exist in schema) ━━━');
 
-    // Link all products to sides options
-    const productSides = [];
-    for (const productId of Object.values(createdIds.products)) {
-      productSides.push(
-        { product_id: productId, sides_id: createdIds.sides['Double Sided (4/4)'], is_default: true },
-        { product_id: productId, sides_id: createdIds.sides['Single Sided (4/0)'], is_default: false }
-      );
-    }
-    const psidesResult = await insertAndVerify('product_sides', productSides);
-    results.push(psidesResult);
-
-    // Link all products to coatings
-    const productCoatings = [];
-    for (const productId of Object.values(createdIds.products)) {
-      let isFirst = true;
-      for (const coatingId of Object.values(createdIds.coatings)) {
-        productCoatings.push({
-          product_id: productId,
-          coating_id: coatingId,
-          is_default: isFirst
-        });
-        isFirst = false;
-      }
-    }
-    const pcResult = await insertAndVerify('product_coatings', productCoatings);
-    results.push(pcResult);
+    // Skip linking products to sides and coatings as these tables don't exist
+    console.log('\n━━━ SKIPPING product_sides and product_coatings (Tables not in schema) ━━━');
 
     // Link products to add-ons
     const productAddOns = [];

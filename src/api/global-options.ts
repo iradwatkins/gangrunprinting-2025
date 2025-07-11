@@ -546,10 +546,18 @@ export const quantitiesApi = {
       const { data, error } = await supabase
         .from('quantities')
         .select('*')
-        .order('name');
+        .order('quantity');
 
       if (error) {
         console.error('❌ Database error:', error);
+        // Check for specific RLS error
+        if (error.message.includes('infinite recursion') || error.message.includes('policy')) {
+          console.error('RLS Policy Error - Please run fix_user_profiles_rls.sql in Supabase SQL editor');
+          return { 
+            error: 'Database permission error. Please contact administrator to fix RLS policies.',
+            data: [] 
+          };
+        }
         return { error: error.message };
       }
 
