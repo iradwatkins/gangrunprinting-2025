@@ -52,6 +52,7 @@ const App = () => (
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/auth" element={<AuthPage />} />
+                      <Route path="/admin/login" element={<AdminLoginPage />} />
                       <Route path="/products" element={<ProductCatalog />} />
                       <Route
                         path="/products/:slug"
