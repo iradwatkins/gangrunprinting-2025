@@ -45,77 +45,160 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  // Load user profile
+  // Load user profile with timeout and better error handling
   const loadUserProfile = async (authUser: User) => {
+    const timeoutMs = 10000; // 10 second timeout
+    
     try {
-      const { data: profile, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', authUser.id)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error loading profile:', error);
-        return null;
-      }
-
-      // Check if super admin
-      const isSuperAdmin = await authLib.isSuperAdmin(authUser.email);
+      // Add timeout wrapper to prevent infinite loading
+      const timeoutPromise = new Promise<null>((_, reject) => {
+        setTimeout(() => reject(new Error('Profile loading timeout')), timeoutMs);
+      });
       
-      if (profile) {
-        const userWithProfile: AuthUser = {
+      const profilePromise = async () => {
+        const { data: profile, error } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('user_id', authUser.id)
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error loading profile:', error);
+          // Still create a basic user object to prevent loading hang
+          const basicUser: AuthUser = {
+            ...authUser,
+            profile: {
+              role: 'customer',
+              email: authUser.email || '',
+              first_name: authUser.user_metadata?.first_name || '',
+              last_name: authUser.user_metadata?.last_name || ''
+            }
+          };
+          setUser(basicUser);
+          return null;
+        }
+
+        // Check if super admin with fallback - Fast path for known admin
+        let isSuperAdmin = false;
+        if (authUser.email === 'iradwatkins@gmail.com') {
+          isSuperAdmin = true;
+        } else {
+          try {
+            isSuperAdmin = await authLib.isSuperAdmin(authUser.email);
+          } catch (err) {
+            console.warn('Super admin check failed, defaulting to false:', err);
+            isSuperAdmin = false;
+          }
+        }
+        
+        if (profile) {
+          const userWithProfile: AuthUser = {
+            ...authUser,
+            profile: {
+              ...profile,
+              role: isSuperAdmin ? 'super_admin' : (profile.role || 'customer')
+            }
+          };
+          setUser(userWithProfile);
+          return profile;
+        }
+
+        // Create profile if it doesn't exist
+        const { data: newProfile, error: createError } = await supabase
+          .from('user_profiles')
+          .insert({
+            user_id: authUser.id,
+            email: authUser.email,
+            first_name: authUser.user_metadata?.first_name || '',
+            last_name: authUser.user_metadata?.last_name || '',
+            role: 'customer'
+          })
+          .select()
+          .single();
+
+        if (!createError && newProfile) {
+          const userWithProfile: AuthUser = {
+            ...authUser,
+            profile: {
+              ...newProfile,
+              role: isSuperAdmin ? 'super_admin' : 'customer'
+            }
+          };
+          setUser(userWithProfile);
+          return newProfile;
+        }
+
+        // Fallback: Create basic user object to prevent loading hang
+        const fallbackUser: AuthUser = {
           ...authUser,
           profile: {
-            ...profile,
-            role: isSuperAdmin ? 'super_admin' : (profile.role || 'customer')
+            role: 'customer',
+            email: authUser.email || '',
+            first_name: authUser.user_metadata?.first_name || '',
+            last_name: authUser.user_metadata?.last_name || ''
           }
         };
-        setUser(userWithProfile);
-        return profile;
-      }
+        setUser(fallbackUser);
+        return null;
+      };
 
-      // Create profile if it doesn't exist
-      const { data: newProfile, error: createError } = await supabase
-        .from('user_profiles')
-        .insert({
-          user_id: authUser.id,
-          email: authUser.email,
-          first_name: authUser.user_metadata?.first_name || '',
-          last_name: authUser.user_metadata?.last_name || '',
-          role: 'customer'
-        })
-        .select()
-        .single();
-
-      if (!createError && newProfile) {
-        const userWithProfile: AuthUser = {
-          ...authUser,
-          profile: {
-            ...newProfile,
-            role: isSuperAdmin ? 'super_admin' : 'customer'
-          }
-        };
-        setUser(userWithProfile);
-        return newProfile;
-      }
-
-      return null;
+      return await Promise.race([profilePromise(), timeoutPromise]);
     } catch (err) {
-      console.error('Unexpected error loading profile:', err);
+      console.error('Profile loading error (creating fallback user):', err);
+      
+      // Always create a fallback user to prevent infinite loading
+      const fallbackUser: AuthUser = {
+        ...authUser,
+        profile: {
+          role: 'customer',
+          email: authUser.email || '',
+          first_name: authUser.user_metadata?.first_name || '',
+          last_name: authUser.user_metadata?.last_name || ''
+        }
+      };
+      setUser(fallbackUser);
       return null;
     }
   };
 
   // Initialize auth state
   useEffect(() => {
+    // Add a fallback timeout to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      console.warn('Auth loading timeout reached, forcing loading=false');
+      setLoading(false);
+    }, 15000); // 15 second max loading time
+
     // Check active session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
-        loadUserProfile(session.user).finally(() => setLoading(false));
+        loadUserProfile(session.user)
+          .catch((err) => {
+            console.error('Profile load failed in init:', err);
+            // Create fallback user to prevent blocking
+            setUser({
+              ...session.user,
+              profile: {
+                role: 'customer',
+                email: session.user.email || '',
+                first_name: session.user.user_metadata?.first_name || '',
+                last_name: session.user.user_metadata?.last_name || ''
+              }
+            });
+          })
+          .finally(() => {
+            clearTimeout(loadingTimeout);
+            setLoading(false);
+          });
       } else {
+        clearTimeout(loadingTimeout);
         setLoading(false);
       }
+    }).catch((err) => {
+      console.error('Session check failed:', err);
+      clearTimeout(loadingTimeout);
+      setLoading(false);
     });
 
     // Listen for auth changes
@@ -124,17 +207,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session);
         
         if (session?.user) {
-          const profile = await loadUserProfile(session.user);
-          
-          // Clean URL fragments after OAuth
-          if (_event === 'SIGNED_IN') {
-            cleanOAuthFragments();
-            toast.success('Successfully signed in!');
+          try {
+            const profile = await loadUserProfile(session.user);
             
-            // Redirect admins to admin panel on sign in
-            if (profile?.role === 'admin' || profile?.role === 'super_admin') {
-              navigate('/admin');
+            // Clean URL fragments after OAuth
+            if (_event === 'SIGNED_IN') {
+              cleanOAuthFragments();
+              toast.success('Successfully signed in!');
+              
+              // Redirect admins to admin panel on sign in
+              if (profile?.role === 'admin' || profile?.role === 'super_admin') {
+                navigate('/admin');
+              }
             }
+          } catch (err) {
+            console.error('Profile load failed in auth change:', err);
           }
         } else {
           setUser(null);
@@ -148,7 +235,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(loadingTimeout);
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   const signOut = async () => {

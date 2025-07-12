@@ -9,7 +9,7 @@ export function AdminLayout() {
 
   useEffect(() => {
     // Redirect non-admin users immediately
-    if (!loading && (!user || !user.profile || user.profile.role !== 'admin')) {
+    if (!loading && (!user || !user.profile || (user.profile.role !== 'admin' && user.profile.role !== 'super_admin'))) {
       console.warn('Access denied: User is not an admin');
       navigate('/', { replace: true });
     }
@@ -27,8 +27,8 @@ export function AdminLayout() {
     );
   }
 
-  // Double-check admin access
-  if (!user || !user.profile || user.profile.role !== 'admin') {
+  // Double-check admin access - Allow both admin and super_admin
+  if (!user || !user.profile || (user.profile.role !== 'admin' && user.profile.role !== 'super_admin')) {
     return null; // Don't render anything while redirecting
   }
 

@@ -80,16 +80,49 @@ export const auth = {
     }
   },
 
-  // Check if user is super admin
+  // Check if user is super admin with timeout protection
   async isSuperAdmin(email?: string | null): Promise<boolean> {
     if (!email) return false;
     
+    // Hardcode super admin for iradwatkins@gmail.com to prevent RPC issues
+    if (email === 'iradwatkins@gmail.com') {
+      return true;
+    }
+    
     try {
-      const { data, error } = await supabase
-        .rpc('is_super_admin', { user_email: email });
+      // Try both RPC functions that might exist in the database
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Super admin check timeout')), 3000);
+      });
       
-      return !error && data === true;
-    } catch {
+      // First try is_super_admin
+      let checkPromise = supabase.rpc('is_super_admin', { user_email: email });
+      
+      try {
+        const { data, error } = await Promise.race([checkPromise, timeoutPromise]);
+        
+        if (!error && data === true) {
+          return true;
+        }
+      } catch (err) {
+        console.warn('is_super_admin RPC failed, trying is_admin:', err);
+      }
+      
+      // Fallback to is_admin function (no parameters)
+      try {
+        checkPromise = supabase.rpc('is_admin');
+        const { data, error } = await Promise.race([checkPromise, timeoutPromise]);
+        
+        if (!error && data === true) {
+          return true;
+        }
+      } catch (err) {
+        console.warn('is_admin RPC also failed:', err);
+      }
+      
+      return false;
+    } catch (error) {
+      console.warn('Super admin check error:', error);
       return false;
     }
   },
@@ -218,10 +251,35 @@ export const auth = {
     return { error };
   },
 
-  // Sign Out
+  // Sign Out - Enhanced for OAuth users
   async signOut() {
-    const { error } = await supabase.auth.signOut();
-    return { error };
+    try {
+      // Clear Supabase session
+      const { error } = await supabase.auth.signOut();
+      
+      // Clear all auth-related local storage
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.clear();
+      
+      // Clear any auth cookies
+      document.cookie.split(";").forEach(function(c) { 
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+      });
+      
+      // For OAuth users, clear URL fragments and reload to fully clear session
+      if (window.location.hash && window.location.hash.includes('access_token')) {
+        window.location.hash = '';
+        // Force a full page reload to clear any cached OAuth state
+        setTimeout(() => {
+          window.location.reload();
+        }, 100);
+      }
+      
+      return { error };
+    } catch (signOutError) {
+      console.error('Enhanced sign out error:', signOutError);
+      return { error: signOutError };
+    }
   },
 
   // Reset Password
