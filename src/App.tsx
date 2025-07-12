@@ -30,7 +30,7 @@ import { OrdersPage } from "./pages/orders/OrdersPage";
 import InvoicePaymentPage from "./pages/InvoicePaymentPage";
 import { AuthPage } from "./pages/AuthPage";
 import { AuthGuard } from "./components/AuthGuard";
-import { AdminLayout } from "./components/AdminLayout";
+import { AdminLayout } from "./components/admin/AdminLayout";
 
 // Import utilities to make them available
 import "./utils/checkAdminStatus";

@@ -14,7 +14,6 @@ import {
   Activity,
   AlertCircle
 } from 'lucide-react';
-import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateOrderForCustomer } from '@/components/admin/CreateOrderForCustomer';
@@ -193,24 +192,23 @@ export function AdminDashboard() {
   ];
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Business Dashboard</h1>
-            <p className="text-gray-600">Manage your printing business operations</p>
-          </div>
-          <div className="flex items-center space-x-3">
-            <CreateOrderForCustomer />
-            <Button asChild>
-              <Link to="/admin/products/new">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Product
-              </Link>
-            </Button>
-          </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Business Dashboard</h1>
+          <p className="text-gray-600">Manage your printing business operations</p>
         </div>
+        <div className="flex items-center space-x-3">
+          <CreateOrderForCustomer />
+          <Button asChild>
+            <Link to="/admin/products/new">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Product
+            </Link>
+          </Button>
+        </div>
+      </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -356,6 +354,5 @@ export function AdminDashboard() {
         <FixVendorAddresses />
 
       </div>
-    </AdminLayout>
   );
 }
