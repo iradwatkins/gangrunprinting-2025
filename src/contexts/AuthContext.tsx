@@ -45,96 +45,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  // Load user profile with timeout and better error handling
+  // Load user profile - simplified without timeout complexity
   const loadUserProfile = async (authUser: User) => {
-    const timeoutMs = 10000; // 10 second timeout
-    
     try {
-      // Add timeout wrapper to prevent infinite loading
-      const timeoutPromise = new Promise<null>((_, reject) => {
-        setTimeout(() => reject(new Error('Profile loading timeout')), timeoutMs);
-      });
+      // Fast path for super admin to avoid RPC calls
+      const isSuperAdmin = authUser.email === 'iradwatkins@gmail.com';
       
-      const profilePromise = async () => {
-        const { data: profile, error } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('user_id', authUser.id)
-          .single();
+      const { data: profile, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', authUser.id)
+        .single();
 
-        if (error && error.code !== 'PGRST116') {
-          console.error('Error loading profile:', error);
-          // Still create a basic user object to prevent loading hang
-          // Check if this should be super admin
-          const role = authUser.email === 'iradwatkins@gmail.com' ? 'super_admin' : 'customer';
-          console.log(`Creating fallback user for ${authUser.email} with role: ${role}`);
-          const basicUser: AuthUser = {
-            ...authUser,
-            profile: {
-              role: role,
-              email: authUser.email || '',
-              first_name: authUser.user_metadata?.first_name || '',
-              last_name: authUser.user_metadata?.last_name || ''
-            }
-          };
-          setUser(basicUser);
-          return null;
-        }
-
-        // Check if super admin with fallback - Fast path for known admin
-        let isSuperAdmin = false;
-        if (authUser.email === 'iradwatkins@gmail.com') {
-          isSuperAdmin = true;
-        } else {
-          try {
-            isSuperAdmin = await authLib.isSuperAdmin(authUser.email);
-          } catch (err) {
-            console.warn('Super admin check failed, defaulting to false:', err);
-            isSuperAdmin = false;
-          }
-        }
-        
-        if (profile) {
-          const userWithProfile: AuthUser = {
-            ...authUser,
-            profile: {
-              ...profile,
-              role: isSuperAdmin ? 'super_admin' : (profile.role || 'customer')
-            }
-          };
-          setUser(userWithProfile);
-          return profile;
-        }
-
-        // Create profile if it doesn't exist
-        const { data: newProfile, error: createError } = await supabase
-          .from('user_profiles')
-          .insert({
-            user_id: authUser.id,
-            email: authUser.email,
-            first_name: authUser.user_metadata?.first_name || '',
-            last_name: authUser.user_metadata?.last_name || '',
-            role: 'customer'
-          })
-          .select()
-          .single();
-
-        if (!createError && newProfile) {
-          const userWithProfile: AuthUser = {
-            ...authUser,
-            profile: {
-              ...newProfile,
-              role: isSuperAdmin ? 'super_admin' : 'customer'
-            }
-          };
-          setUser(userWithProfile);
-          return newProfile;
-        }
-
-        // Fallback: Create basic user object to prevent loading hang
-        // Check if this should be super admin
-        const role = authUser.email === 'iradwatkins@gmail.com' ? 'super_admin' : 'customer';
-        const fallbackUser: AuthUser = {
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading profile:', error);
+        // Create fallback user
+        const role = isSuperAdmin ? 'super_admin' : 'customer';
+        const basicUser: AuthUser = {
           ...authUser,
           profile: {
             role: role,
@@ -143,18 +70,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             last_name: authUser.user_metadata?.last_name || ''
           }
         };
-        setUser(fallbackUser);
+        setUser(basicUser);
         return null;
-      };
+      }
+        
+      if (profile) {
+        const userWithProfile: AuthUser = {
+          ...authUser,
+          profile: {
+            ...profile,
+            role: isSuperAdmin ? 'super_admin' : (profile.role || 'customer')
+          }
+        };
+        setUser(userWithProfile);
+        return profile;
+      }
 
-      return await Promise.race([profilePromise(), timeoutPromise]);
-    } catch (err) {
-      console.error('Profile loading error (creating fallback user):', err);
-      
-      // Always create a fallback user to prevent infinite loading
-      // Check if this should be super admin
-      const role = authUser.email === 'iradwatkins@gmail.com' ? 'super_admin' : 'customer';
-      console.log(`TIMEOUT FALLBACK: Creating user for ${authUser.email} with role: ${role}`);
+      // Create profile if it doesn't exist
+      const { data: newProfile, error: createError } = await supabase
+        .from('user_profiles')
+        .insert({
+          user_id: authUser.id,
+          email: authUser.email,
+          first_name: authUser.user_metadata?.first_name || '',
+          last_name: authUser.user_metadata?.last_name || '',
+          role: 'customer'
+        })
+        .select()
+        .single();
+
+      if (!createError && newProfile) {
+        const userWithProfile: AuthUser = {
+          ...authUser,
+          profile: {
+            ...newProfile,
+            role: isSuperAdmin ? 'super_admin' : 'customer'
+          }
+        };
+        setUser(userWithProfile);
+        return newProfile;
+      }
+
+      // Final fallback
+      const role = isSuperAdmin ? 'super_admin' : 'customer';
       const fallbackUser: AuthUser = {
         ...authUser,
         profile: {
@@ -165,72 +123,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       };
       setUser(fallbackUser);
-      console.log('TIMEOUT FALLBACK: User set to:', fallbackUser);
+      return null;
+    } catch (err) {
+      console.error('Profile loading error:', err);
+      
+      // Always create a fallback user to prevent infinite loading
+      const role = authUser.email === 'iradwatkins@gmail.com' ? 'super_admin' : 'customer';
+      const fallbackUser: AuthUser = {
+        ...authUser,
+        profile: {
+          role: role,
+          email: authUser.email || '',
+          first_name: authUser.user_metadata?.first_name || '',
+          last_name: authUser.user_metadata?.last_name || ''
+        }
+      };
+      setUser(fallbackUser);
       return null;
     }
   };
 
   // Initialize auth state
   useEffect(() => {
-    // Add a fallback timeout to prevent infinite loading
-    const loadingTimeout = setTimeout(async () => {
-      console.warn('Auth loading timeout reached, forcing loading=false');
-      
-      // If we have a session but no user, create fallback user
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user && !user) {
-          console.log('GLOBAL TIMEOUT: Creating fallback user for session');
-          const role = session.user.email === 'iradwatkins@gmail.com' ? 'super_admin' : 'customer';
-          setUser({
-            ...session.user,
-            profile: {
-              role: role,
-              email: session.user.email || '',
-              first_name: session.user.user_metadata?.first_name || '',
-              last_name: session.user.user_metadata?.last_name || ''
-            }
-          });
-          console.log(`GLOBAL TIMEOUT: Fallback user created with role: ${role}`);
-        }
-      } catch (err) {
-        console.error('Global timeout session check failed:', err);
-      }
-      
-      setLoading(false);
-    }, 15000); // 15 second max loading time
-
     // Check active session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
         loadUserProfile(session.user)
-          .catch((err) => {
-            console.error('Profile load failed in init:', err);
-            // Create fallback user to prevent blocking
-            // Check if this should be super admin
-            const role = session.user.email === 'iradwatkins@gmail.com' ? 'super_admin' : 'customer';
-            setUser({
-              ...session.user,
-              profile: {
-                role: role,
-                email: session.user.email || '',
-                first_name: session.user.user_metadata?.first_name || '',
-                last_name: session.user.user_metadata?.last_name || ''
-              }
-            });
-          })
-          .finally(() => {
-            clearTimeout(loadingTimeout);
-            setLoading(false);
-          });
+          .finally(() => setLoading(false));
       } else {
-        clearTimeout(loadingTimeout);
         setLoading(false);
       }
     }).catch((err) => {
       console.error('Session check failed:', err);
-      clearTimeout(loadingTimeout);
       setLoading(false);
     });
 
@@ -240,21 +165,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session);
         
         if (session?.user) {
-          try {
-            const profile = await loadUserProfile(session.user);
+          await loadUserProfile(session.user);
+          
+          // Clean URL fragments after OAuth
+          if (_event === 'SIGNED_IN') {
+            cleanOAuthFragments();
+            toast.success('Successfully signed in!');
             
-            // Clean URL fragments after OAuth
-            if (_event === 'SIGNED_IN') {
-              cleanOAuthFragments();
-              toast.success('Successfully signed in!');
-              
-              // Redirect admins to admin panel on sign in
-              if (profile?.role === 'admin' || profile?.role === 'super_admin') {
-                navigate('/admin');
-              }
+            // Get user role for redirect
+            const userRole = session.user.email === 'iradwatkins@gmail.com' ? 'super_admin' : 'customer';
+            if (userRole === 'super_admin' || userRole === 'admin') {
+              navigate('/admin');
             }
-          } catch (err) {
-            console.error('Profile load failed in auth change:', err);
           }
         } else {
           setUser(null);
@@ -269,7 +191,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     return () => {
-      clearTimeout(loadingTimeout);
       subscription.unsubscribe();
     };
   }, [navigate]);

@@ -1,5 +1,6 @@
 import React from 'react';
 import { FileManager } from '@/components/files/FileManager';
+import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -43,8 +44,9 @@ export default function FilesPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <Layout>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">File Management</h1>
@@ -107,7 +109,8 @@ export default function FilesPage() {
 
         {/* File Manager */}
         <FileManager allowUpload allowDelete />
+        </div>
       </div>
-    </div>
+    </Layout>
   );
 }

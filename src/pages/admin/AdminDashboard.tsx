@@ -23,7 +23,6 @@ import { AdminLogin } from '@/components/admin/AdminLogin';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { FixVendorAddresses } from '@/components/admin/FixVendorAddresses';
-import { AdminPageWrapper } from '@/components/admin/AdminPageWrapper';
 
 export function AdminDashboard() {
   const { user, loading: authLoading } = useAuth();
@@ -193,8 +192,7 @@ export function AdminDashboard() {
   ];
 
   return (
-    <AdminPageWrapper>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -356,6 +354,5 @@ export function AdminDashboard() {
         <FixVendorAddresses />
 
       </div>
-    </AdminPageWrapper>
   );
 }

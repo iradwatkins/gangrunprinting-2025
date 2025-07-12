@@ -9,7 +9,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
 import { paperStocksApi } from '@/api/global-options';
 import type { Tables } from '@/integrations/supabase/types';
@@ -153,18 +152,15 @@ export function PaperStocksPage() {
 
   if (error) {
     return (
-      <AdminLayout>
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>Failed to load paper stocks: {error instanceof Error ? error.message : 'Unknown error'}</AlertDescription>
-        </Alert>
-      </AdminLayout>
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>Failed to load paper stocks: {error instanceof Error ? error.message : 'Unknown error'}</AlertDescription>
+      </Alert>
     );
   }
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Paper Stock Management</h1>
@@ -391,7 +387,6 @@ export function PaperStocksPage() {
         <div className="text-sm text-gray-500">
           Total: {filteredPaperStocks.length} paper stock{filteredPaperStocks.length !== 1 ? 's' : ''}
         </div>
-      </div>
-    </AdminLayout>
+    </div>
   );
 }

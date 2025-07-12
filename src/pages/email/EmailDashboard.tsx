@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Layout } from '@/components/layout/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -73,7 +74,8 @@ const EmailDashboard: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <Layout>
+      <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Email Marketing</h1>
         <p className="text-gray-600">Manage your email campaigns, templates, and automation</p>
@@ -285,7 +287,8 @@ const EmailDashboard: React.FC = () => {
           <EmailAnalytics />
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </Layout>
   );
 };
 

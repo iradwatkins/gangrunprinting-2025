@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -121,15 +122,18 @@ export function BrokerApplication() {
 
   if (checkingApplication) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <Layout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </Layout>
     );
   }
 
   if (existingApplication) {
     return (
-      <div className="max-w-4xl mx-auto space-y-6">
+      <Layout>
+        <div className="max-w-4xl mx-auto space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Broker Application Status</CardTitle>
@@ -156,12 +160,14 @@ export function BrokerApplication() {
             </Alert>
           </CardContent>
         </Card>
-      </div>
+        </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <Layout>
+      <div className="max-w-4xl mx-auto space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Apply for Broker Discount</CardTitle>
@@ -375,6 +381,7 @@ export function BrokerApplication() {
           </form>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </Layout>
   );
 }

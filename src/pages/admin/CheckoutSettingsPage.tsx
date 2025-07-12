@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { AdminLayout } from '@/components/admin/AdminLayout';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -158,9 +157,8 @@ export function CheckoutSettingsPage() {
   };
 
   return (
-    <AdminLayout>
-      <ErrorBoundary>
-        <div className="space-y-6">
+    <ErrorBoundary>
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -551,8 +549,7 @@ export function CheckoutSettingsPage() {
             </div>
           </TabsContent>
         </Tabs>
-      </div>
-      </ErrorBoundary>
-    </AdminLayout>
+    </div>
+    </ErrorBoundary>
   );
 }

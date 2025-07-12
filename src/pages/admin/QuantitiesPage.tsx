@@ -8,7 +8,6 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
 import { quantitiesApi } from '@/api/global-options';
 import type { Tables } from '@/integrations/supabase/types';
@@ -188,20 +187,17 @@ export function QuantitiesPage() {
 
   if (error) {
     return (
-      <AdminLayout>
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Failed to load quantity groups: {error instanceof Error ? error.message : 'Unknown error'}
-          </AlertDescription>
-        </Alert>
-      </AdminLayout>
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Failed to load quantity groups: {error instanceof Error ? error.message : 'Unknown error'}
+        </AlertDescription>
+      </Alert>
     );
   }
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Quantity Groups</h1>
@@ -417,7 +413,6 @@ export function QuantitiesPage() {
             Total: {filteredGroups.length} quantity group{filteredGroups.length !== 1 ? 's' : ''}
           </div>
         )}
-      </div>
-    </AdminLayout>
+    </div>
   );
 }

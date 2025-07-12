@@ -1,24 +1,21 @@
 import React from 'react';
-import { AdminLayout } from '@/components/admin/AdminLayout';
 import { AdminOrdersList } from '@/components/admin/AdminOrdersList';
 import { CreateOrderForCustomer } from '@/components/admin/CreateOrderForCustomer';
 
 export function AdminOrdersPage() {
   return (
-    <AdminLayout>
-      <div className="space-y-6">
-        {/* Admin Actions */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold">Order Management</h1>
-            <p className="text-gray-600">Manage all orders and create new orders for customers</p>
-          </div>
-          <CreateOrderForCustomer />
+    <div className="space-y-6">
+      {/* Admin Actions */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold">Order Management</h1>
+          <p className="text-gray-600">Manage all orders and create new orders for customers</p>
         </div>
-        
-        {/* Orders List */}
-        <AdminOrdersList />
+        <CreateOrderForCustomer />
       </div>
-    </AdminLayout>
+      
+      {/* Orders List */}
+      <AdminOrdersList />
+    </div>
   );
 }

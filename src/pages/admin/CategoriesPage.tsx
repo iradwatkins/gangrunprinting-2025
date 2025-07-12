@@ -8,7 +8,6 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
 import { categoriesApi } from '@/api/categories';
 import type { Tables } from '@/integrations/supabase/types';
@@ -173,7 +172,7 @@ export function CategoriesPage() {
 
   if (error) {
     return (
-      <AdminLayout>
+      <>
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>Failed to load categories: {(error as Error).message}</AlertDescription>
@@ -182,13 +181,12 @@ export function CategoriesPage() {
           <h3 className="font-bold">Debug Info:</h3>
           <pre className="text-xs">{JSON.stringify({ error: error?.message }, null, 2)}</pre>
         </div>
-      </AdminLayout>
+      </>
     );
   }
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Categories</h1>
@@ -407,7 +405,6 @@ export function CategoriesPage() {
         <div className="text-sm text-gray-500">
           Total: {filteredCategories.length} categor{filteredCategories.length !== 1 ? 'ies' : 'y'}
         </div>
-      </div>
-    </AdminLayout>
+    </div>
   );
 }

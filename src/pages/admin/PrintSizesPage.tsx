@@ -8,7 +8,6 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
 import { printSizesApi } from '@/api/global-options';
 import type { Tables } from '@/integrations/supabase/types';
@@ -144,18 +143,15 @@ export function PrintSizesPage() {
 
   if (error) {
     return (
-      <AdminLayout>
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>Failed to load print sizes: {(error as Error).message}</AlertDescription>
-        </Alert>
-      </AdminLayout>
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>Failed to load print sizes: {(error as Error).message}</AlertDescription>
+      </Alert>
     );
   }
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Print Sizes</h1>
@@ -398,7 +394,6 @@ export function PrintSizesPage() {
         <div className="text-sm text-gray-500">
           Total: {filteredSizes.length} size{filteredSizes.length !== 1 ? 's' : ''}
         </div>
-      </div>
-    </AdminLayout>
+    </div>
   );
 }

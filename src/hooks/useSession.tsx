@@ -25,18 +25,60 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
   const initializationRef = useRef(false);
 
-  // Fetch user profile using RPC function
+  // Fetch user profile using direct database queries
   const fetchUserProfile = useCallback(async (userId: string): Promise<UserProfile | null> => {
     try {
-      const { data: profileData, error } = await supabase
-        .rpc('get_or_create_profile');
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (error) {
-        console.error('[Session] Profile fetch error:', error);
+      if (!user) {
         return null;
       }
+
+      // Check if super admin by email
+      const isSuperAdmin = user.email === 'iradwatkins@gmail.com';
       
-      return profileData as UserProfile;
+      // Try to get existing profile
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      
+      if (existingProfile) {
+        return {
+          ...existingProfile,
+          role: isSuperAdmin ? 'super_admin' : (existingProfile.role || 'customer')
+        } as UserProfile;
+      }
+
+      // Create profile if it doesn't exist
+      if (fetchError?.code === 'PGRST116') {
+        const { data: newProfile, error: createError } = await supabase
+          .from('user_profiles')
+          .insert({
+            user_id: userId,
+            email: user.email,
+            first_name: user.user_metadata?.first_name || '',
+            last_name: user.user_metadata?.last_name || '',
+            role: isSuperAdmin ? 'super_admin' : 'customer'
+          })
+          .select()
+          .single();
+
+        if (!createError && newProfile) {
+          return newProfile as UserProfile;
+        }
+      }
+
+      // Fallback: create basic profile object
+      return {
+        user_id: userId,
+        email: user.email || '',
+        first_name: user.user_metadata?.first_name || '',
+        last_name: user.user_metadata?.last_name || '',
+        role: isSuperAdmin ? 'super_admin' : 'customer'
+      } as UserProfile;
+      
     } catch (error) {
       console.error('[Session] Unexpected error fetching profile:', error);
       return null;

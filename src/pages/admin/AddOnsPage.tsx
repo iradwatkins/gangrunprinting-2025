@@ -11,7 +11,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
 import { addOnsApi } from '@/api/global-options';
 import type { Tables } from '@/integrations/supabase/types';
@@ -307,18 +306,15 @@ export function AddOnsPage() {
 
   if (error) {
     return (
-      <AdminLayout>
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>Failed to load add-ons: {(error as Error).message}</AlertDescription>
-        </Alert>
-      </AdminLayout>
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>Failed to load add-ons: {(error as Error).message}</AlertDescription>
+      </Alert>
     );
   }
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Add-on Services</h1>
@@ -566,7 +562,6 @@ export function AddOnsPage() {
         <div className="text-sm text-gray-500">
           Total: {filteredAddOns.length} service{filteredAddOns.length !== 1 ? 's' : ''}
         </div>
-      </div>
-    </AdminLayout>
+    </div>
   );
 }
