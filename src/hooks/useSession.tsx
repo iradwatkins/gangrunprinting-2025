@@ -29,7 +29,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const fetchUserProfile = useCallback(async (userId: string): Promise<UserProfile | null> => {
     try {
       const { data: profileData, error } = await supabase
-        .rpc('get_user_profile');
+        .rpc('get_or_create_profile');
       
       if (error) {
         console.error('[Session] Profile fetch error:', error);

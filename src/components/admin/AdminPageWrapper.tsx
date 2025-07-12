@@ -214,6 +214,11 @@ export function AdminPageWrapper({ children }: AdminPageWrapperProps) {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Mobile sidebar */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" className="md:hidden fixed top-4 left-4 z-50">
+            <Menu className="h-5 w-5" />
+          </Button>
+        </SheetTrigger>
         <SheetContent side="left" className="w-64 p-0">
           <nav className="h-full bg-white dark:bg-gray-800 border-r">
             <div className="p-4">
@@ -361,11 +366,6 @@ export function AdminPageWrapper({ children }: AdminPageWrapperProps) {
           <div className="px-4 sm:px-6 md:px-8">
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center">
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="md:hidden">
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </SheetTrigger>
                 <h1 className="ml-2 text-xl font-semibold text-gray-900 dark:text-gray-100">
                   {navigation.find(item => isActive(item.href, item.exact))?.name || 'Admin'}
                 </h1>
