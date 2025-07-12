@@ -154,6 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Always create a fallback user to prevent infinite loading
       // Check if this should be super admin
       const role = authUser.email === 'iradwatkins@gmail.com' ? 'super_admin' : 'customer';
+      console.log(`TIMEOUT FALLBACK: Creating user for ${authUser.email} with role: ${role}`);
       const fallbackUser: AuthUser = {
         ...authUser,
         profile: {
@@ -164,6 +165,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       };
       setUser(fallbackUser);
+      console.log('TIMEOUT FALLBACK: User set to:', fallbackUser);
       return null;
     }
   };
@@ -171,8 +173,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Initialize auth state
   useEffect(() => {
     // Add a fallback timeout to prevent infinite loading
-    const loadingTimeout = setTimeout(() => {
+    const loadingTimeout = setTimeout(async () => {
       console.warn('Auth loading timeout reached, forcing loading=false');
+      
+      // If we have a session but no user, create fallback user
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user && !user) {
+          console.log('GLOBAL TIMEOUT: Creating fallback user for session');
+          const role = session.user.email === 'iradwatkins@gmail.com' ? 'super_admin' : 'customer';
+          setUser({
+            ...session.user,
+            profile: {
+              role: role,
+              email: session.user.email || '',
+              first_name: session.user.user_metadata?.first_name || '',
+              last_name: session.user.user_metadata?.last_name || ''
+            }
+          });
+          console.log(`GLOBAL TIMEOUT: Fallback user created with role: ${role}`);
+        }
+      } catch (err) {
+        console.error('Global timeout session check failed:', err);
+      }
+      
       setLoading(false);
     }, 15000); // 15 second max loading time
 
