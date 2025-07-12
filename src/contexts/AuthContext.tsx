@@ -65,10 +65,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error && error.code !== 'PGRST116') {
           console.error('Error loading profile:', error);
           // Still create a basic user object to prevent loading hang
+          // Check if this should be super admin
+          const role = authUser.email === 'iradwatkins@gmail.com' ? 'super_admin' : 'customer';
+          console.log(`Creating fallback user for ${authUser.email} with role: ${role}`);
           const basicUser: AuthUser = {
             ...authUser,
             profile: {
-              role: 'customer',
+              role: role,
               email: authUser.email || '',
               first_name: authUser.user_metadata?.first_name || '',
               last_name: authUser.user_metadata?.last_name || ''
@@ -129,10 +132,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         // Fallback: Create basic user object to prevent loading hang
+        // Check if this should be super admin
+        const role = authUser.email === 'iradwatkins@gmail.com' ? 'super_admin' : 'customer';
         const fallbackUser: AuthUser = {
           ...authUser,
           profile: {
-            role: 'customer',
+            role: role,
             email: authUser.email || '',
             first_name: authUser.user_metadata?.first_name || '',
             last_name: authUser.user_metadata?.last_name || ''
@@ -147,10 +152,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Profile loading error (creating fallback user):', err);
       
       // Always create a fallback user to prevent infinite loading
+      // Check if this should be super admin
+      const role = authUser.email === 'iradwatkins@gmail.com' ? 'super_admin' : 'customer';
       const fallbackUser: AuthUser = {
         ...authUser,
         profile: {
-          role: 'customer',
+          role: role,
           email: authUser.email || '',
           first_name: authUser.user_metadata?.first_name || '',
           last_name: authUser.user_metadata?.last_name || ''
@@ -177,10 +184,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .catch((err) => {
             console.error('Profile load failed in init:', err);
             // Create fallback user to prevent blocking
+            // Check if this should be super admin
+            const role = session.user.email === 'iradwatkins@gmail.com' ? 'super_admin' : 'customer';
             setUser({
               ...session.user,
               profile: {
-                role: 'customer',
+                role: role,
                 email: session.user.email || '',
                 first_name: session.user.user_metadata?.first_name || '',
                 last_name: session.user.user_metadata?.last_name || ''
