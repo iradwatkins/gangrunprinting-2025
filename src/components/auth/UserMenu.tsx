@@ -9,7 +9,8 @@ import {
   Shield,
   ChevronDown,
   Bell,
-  LayoutDashboard
+  LayoutDashboard,
+  Crown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -29,23 +30,23 @@ interface UserMenuProps {
 }
 
 export function UserMenu({ className }: UserMenuProps) {
-  const { user, signOut } = useAuth();
-  
-  // Check if user has broker privileges
-  const isBroker = user?.profile?.is_broker || false;
-  
-  // Check if user is admin
-  const isAdmin = user?.profile?.role === 'admin';
+  const { user, isAdmin, isSuperAdmin, signOut } = useAuth();
 
   if (!user) {
     return null;
   }
 
   const getInitials = () => {
+    if (user.profile?.first_name && user.profile?.last_name) {
+      return `${user.profile.first_name[0]}${user.profile.last_name[0]}`.toUpperCase();
+    }
     return user.email?.[0]?.toUpperCase() || 'U';
   };
 
   const getDisplayName = () => {
+    if (user.profile?.first_name && user.profile?.last_name) {
+      return `${user.profile.first_name} ${user.profile.last_name}`;
+    }
     return user.email || 'User';
   };
 
@@ -66,10 +67,16 @@ export function UserMenu({ className }: UserMenuProps) {
             <div className="hidden md:block text-left">
               <div className="flex items-center space-x-2">
                 <span className="text-sm font-medium">{getDisplayName()}</span>
-                {isBroker && (
+                {isSuperAdmin && (
+                  <Badge variant="destructive" className="text-xs">
+                    <Crown className="h-3 w-3 mr-1" />
+                    Super Admin
+                  </Badge>
+                )}
+                {isAdmin && !isSuperAdmin && (
                   <Badge variant="secondary" className="text-xs">
                     <Shield className="h-3 w-3 mr-1" />
-                    Broker
+                    Admin
                   </Badge>
                 )}
               </div>
@@ -86,10 +93,16 @@ export function UserMenu({ className }: UserMenuProps) {
             <p className="text-xs leading-none text-muted-foreground">
               {user.email}
             </p>
-            {isBroker && (
+            {isSuperAdmin && (
+              <Badge variant="destructive" className="w-fit text-xs mt-1">
+                <Crown className="h-3 w-3 mr-1" />
+                Super Admin
+              </Badge>
+            )}
+            {isAdmin && !isSuperAdmin && (
               <Badge variant="secondary" className="w-fit text-xs mt-1">
                 <Shield className="h-3 w-3 mr-1" />
-                Broker Account
+                Admin
               </Badge>
             )}
           </div>
@@ -113,7 +126,7 @@ export function UserMenu({ className }: UserMenuProps) {
 
         {isAdmin && (
           <DropdownMenuItem asChild>
-            <Link to="/admin/dashboard" className="flex items-center">
+            <Link to="/admin" className="flex items-center">
               <LayoutDashboard className="mr-2 h-4 w-4" />
               <span>Admin Dashboard</span>
             </Link>
@@ -140,18 +153,6 @@ export function UserMenu({ className }: UserMenuProps) {
             <span>Payment Methods</span>
           </Link>
         </DropdownMenuItem>
-
-        {isBroker && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link to="/broker/dashboard" className="flex items-center">
-                <Shield className="mr-2 h-4 w-4" />
-                <span>Broker Dashboard</span>
-              </Link>
-            </DropdownMenuItem>
-          </>
-        )}
 
         <DropdownMenuSeparator />
 

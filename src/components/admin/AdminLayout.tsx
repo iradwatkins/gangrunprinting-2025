@@ -181,6 +181,11 @@ const navigation = [
     href: '/admin/users',
     icon: Users
   },
+  {
+    name: 'Broker Applications',
+    href: '/admin/broker-applications',
+    icon: UserCheck
+  },
 ];
 
 interface AdminLayoutProps {
@@ -194,18 +199,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   
   // Get session data from the useSession hook
   const { user, profile, isLoading, isInitialized } = useSession();
-
-  // Log session state for debugging
-  useEffect(() => {
-    console.log('[AdminLayout] Session state:', {
-      isLoading,
-      isInitialized,
-      hasUser: !!user,
-      userId: user?.id,
-      hasProfile: !!profile,
-      role: profile?.role
-    });
-  }, [isLoading, isInitialized, user, profile]);
 
   const isActive = (href: string, exact?: boolean) => {
     if (exact) {
@@ -235,19 +228,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   }
 
   // Check if user has admin access after loading is complete
-  // Special handling for admin email even if profile is null
-  const isAdminEmail = user?.email === 'iradwatkins@gmail.com';
-  const isAdmin = (user && profile && profile.role === 'admin') || isAdminEmail;
+  const isAdmin = user && profile && profile.role === 'admin';
 
   // Redirect non-admin users
   if (!isAdmin) {
-    console.log('[AdminLayout] Access denied - redirecting to home:', {
-      hasUser: !!user,
-      hasProfile: !!profile,
-      role: profile?.role,
-      email: user?.email,
-      isAdminEmail
-    });
     return <Navigate to="/" replace />;
   }
 

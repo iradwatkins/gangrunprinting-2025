@@ -7,10 +7,16 @@ interface AuthGuardProps {
   children: React.ReactNode;
   requireAuth?: boolean;
   requireAdmin?: boolean;
+  requireSuperAdmin?: boolean;
 }
 
-export function AuthGuard({ children, requireAuth = false, requireAdmin = false }: AuthGuardProps) {
-  const { user, loading } = useAuth();
+export function AuthGuard({ 
+  children, 
+  requireAuth = false, 
+  requireAdmin = false,
+  requireSuperAdmin = false 
+}: AuthGuardProps) {
+  const { user, isAdmin, isSuperAdmin, loading } = useAuth();
   const location = useLocation();
   const [showTimeout, setShowTimeout] = useState(false);
 
@@ -48,12 +54,14 @@ export function AuthGuard({ children, requireAuth = false, requireAdmin = false 
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // Check admin requirements
-  if (requireAdmin) {
-    // Check if user exists and has admin role
-    if (!user || !user.profile || user.profile.role !== 'admin') {
-      return <Navigate to="/" replace />;
-    }
+  // Check super admin requirements
+  if (requireSuperAdmin && !isSuperAdmin) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Check admin requirements (includes super admin)
+  if (requireAdmin && !isAdmin) {
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

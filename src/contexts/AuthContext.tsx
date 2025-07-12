@@ -3,35 +3,28 @@ import { useNavigate } from 'react-router-dom';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { auth as authLib } from '@/lib/auth';
+import type { UserProfile, UserRole } from '@/types/auth';
 
 export interface AuthUser extends User {
-  profile?: {
-    id: string;
-    email: string;
-    full_name: string | null;
-    avatar_url: string | null;
-    phone: string | null;
-    company: string | null;
-    role: 'customer' | 'admin' | 'broker';
-    broker_status: 'pending' | 'approved' | 'rejected' | null;
-    is_broker: boolean;
-    broker_category_discounts: Record<string, any>;
-    created_at: string;
-    updated_at: string;
-  };
+  profile?: UserProfile;
 }
 
 interface AuthContextType {
   user: AuthUser | null;
   session: Session | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
+  isSuperAdmin: boolean;
   loading: boolean;
   error?: string | null;
   signOut: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  signUp: (email: string, password: string, fullName?: string) => Promise<{ success: boolean; error?: string }>;
+  signUp: (email: string, password: string, metadata?: any) => Promise<{ success: boolean; error?: string }>;
   signInWithMagicLink: (email: string) => Promise<{ error: string | null }>;
   signInWithGoogle: () => Promise<{ error: string | null }>;
+  updateProfile: (data: any) => Promise<{ success: boolean; error?: string }>;
+  toggleAdminStatus: (userId: string) => Promise<boolean>;
   clearError?: () => void;
 }
 
@@ -52,49 +45,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  // Clear any stored error on mount
-  useEffect(() => {
-    sessionStorage.removeItem('auth_error');
-  }, []);
-
-  // Load user profile using RPC function
+  // Load user profile
   const loadUserProfile = async (authUser: User) => {
     try {
-      console.log('Loading user profile for:', authUser.id);
-      
-      // Use the get_or_create_profile RPC function
-      const { data: profileData, error } = await supabase
-        .rpc('get_or_create_profile', { user_uuid: authUser.id });
+      const { data: profile, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', authUser.id)
+        .single();
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') {
         console.error('Error loading profile:', error);
-        toast.error('Failed to load user profile');
-        setUser({ ...authUser, profile: undefined });
         return null;
       }
 
-      if (profileData) {
-        const profile = {
-          ...profileData,
-          broker_category_discounts: profileData.broker_category_discounts || {}
-        };
-        
-        setUser({
+      // Check if super admin
+      const isSuperAdmin = await authLib.isSuperAdmin(authUser.email);
+      
+      if (profile) {
+        const userWithProfile: AuthUser = {
           ...authUser,
-          profile
-        });
-        
+          profile: {
+            ...profile,
+            role: isSuperAdmin ? 'super_admin' : (profile.role || 'customer')
+          }
+        };
+        setUser(userWithProfile);
         return profile;
       }
 
-      // This shouldn't happen with get_or_create_profile
-      console.error('No profile data returned');
-      setUser({ ...authUser, profile: undefined });
+      // Create profile if it doesn't exist
+      const { data: newProfile, error: createError } = await supabase
+        .from('user_profiles')
+        .insert({
+          user_id: authUser.id,
+          email: authUser.email,
+          first_name: authUser.user_metadata?.first_name || '',
+          last_name: authUser.user_metadata?.last_name || '',
+          role: 'customer'
+        })
+        .select()
+        .single();
+
+      if (!createError && newProfile) {
+        const userWithProfile: AuthUser = {
+          ...authUser,
+          profile: {
+            ...newProfile,
+            role: isSuperAdmin ? 'super_admin' : 'customer'
+          }
+        };
+        setUser(userWithProfile);
+        return newProfile;
+      }
+
       return null;
     } catch (err) {
       console.error('Unexpected error loading profile:', err);
-      toast.error('An unexpected error occurred');
-      setUser({ ...authUser, profile: undefined });
       return null;
     }
   };
@@ -125,7 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             toast.success('Successfully signed in!');
             
             // Redirect admins to admin panel on sign in
-            if (profile?.role === 'admin') {
+            if (profile?.role === 'admin' || profile?.role === 'super_admin') {
               navigate('/admin');
             }
           }
@@ -147,7 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signOut();
+      const { error } = await authLib.signOut();
       if (error) throw error;
       
       setUser(null);
@@ -163,10 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       setError(null);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { error } = await authLib.signIn(email, password);
 
       if (error) {
         setError(error.message);
@@ -183,18 +187,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string, fullName?: string) => {
+  const signUp = async (email: string, password: string, metadata?: any) => {
     try {
       setError(null);
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
-        },
-      });
+      const { data, error } = await authLib.signUp(email, password, metadata);
 
       if (error) {
         setError(error.message);
@@ -214,17 +210,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithMagicLink = async (email: string) => {
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth`,
-        },
-      });
+      const { error } = await authLib.signInWithMagicLink(email);
 
       if (error) {
         return { error: error.message };
       }
 
+      toast.success('Magic link sent! Check your email.');
       return { error: null };
     } catch (error: any) {
       return { error: error.message || 'Failed to send magic link' };
@@ -233,12 +225,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth`,
-        },
-      });
+      const { error } = await authLib.signInWithGoogle();
 
       if (error) {
         return { error: error.message };
@@ -250,6 +237,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateProfile = async (data: any) => {
+    try {
+      if (!user) {
+        return { success: false, error: 'No user logged in' };
+      }
+
+      const { error } = await supabase
+        .from('user_profiles')
+        .update(data)
+        .eq('user_id', user.id);
+
+      if (error) {
+        toast.error(error.message);
+        return { success: false, error: error.message };
+      }
+
+      // Reload profile
+      await loadUserProfile(user);
+      toast.success('Profile updated successfully');
+      return { success: true };
+    } catch (error: any) {
+      const message = error.message || 'Failed to update profile';
+      toast.error(message);
+      return { success: false, error: message };
+    }
+  };
+
+  const toggleAdminStatus = async (userId: string) => {
+    try {
+      const isAdmin = await authLib.toggleAdminStatus(userId);
+      toast.success(isAdmin ? 'User granted admin access' : 'Admin access revoked');
+      return isAdmin;
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to toggle admin status');
+      throw error;
+    }
+  };
+
   const clearError = () => {
     setError(null);
   };
@@ -258,6 +283,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     session,
     isAuthenticated: !!user,
+    isAdmin: user?.profile?.role === 'admin' || user?.profile?.role === 'super_admin',
+    isSuperAdmin: user?.profile?.role === 'super_admin',
     loading,
     error,
     signOut,
@@ -265,6 +292,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signInWithMagicLink,
     signInWithGoogle,
+    updateProfile,
+    toggleAdminStatus,
     clearError,
   };
 

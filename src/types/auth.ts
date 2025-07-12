@@ -31,11 +31,15 @@ export interface UserPreferences {
   };
 }
 
+export type UserRole = 'customer' | 'admin' | 'super_admin';
+
 export interface UserProfile {
   id: string;
   user_id: string;
-  is_broker: boolean;
-  broker_category_discounts?: Record<string, any>;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  role: UserRole;
   company_name?: string;
   phone?: string;
   created_at: string;
@@ -67,6 +71,10 @@ export interface LoginRequest {
   rememberMe?: boolean;
 }
 
+export interface MagicLinkRequest {
+  email: string;
+}
+
 export interface ResetPasswordRequest {
   email: string;
 }
@@ -85,50 +93,27 @@ export interface UpdateProfileRequest {
   preferences?: Partial<UserPreferences>;
 }
 
-export interface BrokerApplicationRequest {
-  company_name: string;
-  business_type: string;
-  tax_id: string;
-  annual_volume: string;
-  business_address: Omit<Address, 'id' | 'label' | 'is_default'>;
-  additional_info?: string;
-}
-
-export interface BrokerApplication {
-  id: string;
-  user_id: string;
-  status: 'pending' | 'approved' | 'rejected';
-  company_name: string;
-  business_type: string;
-  tax_id: string;
-  annual_volume: string;
-  business_address: Address;
-  additional_info?: string;
-  reviewed_by?: string;
-  reviewed_at?: string;
-  rejection_reason?: string;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface AuthState {
   user: AuthUser | null;
   profile: UserProfile | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  isBroker: boolean;
+  isAdmin: boolean;
+  isSuperAdmin: boolean;
   hasProfile: boolean;
 }
 
 export interface AuthContextType extends AuthState {
   signIn: (credentials: LoginRequest) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  signInWithMagicLink: (email: string) => Promise<void>;
   signUp: (data: RegisterRequest) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (data: UpdateProfileRequest) => Promise<void>;
   updatePassword: (data: UpdatePasswordRequest) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   refreshProfile: () => Promise<void>;
-  applyForBroker: (data: BrokerApplicationRequest) => Promise<void>;
+  toggleAdminStatus: (userId: string) => Promise<boolean>;
 }
 
 export type AuthActionType = 

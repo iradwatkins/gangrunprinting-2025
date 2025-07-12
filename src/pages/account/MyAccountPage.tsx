@@ -193,7 +193,8 @@ export function MyAccountPage() {
                     { icon: User, label: 'Profile Settings', href: '/my-account/profile' },
                     { icon: Package, label: 'My Orders', href: '/my-account/orders' },
                     { icon: FileText, label: 'Upload Artwork', href: '/my-account/orders?filter=needs-files' },
-                    { icon: MapPin, label: 'Shipping Addresses', href: '/my-account/addresses' }
+                    { icon: MapPin, label: 'Shipping Addresses', href: '/my-account/addresses' },
+                    { icon: Shield, label: 'Apply for Broker Discount', href: '/my-account/broker-application' }
                   ].map((item, index) => {
                     const Icon = item.icon;
                     return (

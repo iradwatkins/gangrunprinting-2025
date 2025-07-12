@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Calculator, TrendingUp, TrendingDown, Info } from 'lucide-react';
@@ -9,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
+import { useBrokerPricing } from '@/hooks/useBrokerPricing';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Product = Tables<'products'> & {
@@ -68,7 +70,7 @@ export function PriceCalculator({ product, configuration }: PriceCalculatorProps
   const [priceBreakdown, setPriceBreakdown] = useState<PriceBreakdown | null>(null);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
-  const isBroker = user?.profile?.is_broker || false;
+  const { hasBrokerDiscount, discountPercentage } = useBrokerPricing();
 
   // Load coating data for price calculation
   const { data: selectedCoating } = useQuery({
@@ -183,14 +185,9 @@ export function PriceCalculator({ product, configuration }: PriceCalculatorProps
       const quantityDiscount = subtotal * (quantityDiscountPercent / 100);
 
       // Apply broker discount (if applicable)
-      let brokerDiscountPercent = 0;
-      if (isBroker && user?.profile?.broker_category_discounts && product.product_categories?.slug) {
-        const categoryKey = product.product_categories.slug.toLowerCase().replace(/-/g, '_');
-        brokerDiscountPercent = user.profile.broker_category_discounts[categoryKey] || 0;
-      }
-      
       const afterQuantityDiscount = subtotal - quantityDiscount;
-      const brokerDiscount = afterQuantityDiscount * (brokerDiscountPercent / 100);
+      const brokerDiscount = hasBrokerDiscount ? 
+        afterQuantityDiscount * (discountPercentage / 100) : 0;
 
       const finalTotal = afterQuantityDiscount - brokerDiscount;
       const perUnitPrice = finalTotal / quantity;
@@ -351,7 +348,7 @@ export function PriceCalculator({ product, configuration }: PriceCalculatorProps
             
             {priceBreakdown.broker_discount > 0 && (
               <div className="flex justify-between text-green-600">
-                <span>Broker discount (20%)</span>
+                <span>Broker discount ({discountPercentage}%)</span>
                 <span>-${priceBreakdown.broker_discount.toFixed(2)}</span>
               </div>
             )}
@@ -407,14 +404,16 @@ export function PriceCalculator({ product, configuration }: PriceCalculatorProps
         </div>
 
         {/* Broker Benefits */}
-        {!isBroker && (
+        {!hasBrokerDiscount && (
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription>
-              <strong>Become a broker</strong> to get 20% discount on all orders.
-              <Button variant="link" className="h-auto p-0 ml-1">
-                Learn more
-              </Button>
+              <strong>Apply for broker discount</strong> to get special pricing on all orders.
+              <Link to="/my-account/broker-application">
+                <Button variant="link" className="h-auto p-0 ml-1">
+                  Apply now
+                </Button>
+              </Link>
             </AlertDescription>
           </Alert>
         )}

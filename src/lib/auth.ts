@@ -1,14 +1,16 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
-export type UserRole = 'admin' | 'customer' | 'broker';
+export type UserRole = 'customer' | 'admin' | 'super_admin';
 
 export interface AuthUser extends User {
   profile?: {
     role: UserRole;
-    is_broker: boolean; // Deprecated - use role instead
-    broker_category_discounts: Record<string, any>;
+    email: string;
+    first_name?: string;
+    last_name?: string;
+    company_name?: string;
+    phone?: string;
   };
 }
 
@@ -52,23 +54,24 @@ export const auth = {
         return null;
       }
 
-      // Get user profile with new role system
+      // Get user profile
       const { data: profile } = await supabase
         .from('user_profiles')
-        .select('role, broker_category_discounts')
+        .select('role, email, first_name, last_name, company_name, phone')
         .eq('user_id', user.id)
         .single();
 
+      // Check if super admin
+      const isSuperAdmin = await this.isSuperAdmin(user.email);
+      
       return {
         ...user,
         profile: profile ? {
-          role: profile.role as UserRole,
-          is_broker: profile.role === 'broker', // Backward compatibility
-          broker_category_discounts: (profile.broker_category_discounts as Record<string, any>) || {}
+          ...profile,
+          role: isSuperAdmin ? 'super_admin' : (profile.role as UserRole)
         } : { 
-          role: 'customer' as UserRole, 
-          is_broker: false, 
-          broker_category_discounts: {} 
+          role: 'customer' as UserRole,
+          email: user.email || ''
         }
       };
     } catch (error) {
@@ -77,7 +80,21 @@ export const auth = {
     }
   },
 
-  // Check if user is admin
+  // Check if user is super admin
+  async isSuperAdmin(email?: string | null): Promise<boolean> {
+    if (!email) return false;
+    
+    try {
+      const { data, error } = await supabase
+        .rpc('is_super_admin', { user_email: email });
+      
+      return !error && data === true;
+    } catch {
+      return false;
+    }
+  },
+
+  // Check if user is admin (includes super admin)
   async isAdmin(user?: AuthUser): Promise<boolean> {
     try {
       const currentUser = user || await this.getCurrentUser();
@@ -86,9 +103,8 @@ export const auth = {
         return false;
       }
 
-      // Use new role system - only iradwatkins@gmail.com or role === 'admin'
-      return currentUser.email === 'iradwatkins@gmail.com' || 
-             currentUser.profile?.role === 'admin';
+      return currentUser.profile?.role === 'admin' || 
+             currentUser.profile?.role === 'super_admin';
     } catch (error) {
       console.error('Failed to check admin status:', error);
       return false;
@@ -112,21 +128,19 @@ export const auth = {
     return user;
   },
 
-  // Check if user is broker
-  async isBroker(user?: AuthUser): Promise<boolean> {
-    try {
-      const currentUser = user || await this.getCurrentUser();
-      
-      if (!currentUser) {
-        return false;
-      }
-
-      // Use new role system
-      return currentUser.profile?.role === 'broker';
-    } catch (error) {
-      console.error('Failed to check broker status:', error);
-      return false;
+  // Require super admin access
+  async requireSuperAdmin(): Promise<AuthUser> {
+    const user = await this.getCurrentUser();
+    
+    if (!user) {
+      throw new AuthError('Authentication required', 'UNAUTHENTICATED');
     }
+
+    if (user.profile?.role !== 'super_admin') {
+      throw new AuthError('Super admin access required', 'UNAUTHORIZED');
+    }
+
+    return user;
   },
 
   // Get user role
@@ -142,6 +156,21 @@ export const auth = {
     } catch (error) {
       console.error('Failed to get user role:', error);
       return 'customer';
+    }
+  },
+
+  // Toggle admin status (super admin only)
+  async toggleAdminStatus(targetUserId: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .rpc('toggle_admin_status', { target_user_id: targetUserId });
+      
+      if (error) throw error;
+      
+      return data as boolean;
+    } catch (error) {
+      console.error('Failed to toggle admin status:', error);
+      throw new AuthError('Failed to toggle admin status', 'OPERATION_FAILED');
     }
   },
 
@@ -168,15 +197,16 @@ export const auth = {
   },
 
   // Email/Password Sign Up
-  async signUp(email: string, password: string) {
-    const { error } = await supabase.auth.signUp({
+  async signUp(email: string, password: string, metadata?: Record<string, any>) {
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: getRedirectUrl()
+        emailRedirectTo: getRedirectUrl(),
+        data: metadata
       }
     });
-    return { error };
+    return { data, error };
   },
 
   // Email/Password Sign In
@@ -191,6 +221,22 @@ export const auth = {
   // Sign Out
   async signOut() {
     const { error } = await supabase.auth.signOut();
+    return { error };
+  },
+
+  // Reset Password
+  async resetPassword(email: string) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${getRedirectUrl()}reset-password`
+    });
+    return { error };
+  },
+
+  // Update Password
+  async updatePassword(newPassword: string) {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
     return { error };
   }
 };
