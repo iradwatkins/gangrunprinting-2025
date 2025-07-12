@@ -1,37 +1,59 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
-import { Layout } from '@/components/layout/Layout';
-import { useAuth } from '@/contexts/AuthContext';
-import { LogIn, UserPlus, Loader2, AlertCircle, Mail, Chrome, Lock } from 'lucide-react';
-import { toast } from 'sonner';
+import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import { Layout } from "@/components/layout/Layout";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  LogIn,
+  UserPlus,
+  Loader2,
+  AlertCircle,
+  Mail,
+  Chrome,
+  Lock,
+} from "lucide-react";
+import { toast } from "sonner";
 
 export function AuthPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signUp, signInWithMagicLink, signInWithGoogle, loading, error, clearError } = useAuth() as any;
-  
+  const {
+    signIn,
+    signUp,
+    signInWithMagicLink,
+    signInWithGoogle,
+    loading,
+    error,
+    clearError,
+  } = useAuth();
+
   // Form states
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [signupEmail, setSignupEmail] = useState('');
-  const [signupPassword, setSignupPassword] = useState('');
-  const [signupFullName, setSignupFullName] = useState('');
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [signupFullName, setSignupFullName] = useState("");
   const [localLoading, setLocalLoading] = useState(false);
 
   // Get redirect path from location state or default to home
-  const from = (location.state as any)?.from?.pathname || '/';
+  const from = (location.state as any)?.from?.pathname || "/";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalLoading(true);
-    
+
     try {
       const result = await signIn(loginEmail, loginPassword);
       if (result.success) {
@@ -45,15 +67,15 @@ export function AuthPage() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalLoading(true);
-    
+
     try {
       const result = await signUp(signupEmail, signupPassword, signupFullName);
       if (result.success) {
         // Clear form
-        setSignupEmail('');
-        setSignupPassword('');
-        setSignupFullName('');
-        toast.info('Please check your email to verify your account.');
+        setSignupEmail("");
+        setSignupPassword("");
+        setSignupFullName("");
+        toast.info("Please check your email to verify your account.");
       }
     } finally {
       setLocalLoading(false);
@@ -62,17 +84,17 @@ export function AuthPage() {
 
   const handleMagicLink = async () => {
     if (!loginEmail) {
-      toast.error('Please enter your email address');
+      toast.error("Please enter your email address");
       return;
     }
-    
+
     setLocalLoading(true);
-    
+
     try {
       const { error } = await signInWithMagicLink(loginEmail);
       if (!error) {
-        toast.success('Check your email for the login link!');
-        setLoginEmail('');
+        toast.success("Check your email for the login link!");
+        setLoginEmail("");
       } else {
         toast.error(error);
       }
@@ -83,7 +105,7 @@ export function AuthPage() {
 
   const handleGoogleLogin = async () => {
     setLocalLoading(true);
-    
+
     try {
       const { error } = await signInWithGoogle();
       if (error) {
@@ -101,13 +123,18 @@ export function AuthPage() {
       <div className="min-h-[80vh] flex items-center justify-center px-4">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Welcome to GangRun Printing</CardTitle>
+            <CardTitle className="text-2xl text-center">
+              Welcome to GangRun Printing
+            </CardTitle>
             <CardDescription className="text-center">
               Sign in to access your account and manage orders
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login" onValueChange={() => clearError && clearError()}>
+            <Tabs
+              defaultValue="login"
+              onValueChange={() => clearError && clearError()}
+            >
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
@@ -137,7 +164,7 @@ export function AuthPage() {
                         type="button"
                         variant="link"
                         className="p-0 h-auto text-xs"
-                        onClick={() => navigate('/password-reset')}
+                        onClick={() => navigate("/password-reset")}
                       >
                         Forgot password?
                       </Button>
@@ -154,7 +181,12 @@ export function AuthPage() {
                     />
                   </div>
 
-                  <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    size="lg"
+                    disabled={isLoading}
+                  >
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -174,7 +206,9 @@ export function AuthPage() {
                     <Separator />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white px-2 text-muted-foreground">Or continue with</span>
+                    <span className="bg-white px-2 text-muted-foreground">
+                      Or continue with
+                    </span>
                   </div>
                 </div>
 
@@ -185,7 +219,11 @@ export function AuthPage() {
                     variant="outline"
                     onClick={handleMagicLink}
                     disabled={isLoading || !loginEmail}
-                    title={!loginEmail ? "Enter your email above first" : "Send magic link to your email"}
+                    title={
+                      !loginEmail
+                        ? "Enter your email above first"
+                        : "Send magic link to your email"
+                    }
                   >
                     {isLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -269,7 +307,12 @@ export function AuthPage() {
                     </p>
                   </div>
 
-                  <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    size="lg"
+                    disabled={isLoading}
+                  >
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -289,7 +332,9 @@ export function AuthPage() {
                     <Separator />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white px-2 text-muted-foreground">Or sign up with</span>
+                    <span className="bg-white px-2 text-muted-foreground">
+                      Or sign up with
+                    </span>
                   </div>
                 </div>
 
@@ -324,7 +369,8 @@ export function AuthPage() {
             </Tabs>
 
             <div className="mt-6 text-center text-sm text-muted-foreground">
-              By continuing, you agree to our Terms of Service and Privacy Policy
+              By continuing, you agree to our Terms of Service and Privacy
+              Policy
             </div>
           </CardContent>
         </Card>
