@@ -235,9 +235,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     profile &&
     (profile.role === "admin" || profile.role === "super_admin");
 
-  // Redirect non-admin users
+  // Redirect non-admin users to admin login
   if (!isAdmin) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
 
   // Render admin layout for authenticated admins
