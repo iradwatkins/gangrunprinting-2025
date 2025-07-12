@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useOrders, useOrderSearch } from '@/hooks/useOrders';
+import { useOrders } from '@/hooks/useOrders';
 import { OrderHistoryItem, OrderFilter } from '@/types/orders';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,17 +15,29 @@ import { useNavigate } from 'react-router-dom';
 
 interface OrderHistoryProps {
   onOrderSelect?: (orderId: string) => void;
+  isAdmin?: boolean;
 }
 
-export const OrderHistory: React.FC<OrderHistoryProps> = ({ onOrderSelect }) => {
+export const OrderHistory: React.FC<OrderHistoryProps> = ({ onOrderSelect, isAdmin = false }) => {
   const navigate = useNavigate();
   const [filter, setFilter] = useState<OrderFilter>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [dateRange, setDateRange] = useState<{ start?: Date; end?: Date }>({});
 
-  const { orders, loading, error, totalCount, currentPage, hasMore, refetch, loadMore, setCurrentPage } = useOrders(filter, 1, 20);
-  const { searchResults, loading: searchLoading, searchOrders, clearSearch } = useOrderSearch();
+  const { data: orderData, isLoading: loading, error, refetch } = useOrders(filter, 1, 20, isAdmin);
+  const orders = orderData?.orders || [];
+  const totalCount = orderData?.totalCount || 0;
+  const currentPage = orderData?.currentPage || 1;
+  const hasMore = orderData?.hasMore || false;
+  
+  // Simplified search - just filter local orders for now
+  const searchResults = orders.filter(order => 
+    searchTerm ? (
+      order.reference_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.id?.toLowerCase().includes(searchTerm.toLowerCase())
+    ) : true
+  );
 
   const displayOrders = useMemo(() => {
     return searchTerm ? searchResults : orders;
@@ -33,17 +45,11 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ onOrderSelect }) => 
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
-    if (value.trim()) {
-      searchOrders(value);
-    } else {
-      clearSearch();
-    }
   };
 
   const handleFilterChange = (newFilter: Partial<OrderFilter>) => {
     const updatedFilter = { ...filter, ...newFilter };
     setFilter(updatedFilter);
-    setCurrentPage(1);
   };
 
   const handleDateRangeChange = (start?: Date, end?: Date) => {
@@ -87,8 +93,8 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ onOrderSelect }) => 
       <Card>
         <CardContent className="p-6">
           <div className="text-center text-red-600">
-            <p>Error loading orders: {error}</p>
-            <Button onClick={refetch} className="mt-4">
+            <p>Error loading orders: {error instanceof Error ? error.message : String(error)}</p>
+            <Button onClick={() => refetch?.()} className="mt-4">
               <RefreshCw className="w-4 h-4 mr-2" />
               Retry
             </Button>
@@ -119,8 +125,8 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ onOrderSelect }) => 
               <Button
                 variant="outline"
                 size="sm"
-                onClick={refetch}
-                disabled={loading}
+                onClick={() => refetch?.()}
+                disabled={loading || !refetch}
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                 Refresh
@@ -276,24 +282,7 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ onOrderSelect }) => 
               </Table>
             </div>
 
-            {hasMore && !searchTerm && (
-              <div className="text-center">
-                <Button
-                  variant="outline"
-                  onClick={loadMore}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      Loading...
-                    </>
-                  ) : (
-                    'Load More'
-                  )}
-                </Button>
-              </div>
-            )}
+            {/* Load More functionality disabled for now */}
 
             {totalCount > 0 && (
               <div className="text-sm text-gray-500 text-center">

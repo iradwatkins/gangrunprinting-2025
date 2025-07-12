@@ -10,13 +10,15 @@ import {
   ReorderValidation 
 } from '@/types/orders';
 
-export function useOrders(filter?: OrderFilter, page = 1, pageSize = 10) {
+export function useOrders(filter?: OrderFilter, page = 1, pageSize = 10, isAdmin = false) {
   const { user } = useAuth();
   
   return useQuery({
-    queryKey: ['orders', user?.id, filter, page, pageSize],
+    queryKey: ['orders', user?.id, filter, page, pageSize, isAdmin],
     queryFn: async () => {
-      const { data, error } = await supabase
+      console.log('Fetching orders - isAdmin:', isAdmin, 'user:', user?.id);
+      
+      let query = supabase
         .from('orders')
         .select(`
           id,
@@ -29,18 +31,48 @@ export function useOrders(filter?: OrderFilter, page = 1, pageSize = 10) {
             email,
             first_name,
             last_name
+          ),
+          order_jobs (
+            id,
+            products (
+              name
+            )
           )
-        `)
-        .eq('user_id', user?.id)
+        `);
+      
+      // Only filter by user_id if not admin
+      if (!isAdmin && user?.id) {
+        query = query.eq('user_id', user.id);
+      }
+      
+      const { data, error } = await query
         .order('created_at', { ascending: false })
         .range((page - 1) * pageSize, page * pageSize - 1);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Orders fetch error:', error);
+        console.error('Error details:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        });
+        throw error;
+      }
+      
+      // Transform data to match OrderHistoryItem interface
+      const transformedOrders = (data || []).map(order => ({
+        ...order,
+        job_count: order.order_jobs?.length || 0,
+        product_names: order.order_jobs?.map((item: any) => item.products?.name || 'Unknown Product') || [],
+        tracking_numbers: [] // Add this if needed from another table
+      }));
+      
       return {
-        orders: data || [],
-        totalCount: data?.length || 0,
+        orders: transformedOrders,
+        totalCount: transformedOrders.length,
         currentPage: page,
-        hasMore: (data?.length || 0) === pageSize
+        hasMore: transformedOrders.length === pageSize
       };
     },
     enabled: !!user,
@@ -63,7 +95,7 @@ export function useOrderDetail(orderId: string) {
             first_name,
             last_name
           ),
-          order_items (
+          order_jobs (
             *,
             products (
               name,
@@ -88,18 +120,56 @@ export function useOrderSummary() {
   const { user } = useAuth();
   
   const { data: summary, isLoading: loading, error } = useQuery({
-    queryKey: ['order-summary'],
+    queryKey: ['order-summary', user?.id],
     queryFn: async () => {
-      // Get basic order statistics
-      const { data: orders, error: ordersError } = await supabase
-        .from('orders')
-        .select('id, total_amount, status, created_at');
+      try {
+        console.log('Fetching order summary for user:', user?.id);
+        
+        // Get basic order statistics - no user filter for admin summary
+        const { data: orders, error: ordersError } = await supabase
+          .from('orders')
+          .select('id, total_amount, status, created_at');
 
-      if (ordersError) {
-        throw new Error(ordersError.message);
-      }
+        if (ordersError) {
+          console.error('Order summary error:', ordersError);
+          console.error('Error details:', {
+            message: ordersError.message,
+            code: ordersError.code,
+            details: ordersError.details,
+            hint: ordersError.hint
+          });
+          // Return empty summary instead of throwing
+          return {
+            total_orders: 0,
+            total_amount: 0,
+            pending_orders: 0,
+            completed_orders: 0,
+            processing_orders: 0
+          } as OrderSummary;
+        }
 
-      if (!orders) {
+        if (!orders) {
+          return {
+            total_orders: 0,
+            total_amount: 0,
+            pending_orders: 0,
+            completed_orders: 0,
+            processing_orders: 0
+          } as OrderSummary;
+        }
+
+        const summary: OrderSummary = {
+          total_orders: orders.length,
+          total_amount: orders.reduce((sum, order) => sum + (order.total_amount || 0), 0),
+          pending_orders: orders.filter(o => o.status === 'pending').length,
+          completed_orders: orders.filter(o => o.status === 'completed').length,
+          processing_orders: orders.filter(o => o.status === 'processing').length
+        };
+
+        return summary;
+      } catch (err) {
+        console.error('Order summary catch:', err);
+        // Return empty summary on any error
         return {
           total_orders: 0,
           total_amount: 0,
@@ -108,16 +178,6 @@ export function useOrderSummary() {
           processing_orders: 0
         } as OrderSummary;
       }
-
-      const summary: OrderSummary = {
-        total_orders: orders.length,
-        total_amount: orders.reduce((sum, order) => sum + (order.total_amount || 0), 0),
-        pending_orders: orders.filter(o => o.status === 'pending').length,
-        completed_orders: orders.filter(o => o.status === 'completed').length,
-        processing_orders: orders.filter(o => o.status === 'processing').length
-      };
-
-      return summary;
     },
     enabled: !!user,
     staleTime: 30 * 1000,
@@ -204,7 +264,7 @@ export function useReorder() {
         .select(`
           id,
           status,
-          order_items (
+          order_jobs (
             id,
             product_id,
             quantity
@@ -216,8 +276,8 @@ export function useReorder() {
       if (error) throw error;
       
       return {
-        canReorder: order && order.order_items && order.order_items.length > 0,
-        issues: order?.order_items?.length === 0 ? ['No items found in order'] : []
+        canReorder: order && order.order_jobs && order.order_jobs.length > 0,
+        issues: order?.order_jobs?.length === 0 ? ['No items found in order'] : []
       };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to validate reorder';
@@ -237,7 +297,7 @@ export function useReorder() {
         .from('orders')
         .select(`
           *,
-          order_items (*)
+          order_jobs (*)
         `)
         .eq('id', orderId)
         .single();
@@ -258,14 +318,14 @@ export function useReorder() {
 
       if (createError) throw createError;
 
-      // Copy order items
+      // Copy order jobs
       const itemsToReorder = selectedJobIds 
-        ? originalOrder.order_items.filter((item: any) => selectedJobIds.includes(item.id))
-        : originalOrder.order_items;
+        ? originalOrder.order_jobs.filter((item: any) => selectedJobIds.includes(item.id))
+        : originalOrder.order_jobs;
 
       if (itemsToReorder.length > 0) {
         const { error: itemsError } = await supabase
-          .from('order_items')
+          .from('order_jobs')
           .insert(itemsToReorder.map((item: any) => ({
             order_id: newOrder.id,
             product_id: item.product_id,

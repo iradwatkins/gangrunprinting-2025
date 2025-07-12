@@ -78,7 +78,7 @@ export const AdminOrdersList: React.FC = () => {
           <CardTitle>Recent Orders</CardTitle>
         </CardHeader>
         <CardContent>
-          <OrderHistory onOrderSelect={handleOrderSelect} />
+          <OrderHistory onOrderSelect={handleOrderSelect} isAdmin={true} />
         </CardContent>
       </Card>
     </div>
