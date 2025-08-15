@@ -1,0 +1,30 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"],
+      "env": {}
+    },
+    "serena": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/oraios/serena",
+        "serena",
+        "start-mcp-server",
+        "--context",
+        "ide-assistant",
+        "--project",
+        "$(pwd)"
+      ],
+      "env": {}
+    },
+    "shadcn-ui": {
+      "command": "npx",
+      "args": ["@jpisnice/shadcn-ui-mcp-server"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "your-github-token-here"
+      }
+    }
+  }
+}

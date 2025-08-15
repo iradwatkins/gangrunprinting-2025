@@ -1,0 +1,70 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"],
+      "env": {}
+    },
+    "serena": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/oraios/serena",
+        "serena",
+        "start-mcp-server",
+        "--context",
+        "ide-assistant",
+        "--project",
+        "$(pwd)"
+      ],
+      "env": {}
+    },
+    "shadcn-ui": {
+      "command": "npx",
+      "args": ["@jpisnice/shadcn-ui-mcp-server"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "your-github-token-here"
+      }
+    },
+    "exa": {
+      "command": "npx",
+      "args": ["@exa/mcp-server"],
+      "env": {
+        "EXA_API_KEY": "your-exa-api-key-here"
+      }
+    },
+    "firecrawl": {
+      "command": "npx",
+      "args": ["@firecrawl/mcp-server"],
+      "env": {
+        "FIRECRAWL_API_KEY": "your-firecrawl-api-key-here"
+      }
+    },
+    "ref-tools": {
+      "command": "npx",
+      "args": ["@reftools/mcp-server"],
+      "env": {}
+    },
+    "pieces": {
+      "command": "npx",
+      "args": ["@pieces/mcp-server"],
+      "env": {
+        "PIECES_API_KEY": "your-pieces-api-key-here"
+      }
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["@context7/mcp-server"],
+      "env": {
+        "CONTEXT7_API_KEY": "your-context7-api-key-if-required"
+      }
+    },
+    "semgrep": {
+      "command": "npx",
+      "args": ["@semgrep/mcp-server"],
+      "env": {
+        "SEMGREP_APP_TOKEN": "optional-for-cloud-features"
+      }
+    }
+  }
+}

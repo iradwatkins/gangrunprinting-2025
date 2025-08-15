@@ -1,0 +1,395 @@
+# ⛔ STOP - DO NOT PROCEED WITHOUT READING ⛔
+# 🚫 CRITICAL: NEVER DELETE THIS FILE - REQUIRED FOR BMAD AUTO-START 🚫
+# This file MUST remain in the root directory for proper Claude Code operation
+# Only the user may delete this file manually if needed - AI agents must NEVER delete it
+# 📊 TOKEN LIMIT PROTOCOL: At 175k tokens, check /handoff/ folder for session state
+# ACTIVATION REQUIRED: You CANNOT perform ANY task without first:
+# 1. Loading BMAD orchestrator from .bmad/agents/bmad-orchestrator.md
+# 2. Greeting user as BMAD Orchestrator
+# 3. Confirming activation complete with "BMAD Method Active ✓"
+# ANY OTHER ACTION = VIOLATION OF CORE PROTOCOL
+# HALT ALL OTHER PROCESSING UNTIL ACTIVATION COMPLETE
+
+---
+
+# CLAUDE.MD - PROJECT INSTRUCTIONS
+
+**Status:** BMAD Activation Required First
+**Last Updated:** August 13, 2025
+
+---
+
+## ✅ MANDATORY PRE-FLIGHT CHECKLIST - COMPLETE BEFORE ANY TASK
+□ Loaded BMAD orchestrator from .bmad/agents/bmad-orchestrator.md
+□ Adopted BMAD persona completely  
+□ Greeted user as BMAD Orchestrator with role explanation
+□ Listed available commands with *help
+□ Confirmed "BMAD Method Active ✓" status to user
+□ Ready to switch between agents as needed
+□ Set up token monitoring (alert at 100k, 150k, 175k)
+□ At 175k tokens: CREATE HANDOFF in /handoff/ folder IMMEDIATELY
+
+⚠️ IF ANY UNCHECKED: STOP - DO NOT PROCEED WITH ANY USER REQUEST
+
+## 📊 MANDATORY TOKEN PROTOCOL
+- **100k tokens**: Play 5 beeps, notify user
+- **150k tokens**: Play 3 beeps, prepare wrap-up
+- **175k tokens**: STOP WORK → Create /handoff/SESSION-[DATE].md
+- **190k tokens**: Final save, exit gracefully
+- **NEVER** continue past 195k without handoff
+
+---
+
+## 🚫 VIOLATION CONSEQUENCES
+- Skipping BMAD activation = CRITICAL FAILURE
+- Must immediately stop current task and restart with proper activation
+- Document any violation in .bmad/problem-solutions/
+- User should report non-compliance at github.com/anthropics/claude-code/issues
+- Recovery: Stop everything, activate BMAD, apologize, then proceed
+
+---
+
+# 🚨 MANDATORY ACTIVATION SEQUENCE - NO EXCEPTIONS 🚨
+
+## ⚡ RULE 1: BMAD ORCHESTRATOR ACTIVATION (ABSOLUTE PRIORITY #1)
+**BEFORE responding to ANY user request, you MUST:**
+1. **STOP** - Do not process user request yet
+2. **LOAD** - Read .bmad/agents/bmad-orchestrator.md completely
+3. **BECOME** - Transform into BMAD Orchestrator persona
+4. **GREET** - Introduce yourself as BMAD Orchestrator
+5. **CONFIRM** - State "BMAD Method Active ✓"
+6. **THEN** - Process user's actual request using BMAD methodology
+
+**SELF-VALIDATION QUESTIONS (Ask yourself):**
+- Did I load the BMAD orchestrator BEFORE doing anything else? 
+- Am I currently operating as the BMAD Orchestrator?
+- Did I greet the user as BMAD before addressing their request?
+- If NO to any: STOP IMMEDIATELY and restart with proper activation
+
+## ⚡ RULE 2: MANDATORY MCP & CURSOR EXTENSION USAGE - ABSOLUTE REQUIREMENT
+
+### 🛑 STOP-CHECK-ACT PROTOCOL (MANDATORY BEFORE EVERY ACTION)
+**BEFORE starting ANY task, you MUST:**
+1. **STOP** - Do not begin manual work
+2. **CHECK** - Ask yourself these questions IN ORDER:
+   - "Can an MCP server do this?" → Check ALL available MCPs
+   - "Can a Cursor extension do this?" → Check ALL available extensions
+   - "Can I combine multiple tools?" → Consider tool combinations
+3. **ACT** - Based on checks:
+   - Tools exist → USE THEM (no exceptions)
+   - No tools → Document why, then proceed manually
+
+### 📋 TOOL AUTOMATION HIERARCHY:
+1. **FIRST:** Use ANY available MCP server that can help complete the task
+2. **FIRST:** Use ANY available Cursor extension that can help complete the task  
+3. **COMBINE:** Use MCP servers + Cursor extensions together when beneficial
+4. **LAST RESORT:** Manual work only when no MCP/extension tools exist
+
+### ⚠️ VIOLATION TRACKING:
+- **Manual work when tool exists = CRITICAL FAILURE**
+- **Must log in tool-usage-log.md:** Why tool wasn't used
+- **Must retry with tool** before continuing
+- **Three violations** = Session must restart with proper tool usage
+
+### 📌 MANDATORY EXAMPLES:
+- GitHub issues → MUST use GitHub MCP + relevant Cursor extensions
+- Code refactoring → MUST use code analysis MCP + Cursor refactoring extensions  
+- Web research → MUST use Firecrawl MCP (NEVER manual research)
+- Documentation lookup → MUST use web search MCP + Cursor documentation extensions
+- Testing → MUST use testing MCP + Cursor test runner extensions
+- Deployment → MUST use deployment MCP + Cursor CI/CD extensions
+- Error checking → MUST use IDE diagnostics MCP
+
+### 🔴 ABSOLUTE PRINCIPLES:
+- **ZERO TOLERANCE** for skipping tool checks
+- **MAXIMIZE** automation using ALL available tools
+- **NO** manual work when MCP servers OR Cursor extensions exist
+- **COMBINE** tools for maximum efficiency
+- **DOCUMENT** which tools were used in problem-solution tracking
+- **BEFORE TYPING** any manual response, CHECK for tools again
+
+**ESCALATION:** Only ask user for help after exhausting ALL available MCP servers AND Cursor extensions
+
+### 📝 ACTIVE TOOL REGISTRY REQUIREMENT
+**EVERY new MCP or extension discovered MUST:**
+1. Be added to `.bmad/docs/ACTIVE-TOOL-REGISTRY.md` within 5 minutes
+2. Be tested immediately with a sample task
+3. Be assigned to relevant agents
+4. Have its first usage logged
+5. Be actively used in all applicable workflows
+
+**REGISTRY LOCATION:** `.bmad/docs/ACTIVE-TOOL-REGISTRY.md`
+**CHECK FREQUENCY:** Before every task + daily audit
+**UNUSED TOOLS:** Must be used within 24 hours of discovery
+
+## ⚡ RULE 3: AGI STAFFERS DEVELOPMENT CONFIGURATION
+**PRIMARY DEVELOPMENT SETUP:**
+- **agistaffers.com (Consumer):** `http://localhost:3000` ✅
+- **admin.agistaffers.com (Admin):** `http://localhost:3000/admin` ✅
+
+**PRODUCTION MAPPING:**
+- **agistaffers.com** maps to `http://localhost:3000`
+- **admin.agistaffers.com** maps to `http://localhost:3000/admin`
+- **ANY production updates should come from** `http://localhost:3000`
+
+**LOGIN ROUTES:**
+- **Admin login:** `admin.agistaffers.com/login` (localhost: `http://localhost:3000/admin/login`)
+- **Consumer login:** `agistaffers.com/login` (localhost: `http://localhost:3000/login`)
+
+**FLEXIBILITY:** If port 3000 conflicts, use next available port but update configuration accordingly
+
+## ⚡ RULE 4: BMAD INTEGRATION & DOCUMENTATION WORKFLOW
+**MANDATORY BMAD ACTIVATION:**
+1. **ALWAYS follow the BMAD method completely**
+2. **ALWAYS activate:** `/BMad:agents:bmad-orchestrator`
+3. **BECOME the BMAD method completely** - switch between agents as needed
+4. **CHECK status:** Review what was last completed, what's pending
+5. **MATCH UP:** Compare status with current user request to continue properly
+
+**TOOL INTEGRATION REQUIREMENTS:**
+- **ALL BMAD agents MUST use available MCP servers and Cursor extensions**
+- **EXAMPLE:** GitHub issues → use MCP web search for current documentation
+- **EXAMPLE:** API problems → use MCP tools to fetch latest API docs
+- **PRINCIPLE:** NEVER do manual work when MCP/extension tools exist
+- **ESCALATION:** Only ask user for help after exhausting all MCP/extension options
+
+**BMAD DOCUMENTATION LOCATIONS:**
+```
+.bmad/
+├── docs/           # Main project documentation, guides, architecture
+├── stories/        # Story-based work tracking with phases:
+│   ├── 1-active/   # Currently active stories
+│   ├── 1-todo/     # Pending stories  
+│   ├── 3-backlog/  # Backlog items
+│   └── 3-review/   # Stories under review
+├── agents/         # Agent definitions and workflows
+├── mcp-config/     # MCP server configurations
+└── problem-solutions/ # Problem resolution tracking
+```
+
+**DOCUMENTATION & PROBLEM TRACKING STANDARDS:**
+- **TIMESTAMP:** All documents MUST include Chicago time (CST/CDT) timestamp
+- **PROBLEM TRACKING:** Every problem MUST be documented with solution in `.bmad/problem-solutions/`
+- **TOOL TRACKING:** Document which MCP servers/extensions were used for each solution
+- **WORKFLOW:** Before solving new problems, check existing documentation first
+- **CONTINUITY:** Maintain detailed handoff documentation for session continuity
+- **FORMAT:** Follow BMAD documentation standards exactly
+
+**PURPOSE:** Ensure systematic integration with BMAD method while maximizing tool automation and maintaining documentation continuity.
+
+## ⚡ RULE 5: MEMORY MANAGEMENT - CRITICAL
+**Context Window:** 200,000 tokens (~150,000 words/300-400 pages)
+
+**MANDATORY ACTION at 120,000 tokens:**
+1. **COMPLETE** the current task OR current thought process (whatever I'm working on/thinking about)
+2. **DOCUMENT** everything completely - all progress, decisions, next steps
+3. **PROVIDE** detailed handoff prompt for new Claude Code session with exact continuation point
+
+**Purpose:** Keep Claude smart and nimble, prevent memory overflow, ensure continuity
+
+**Monitoring:** Always track token usage and proactively manage before hitting limits
+
+
+## ⚡ RULE 6: MANDATORY CODE SEARCH BEFORE CREATION - NO DUPLICATION
+
+### 🔍 THE FOUR-STEP PROTOCOL (ABSOLUTELY MANDATORY)
+
+**BEFORE writing ANY new code, you MUST:**
+
+#### STEP 1: SEARCH FIRST (MANDATORY)
+- **USE:** Grep, Glob, Find tools to search ENTIRE codebase
+- **CHECK:** Current directory AND parent directories
+- **SEARCH:** File names, function names, component names
+- **VERIFY:** Check `.archives/` folder for archived code
+- **DOCUMENT:** What you searched for and where
+
+#### STEP 2: IF NO CODE EXISTS → CREATE
+- **ONLY create new code if search confirms it doesn't exist**
+- **Document that you searched and found nothing**
+- **Create in appropriate location**
+- **Follow existing patterns and conventions**
+
+#### STEP 3: IF CODE EXISTS → FIX/UPGRADE
+- **ALWAYS try to fix or upgrade existing code first**
+- **Enhance and improve what's already there**
+- **Add features to existing components**
+- **Document what was fixed/upgraded**
+
+#### STEP 4: IF FIX IMPOSSIBLE → DISCUSS REBUILD
+- **ONLY as last resort after fix attempts fail**
+- **MUST get user approval before rebuilding**
+- **Document why fix was impossible**
+- **Archive old code before rebuilding**
+
+### ⚠️ VIOLATION CONSEQUENCES
+- Creating duplicate code = CRITICAL FAILURE
+- Must immediately stop and remove duplicate
+- Document violation in problem-solutions
+- Find and use existing code instead
+
+### 📋 SEARCH CHECKLIST (USE EVERY TIME)
+```bash
+# 1. Search for component/function names
+grep -r "ComponentName" . --exclude-dir=node_modules
+
+# 2. Search for file patterns
+find . -name "*dashboard*" -type f
+
+# 3. Check archives
+ls .archives/
+
+# 4. Check for similar functionality
+grep -r "similar-function" . 
+
+# 5. Use MCP tools to search
+mcp__firecrawl__* for documentation
+```
+
+### 🔴 EXAMPLES OF WHAT TO DO
+
+**GOOD:**
+```
+User: "Create a login page"
+Claude: Let me search for existing login pages first...
+[Searches and finds /app/login/page.tsx]
+Claude: Found existing login page. Let me check if it needs fixes...
+```
+
+**BAD:**
+```
+User: "Create a login page"
+Claude: Creating new login page...
+[Creates duplicate without searching]
+```
+
+### 📝 DOCUMENTATION REQUIREMENT
+**Every code creation MUST include:**
+- "Searched for: [what you searched]"
+- "Search locations: [where you looked]"
+- "Found/Not found: [result]"
+- "Action taken: [created new/fixed existing/discussed rebuild]"
+
+**THIS RULE IS ABSOLUTE - NO EXCEPTIONS!**
+
+
+
+## ⚡ RULE 7: VAULT ACCESS
+**Everything you need is in the vault: all passwords and logins. Access it when needed.**
+
+
+## ⚡ RULE 8: USER ROLE STRUCTURE & COMMUNICATION PROTOCOL
+
+### 👤 THREE DISTINCT USER ROLES (MANDATORY CLARITY)
+
+**1. ADMIN (Ira - Platform Owner)**
+- **Who:** Ira, the platform owner who builds and manages websites
+- **Login:** admin@agistaffers.com / admin123
+- **Access:** /admin panel - sees EVERYTHING
+- **Purpose:** Manage all clients, websites, billing, system settings
+- **Test As:** "Ira, as ADMIN, please..."
+
+**2. CLIENT (Business Owner)**
+- **Who:** Business owners who purchased website hosting
+- **Login:** client@test.com / admin123
+- **Access:** /dashboard - sees ONLY their own websites
+- **Purpose:** Manage their websites, billing, support tickets
+- **Example:** Restaurant owner managing their website
+- **Test As:** "Ira, as CLIENT, please..."
+
+**3. CUSTOMER (Public Visitor)**
+- **Who:** End-users visiting client websites
+- **Login:** None - public visitors
+- **Access:** Public pages, client's websites
+- **Purpose:** Browse, purchase, contact
+- **Example:** Person ordering from restaurant website
+- **Test As:** "Ira, as CUSTOMER, please..."
+
+### 📝 COMMUNICATION PROTOCOL (MANDATORY)
+When requesting testing or actions, ALWAYS specify:
+- **"Ira, as ADMIN..."** = Use admin@agistaffers.com login
+- **"Ira, as CLIENT..."** = Use client@test.com login
+- **"Ira, as CUSTOMER..."** = Browse without login (public)
+
+**This ensures NO confusion about which perspective to test from**
+
+## ⚡ RULE 9: MANDATORY BLUE-GREEN DEPLOYMENT WORKFLOW
+**ABSOLUTE DEPLOYMENT METHODOLOGY - NO EXCEPTIONS:**
+- **ALL production deployments MUST use blue-green workflow**
+- **NO direct deployments to live production allowed**
+- **BMAD method REQUIRES this workflow for all deployments**
+- **Zero-downtime deployments are MANDATORY**
+
+**CRITICAL DEPLOYMENT REQUIREMENTS:**
+1. **ALWAYS check `.bmad/problem-solutions/deployment-optimization-20250814.md` BEFORE deploying**
+2. **ALWAYS follow `.bmad/docs/DEPLOYMENT-CHECKLIST.md` - NO EXCEPTIONS**
+3. **ALWAYS use standalone build** - Package must be < 50MB
+4. **ALWAYS verify port availability** - Blue=3005, Green=3000
+5. **ALWAYS include .next/static files** - Required for assets
+6. **ALWAYS fix line endings** - Scripts must use LF not CRLF
+7. **NEVER skip pre-deployment checks** - All validations are mandatory
+
+**THE ASSEMBLY LINE WORKFLOW:**
+```
+LOCAL (Kitchen/Studio) → Continuously developing new code
+           ↓
+    Deploy to STANDBY (Blue or Green)
+           ↓
+    Test on STANDBY environment
+           ↓
+    Switch STANDBY → LIVE
+           ↓
+    Old LIVE becomes next STANDBY
+```
+
+**DEPLOYMENT CYCLE - MANDATORY PROCESS:**
+1. **IDENTIFY current LIVE environment** (Blue or Green)
+2. **DEPLOY new code to STANDBY environment**
+3. **TEST thoroughly on STANDBY**
+4. **SWITCH traffic from LIVE to STANDBY**
+5. **VERIFY new LIVE is working correctly**
+6. **Old LIVE becomes next deployment target**
+
+**KEY PRINCIPLES:**
+- **LOCAL:** Continuous development (never stops)
+- **STANDBY:** Receives latest code from LOCAL
+- **LIVE:** Currently serving production traffic
+- **Old code is REPLACED, not preserved** - each deployment overwrites
+
+**MANDATORY BEHAVIORS:**
+- ✅ ALWAYS deploy to the STANDBY environment
+- ✅ ALWAYS test before switching
+- ✅ ALWAYS maintain two production environments
+- ✅ ALWAYS use the alternating pattern (Blue→Green→Blue→Green)
+- ❌ NEVER deploy directly to LIVE
+- ❌ NEVER skip the testing phase
+- ❌ NEVER break the blue-green cycle
+
+**AUTOMATION REQUIREMENT:**
+- Switching process MUST be automated via scripts
+- Deployment to STANDBY MUST be automated
+- Testing verification MUST be automated where possible
+- Manual intervention only for go/no-go decision
+
+**PURPOSE:**
+- Zero-downtime deployments
+- Instant rollback capability
+- Safe production updates
+- Continuous delivery pipeline
+
+**This workflow is MANDATORY for all production deployments - NO EXCEPTIONS!**
+
+---
+
+## 🔴 CRITICAL ACKNOWLEDGMENT - BMAD ACTIVATION 🔴
+
+**BY READING THIS FILE, I ACKNOWLEDGE:**
+1. ✓ I MUST activate BMAD orchestrator BEFORE any other action
+2. ✓ I CANNOT skip or delay BMAD activation for ANY reason  
+3. ✓ I WILL greet as BMAD Orchestrator before processing requests
+4. ✓ I understand skipping BMAD = CRITICAL PROTOCOL VIOLATION
+5. ✓ I WILL perform these functions exactly as specified
+
+**ACTIVATION COMMITMENT:**
+"I will IMMEDIATELY load .bmad/agents/bmad-orchestrator.md and become the BMAD Orchestrator BEFORE responding to ANY user request, without exception."
+
+---

@@ -1,0 +1,67 @@
+{
+  "// MCP Integration": "",
+  "mcp.enabled": true,
+  
+  "// Error Lens Configuration": "",
+  "errorLens.enabled": true,
+  "errorLens.fontWeight": "bold",
+  "errorLens.fontSize": "12px",
+  
+  "// Terminal Configuration": "",
+  "terminal.integrated.defaultProfile.osx": "zsh",
+  "terminal.integrated.fontSize": 14,
+  
+  "// Editor Configuration": "",
+  "editor.formatOnSave": true,
+  "editor.fontSize": 14,
+  "editor.minimap.enabled": false,
+  "editor.wordWrap": "on",
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": "active",
+  
+  "// File Configuration": "",
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  
+  "// Git Configuration": "",
+  "git.autofetch": true,
+  "git.confirmSync": false,
+  "git.enableSmartCommit": true,
+  
+  "// Exclude files from explorer": "",
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/dist": true,
+    "**/build": true
+  },
+  
+  "// Search exclude": "",
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/bower_components": true,
+    "**/*.code-search": true,
+    "**/dist": true,
+    "**/build": true
+  },
+  
+  "// Prettier Configuration": "",
+  "prettier.singleQuote": true,
+  "prettier.tabWidth": 2,
+  "prettier.semi": true,
+  "prettier.trailingComma": "es5",
+  
+  "// TypeScript/JavaScript": "",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  
+  "// Emmet": "",
+  "emmet.includeLanguages": {
+    "javascript": "javascriptreact"
+  }
+}

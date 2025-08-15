@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -38,12 +39,33 @@ import { categoriesApi } from '@/api/categories';
 import { productsApi } from '@/api/products';
 import type { Tables } from '@/integrations/supabase/types';
 import { insertRealTestData } from '@/utils/insertRealTestData';
+import { AnimatedSection, FadeIn, ScaleIn, StaggerContainer, StaggerItem } from '@/components/animations/AnimatedSection';
+import { ParallaxSection, ParallaxText, FloatingElement } from '@/components/animations/ParallaxSection';
+import { InteractiveCard, MagneticButton, PulseRing } from '@/components/animations/InteractiveCard';
+import { ScrollProgressBar, ScrollRevealText, CountUp } from '@/components/animations/ScrollProgress';
+import { Spinner, PulsingDots, Skeleton, LoadingOverlay } from '@/components/animations/LoadingStates';
+import { TypewriterText, GradientText, RotatingText } from '@/components/animations/TextEffects';
 
 const HeroCarousel = () => {
+  const [currentSlide, setCurrentSlide] = React.useState(0);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [Autoplay()]);
 
-  const scrollPrev = () => emblaApi && emblaApi.scrollPrev();
-  const scrollNext = () => emblaApi && emblaApi.scrollNext();
+  const scrollPrev = () => {
+    emblaApi && emblaApi.scrollPrev();
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+  };
+  const scrollNext = () => {
+    emblaApi && emblaApi.scrollNext();
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+  };
+
+  React.useEffect(() => {
+    if (emblaApi) {
+      emblaApi.on('select', () => {
+        setCurrentSlide(emblaApi.selectedScrollSnap());
+      });
+    }
+  }, [emblaApi]);
 
   const slides = [
     {
@@ -77,27 +99,51 @@ const HeroCarousel = () => {
             <div key={index} className="flex-[0_0_100%] min-w-0">
               <div className={`${slide.bgColor} text-white py-16 px-4 md:py-24`}>
                 <div className="max-w-7xl mx-auto">
-                  <div className={`text-${slide.textPosition} max-w-2xl ${slide.textPosition === 'center' ? 'mx-auto' : slide.textPosition === 'right' ? 'ml-auto' : ''}`}>
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    className={`text-${slide.textPosition} max-w-2xl ${slide.textPosition === 'center' ? 'mx-auto' : slide.textPosition === 'right' ? 'ml-auto' : ''}`}
+                  >
                     <h1 className="text-4xl md:text-6xl font-bold mb-4">
-                      {slide.title}
+                      <TypewriterText text={slide.title} speed={0.05} />
                     </h1>
-                    <p className="text-xl md:text-2xl mb-2 text-blue-100">
+                    <motion.p
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3, duration: 0.6 }}
+                      className="text-xl md:text-2xl mb-2 text-blue-100"
+                    >
                       {slide.subtitle}
-                    </p>
-                    <p className="text-lg mb-8 text-blue-100">
+                    </motion.p>
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.5, duration: 0.6 }}
+                      className="text-lg mb-8 text-blue-100"
+                    >
                       {slide.description}
-                    </p>
-                    <div className="space-x-4">
-                      <Link to="/products">
-                        <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50">
-                          Shop Now
+                    </motion.p>
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.7, duration: 0.6 }}
+                      className="space-x-4"
+                    >
+                      <MagneticButton>
+                        <Link to="/products">
+                          <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50">
+                            Shop Now
+                          </Button>
+                        </Link>
+                      </MagneticButton>
+                      <MagneticButton>
+                        <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
+                          Get Quote
                         </Button>
-                      </Link>
-                      <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
-                        Get Quote
-                      </Button>
-                    </div>
-                  </div>
+                      </MagneticButton>
+                    </motion.div>
+                  </motion.div>
                 </div>
               </div>
             </div>
@@ -105,18 +151,38 @@ const HeroCarousel = () => {
         </div>
       </div>
       
-      <button 
+      <motion.button
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
         onClick={scrollPrev}
         className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-colors"
       >
         <ChevronLeft className="w-6 h-6" />
-      </button>
-      <button 
+      </motion.button>
+      <motion.button
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
         onClick={scrollNext}
         className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-colors"
       >
         <ChevronRight className="w-6 h-6" />
-      </button>
+      </motion.button>
+      
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+        {slides.map((_, index) => (
+          <motion.button
+            key={index}
+            className={`w-2 h-2 rounded-full transition-colors ${
+              currentSlide === index ? 'bg-white' : 'bg-white/50'
+            }`}
+            whileHover={{ scale: 1.2 }}
+            onClick={() => {
+              emblaApi && emblaApi.scrollTo(index);
+              setCurrentSlide(index);
+            }}
+          />
+        ))}
+      </div>
     </div>
   );
 };
@@ -171,7 +237,7 @@ export default function Homepage() {
       }
     },
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
-    cacheTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
     retry: 1,
     refetchOnWindowFocus: false, // Prevent refetch on window focus
     refetchOnMount: false // Prevent refetch on component mount if data exists
@@ -268,14 +334,34 @@ export default function Homepage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
+        <FloatingElement duration={2}>
+          <Spinner size={60} color="rgb(59, 130, 246)" />
+        </FloatingElement>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mt-8"
+        >
+          <PulsingDots size={12} />
+        </motion.div>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="mt-4 text-gray-600 font-medium"
+        >
+          Loading amazing products...
+        </motion.p>
       </div>
     );
   }
 
   return (
     <Layout>
+      <ScrollProgressBar color="rgb(59, 130, 246)" height={3} />
+      
       {/* Hero Carousel */}
       <HeroCarousel />
 
@@ -334,116 +420,206 @@ export default function Homepage() {
       )}
 
       {/* Product Categories Grid */}
-      <section className="py-16 bg-gray-50">
+      <ParallaxSection className="py-16 bg-gray-50" offset={30}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Products</h2>
+          <AnimatedSection className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              <GradientText text="Our Products" gradient="from-blue-600 to-purple-600" />
+            </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Professional printing solutions for all your business needs
+              <ScrollRevealText text="Professional printing solutions for all your business needs" delay={0.2} />
             </p>
-          </div>
+          </AnimatedSection>
           
           {!categoriesLoading && categories.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            <StaggerContainer className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
               {categories.map((category, index) => {
                 const IconComponent = getIconForCategory(category.name);
                 const color = getColorForCategory(index);
                 return (
-                  <Link 
-                    key={category.id} 
-                    to={`/products?category=${category.slug}`}
-                    className="group"
-                  >
-                    <Card className="group-hover:shadow-lg transition-shadow cursor-pointer">
-                      <CardContent className="p-6 text-center">
-                        <IconComponent className={`h-12 w-12 mx-auto mb-4 ${color} group-hover:scale-110 transition-transform`} />
-                        <h3 className="font-semibold text-gray-900">{category.name}</h3>
-                      </CardContent>
-                    </Card>
-                  </Link>
+                  <StaggerItem key={category.id}>
+                    <Link 
+                      to={`/products?category=${category.slug}`}
+                      className="group block"
+                    >
+                      <InteractiveCard glowColor="rgba(59, 130, 246, 0.3)">
+                        <Card className="group-hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden">
+                          <CardContent className="p-6 text-center relative">
+                            <FloatingElement duration={3} delay={index * 0.1}>
+                              <IconComponent className={`h-12 w-12 mx-auto mb-4 ${color} group-hover:scale-110 transition-transform`} />
+                            </FloatingElement>
+                            <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                              {category.name}
+                            </h3>
+                          </CardContent>
+                        </Card>
+                      </InteractiveCard>
+                    </Link>
+                  </StaggerItem>
                 );
               })}
-            </div>
+            </StaggerContainer>
           ) : (
             <div className="text-center py-12">
               <p className="text-gray-500">No categories available at the moment.</p>
             </div>
           )}
         </div>
-      </section>
+      </ParallaxSection>
 
       {/* Featured Products */}
       {!productsLoading && featuredProducts.length > 0 && (
-        <section className="py-16 bg-white">
+        <ParallaxSection className="py-16 bg-white" offset={40}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Featured Products</h2>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Popular choices for businesses like yours
-              </p>
-            </div>
+            <AnimatedSection className="text-center mb-12" delay={0.2}>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                <RotatingText 
+                  words={['Featured', 'Popular', 'Best-Selling']} 
+                  className="inline-block mr-2"
+                />
+                Products
+              </h2>
+              <ParallaxText speed={0.3}>
+                <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                  Popular choices for businesses like yours
+                </p>
+              </ParallaxText>
+            </AnimatedSection>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {featuredProducts.slice(0, 3).map((product) => (
-                <Link 
-                  key={product.id} 
-                  to={`/products/${product.slug}`}
-                  className="group"
-                >
-                  <Card className="group-hover:shadow-lg transition-shadow cursor-pointer h-full">
-                    <CardContent className="p-6">
-                      <h3 className="font-semibold text-lg text-gray-900 mb-2">{product.name}</h3>
-                      <p className="text-gray-600 mb-4 line-clamp-2">{product.description}</p>
-                      <div className="flex justify-between items-center">
-                        <span className="text-blue-600 font-semibold">View Details</span>
-                        <ChevronRight className="w-5 h-5 text-blue-600 group-hover:translate-x-1 transition-transform" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
+                <StaggerItem key={product.id}>
+                  <Link 
+                    to={`/products/${product.slug}`}
+                    className="group block h-full"
+                  >
+                    <InteractiveCard className="h-full" glowColor="rgba(139, 92, 246, 0.3)">
+                      <Card className="group-hover:shadow-xl transition-all duration-300 cursor-pointer h-full transform group-hover:-translate-y-1">
+                        <CardContent className="p-6">
+                          <h3 className="font-semibold text-lg text-gray-900 mb-2 group-hover:text-purple-600 transition-colors">
+                            {product.name}
+                          </h3>
+                          <p className="text-gray-600 mb-4 line-clamp-2">{product.description}</p>
+                          <div className="flex justify-between items-center">
+                            <span className="text-blue-600 font-semibold group-hover:text-purple-600 transition-colors">
+                              View Details
+                            </span>
+                            <motion.div
+                              animate={{ x: [0, 5, 0] }}
+                              transition={{ duration: 1.5, repeat: Infinity }}
+                            >
+                              <ChevronRight className="w-5 h-5 text-blue-600 group-hover:text-purple-600 transition-colors" />
+                            </motion.div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </InteractiveCard>
+                  </Link>
+                </StaggerItem>
               ))}
-            </div>
+            </StaggerContainer>
           </div>
-        </section>
+        </ParallaxSection>
       )}
 
       {/* Value Propositions */}
-      <section className="py-16 bg-gray-50">
+      <ParallaxSection className="py-16 bg-gray-50" offset={20}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-3 gap-8">
             {valueProps.map((prop, index) => {
               const IconComponent = prop.icon;
               return (
-                <div key={index} className="text-center">
-                  <IconComponent className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{prop.title}</h3>
-                  <p className="text-gray-600">{prop.description}</p>
-                </div>
+                <AnimatedSection key={index} delay={index * 0.2} direction="up">
+                  <div className="text-center group cursor-pointer">
+                    <motion.div
+                      whileHover={{ scale: 1.1, rotate: 360 }}
+                      transition={{ duration: 0.5 }}
+                      className="inline-block"
+                    >
+                      <IconComponent className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                    </motion.div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                      {prop.title}
+                    </h3>
+                    <p className="text-gray-600">{prop.description}</p>
+                  </div>
+                </AnimatedSection>
               );
             })}
+          </div>
+        </div>
+      </ParallaxSection>
+
+      {/* Statistics Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <AnimatedSection>
+              <h3 className="text-4xl font-bold text-blue-600">
+                <CountUp end={5000} duration={2} suffix="+" />
+              </h3>
+              <p className="text-gray-600 mt-2">Happy Customers</p>
+            </AnimatedSection>
+            <AnimatedSection delay={0.1}>
+              <h3 className="text-4xl font-bold text-green-600">
+                <CountUp end={24} duration={2} prefix="" suffix="hr" />
+              </h3>
+              <p className="text-gray-600 mt-2">Turnaround Time</p>
+            </AnimatedSection>
+            <AnimatedSection delay={0.2}>
+              <h3 className="text-4xl font-bold text-purple-600">
+                <CountUp end={100} duration={2} suffix="%" />
+              </h3>
+              <p className="text-gray-600 mt-2">Quality Guarantee</p>
+            </AnimatedSection>
+            <AnimatedSection delay={0.3}>
+              <h3 className="text-4xl font-bold text-orange-600">
+                <CountUp end={50} duration={2} suffix="+" />
+              </h3>
+              <p className="text-gray-600 mt-2">Product Types</p>
+            </AnimatedSection>
           </div>
         </div>
       </section>
 
       {/* Email Signup */}
-      <section className="py-16 bg-blue-600">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">Stay Updated</h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            Get the latest deals and printing tips delivered to your inbox
-          </p>
-          <div className="flex max-w-md mx-auto gap-4">
-            <Input 
-              type="email" 
-              placeholder="Enter your email" 
-              className="bg-white"
-            />
-            <Button className="bg-white text-blue-600 hover:bg-blue-50">
-              Subscribe
-            </Button>
-          </div>
+      <ParallaxSection className="py-16 bg-gradient-to-r from-blue-600 to-purple-600" offset={50}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
+          <FloatingElement duration={4} className="absolute -top-10 left-10">
+            <Mail className="h-8 w-8 text-white/30" />
+          </FloatingElement>
+          <FloatingElement duration={5} delay={1} className="absolute -top-10 right-10">
+            <Megaphone className="h-8 w-8 text-white/30" />
+          </FloatingElement>
+          
+          <AnimatedSection>
+            <h2 className="text-3xl font-bold text-white mb-4">
+              <TypewriterText text="Stay Updated" speed={0.1} />
+            </h2>
+          </AnimatedSection>
+          
+          <AnimatedSection delay={0.2}>
+            <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+              Get the latest deals and printing tips delivered to your inbox
+            </p>
+          </AnimatedSection>
+          
+          <AnimatedSection delay={0.4}>
+            <div className="flex max-w-md mx-auto gap-4">
+              <Input 
+                type="email" 
+                placeholder="Enter your email" 
+                className="bg-white"
+              />
+              <MagneticButton>
+                <Button className="bg-white text-blue-600 hover:bg-blue-50 transform transition-all">
+                  Subscribe
+                </Button>
+              </MagneticButton>
+            </div>
+          </AnimatedSection>
         </div>
-      </section>
+      </ParallaxSection>
     </Layout>
   );
 }

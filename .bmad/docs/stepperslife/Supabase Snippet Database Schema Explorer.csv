@@ -1,0 +1,101 @@
+table_name,column_name,data_type,is_nullable,column_default
+audience_insights,id,uuid,NO,gen_random_uuid()
+audience_insights,event_id,uuid,YES,null
+audience_insights,user_id,uuid,YES,null
+audience_insights,age_group,text,YES,null
+audience_insights,gender,text,YES,null
+audience_insights,location,text,YES,null
+audience_insights,referral_source,text,YES,null
+audience_insights,purchase_behavior,jsonb,YES,null
+audience_insights,engagement_score,integer,YES,null
+audience_insights,created_at,timestamp with time zone,YES,now()
+business_inquiries,id,uuid,NO,gen_random_uuid()
+business_inquiries,business_id,uuid,NO,null
+business_inquiries,inquirer_id,uuid,YES,null
+business_inquiries,inquirer_email,character varying,NO,null
+business_inquiries,inquirer_name,character varying,NO,null
+business_inquiries,inquirer_phone,character varying,YES,null
+business_inquiries,subject,character varying,YES,null
+business_inquiries,message,text,NO,null
+business_inquiries,inquiry_type,character varying,YES,'general'::character varying
+business_inquiries,status,character varying,YES,'new'::character varying
+business_inquiries,created_at,timestamp with time zone,NO,now()
+business_reviews,id,uuid,NO,gen_random_uuid()
+business_reviews,business_id,uuid,NO,null
+business_reviews,reviewer_id,uuid,NO,null
+business_reviews,rating,integer,NO,null
+business_reviews,review_text,text,YES,null
+business_reviews,helpful_count,integer,NO,0
+business_reviews,verified_purchase,boolean,NO,false
+business_reviews,created_at,timestamp with time zone,NO,now()
+business_reviews,updated_at,timestamp with time zone,NO,now()
+commission_transactions,id,uuid,NO,gen_random_uuid()
+commission_transactions,user_id,uuid,YES,null
+commission_transactions,order_id,uuid,YES,null
+commission_transactions,event_id,uuid,YES,null
+commission_transactions,ticket_type_id,uuid,YES,null
+commission_transactions,quantity,integer,NO,null
+commission_transactions,ticket_price,integer,NO,null
+commission_transactions,commission_rate,numeric,NO,null
+commission_transactions,commission_amount,integer,NO,null
+commission_transactions,status,text,YES,'pending'::text
+commission_transactions,referral_code,text,YES,null
+commission_transactions,created_at,timestamp with time zone,YES,now()
+community_businesses,id,uuid,NO,gen_random_uuid()
+community_businesses,owner_id,uuid,NO,null
+community_businesses,business_name,character varying,NO,null
+community_businesses,description,text,NO,null
+community_businesses,category,USER-DEFINED,NO,null
+community_businesses,subcategory,character varying,YES,null
+community_businesses,contact_email,character varying,YES,null
+community_businesses,contact_phone,character varying,YES,null
+community_businesses,website_url,character varying,YES,null
+community_businesses,social_media,jsonb,YES,'{}'::jsonb
+community_businesses,address,text,YES,null
+community_businesses,city,character varying,YES,null
+community_businesses,state,character varying,YES,null
+community_businesses,zip_code,character varying,YES,null
+community_businesses,country,character varying,YES,'United States'::character varying
+community_businesses,latitude,numeric,YES,null
+community_businesses,longitude,numeric,YES,null
+community_businesses,service_area_radius,integer,YES,null
+community_businesses,business_hours,jsonb,YES,'{}'::jsonb
+community_businesses,price_range,character varying,YES,null
+community_businesses,tags,ARRAY,YES,'{}'::text[]
+community_businesses,specialties,ARRAY,YES,'{}'::text[]
+community_businesses,logo_url,character varying,YES,null
+community_businesses,cover_image_url,character varying,YES,null
+community_businesses,gallery_images,ARRAY,YES,'{}'::text[]
+community_businesses,status,USER-DEFINED,NO,'pending'::business_status
+community_businesses,is_verified,boolean,NO,false
+community_businesses,verification_date,timestamp with time zone,YES,null
+community_businesses,verified_by,uuid,YES,null
+community_businesses,slug,character varying,YES,null
+community_businesses,keywords,ARRAY,YES,'{}'::text[]
+community_businesses,featured,boolean,NO,false
+community_businesses,featured_until,timestamp with time zone,YES,null
+community_businesses,view_count,integer,NO,0
+community_businesses,contact_count,integer,NO,0
+community_businesses,rating_average,numeric,YES,0
+community_businesses,rating_count,integer,NO,0
+community_businesses,created_at,timestamp with time zone,NO,now()
+community_businesses,updated_at,timestamp with time zone,NO,now()
+community_businesses,last_active_at,timestamp with time zone,YES,now()
+community_businesses,business_type,USER-DEFINED,NO,'physical_business'::business_type
+event_analytics,id,uuid,NO,uuid_generate_v4()
+event_analytics,event_id,uuid,NO,null
+event_analytics,metric_name,text,NO,null
+event_analytics,metric_value,numeric,NO,null
+event_analytics,recorded_date,date,YES,CURRENT_DATE
+event_analytics,created_at,timestamp with time zone,YES,now()
+event_likes,id,uuid,NO,uuid_generate_v4()
+event_likes,user_id,uuid,NO,null
+event_likes,event_id,uuid,NO,null
+event_likes,created_at,timestamp with time zone,NO,now()
+event_likes,updated_at,timestamp with time zone,NO,now()
+events,id,uuid,NO,uuid_generate_v4()
+events,owner_id,uuid,NO,null
+events,title,text,NO,null
+events,description,text,YES,null
+events,organization_name,text,YES,null
+events,date,date,NO,null

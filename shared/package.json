@@ -1,0 +1,20 @@
+{
+  "name": "@gangrunprinting/shared",
+  "version": "1.0.0",
+  "description": "Shared business logic for Gang Run Printing",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "decimal.js": "^10.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

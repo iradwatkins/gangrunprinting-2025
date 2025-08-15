@@ -1,0 +1,799 @@
+// This is your Prisma schema file
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER & AUTHENTICATION
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  accounts     Account[]
+  sessions     Session[]
+  profile      UserProfile?
+  orders       Order[]
+  brokerProfile BrokerProfile?
+  crmCustomer  CrmCustomer?
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model UserProfile {
+  id                       String    @id @default(uuid())
+  userId                   String    @unique @map("user_id")
+  email                    String    @unique
+  firstName                String?   @map("first_name")
+  lastName                 String?   @map("last_name")
+  companyName              String?   @map("company_name")
+  phone                    String?
+  address                  String?
+  city                     String?
+  state                    String?
+  zipCode                  String?   @map("zip_code")
+  country                  String?   @default("USA")
+  isAdmin                  Boolean   @default(false) @map("is_admin")
+  isBroker                 Boolean   @default(false) @map("is_broker")
+  brokerStatus             String?   @map("broker_status") // pending, approved, rejected, suspended
+  brokerTier               String?   @map("broker_tier") // bronze, silver, gold, platinum
+  brokerDiscountPercentage Float?    @map("broker_discount_percentage")
+  categoryDiscounts        Json?     @map("category_discounts") // JSONB for category-specific discounts
+  annualVolume             Float?    @map("annual_volume")
+  ytdVolume                Float?    @map("ytd_volume")
+  createdAt                DateTime  @default(now()) @map("created_at")
+  updatedAt                DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  user  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notes CustomerNote[]
+
+  @@map("user_profiles")
+}
+
+// ============================================
+// PRODUCTS & CATALOG
+// ============================================
+
+model Category {
+  id                    String     @id @default(uuid())
+  name                  String
+  slug                  String     @unique
+  description           String?
+  parentCategoryId      String?    @map("parent_category_id")
+  defaultBrokerDiscount Float?     @map("default_broker_discount")
+  sortOrder             Int        @default(0) @map("sort_order")
+  isActive              Boolean    @default(true) @map("is_active")
+  createdAt             DateTime   @default(now()) @map("created_at")
+  updatedAt             DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  parentCategory Category?  @relation("CategoryHierarchy", fields: [parentCategoryId], references: [id])
+  subCategories  Category[] @relation("CategoryHierarchy")
+  products       Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id              String   @id @default(uuid())
+  name            String
+  slug            String   @unique
+  description     String?
+  categoryId      String   @map("category_id")
+  vendorId        String?  @map("vendor_id")
+  basePrice       Float    @map("base_price")
+  minimumQuantity Int      @default(1) @map("minimum_quantity")
+  isActive        Boolean  @default(true) @map("is_active")
+  metadata        Json?    // JSONB for additional product data
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  category           Category                @relation(fields: [categoryId], references: [id])
+  vendor             Vendor?                 @relation(fields: [vendorId], references: [id])
+  quantities         ProductQuantity[]
+  coatings           ProductCoating[]
+  printSizes         ProductPrintSize[]
+  turnaroundTimes    ProductTurnaroundTime[]
+  addOns             ProductAddOn[]
+  paperStocks        ProductPaperStock[]
+  sides              ProductSide[]
+  orderJobs          OrderJob[]
+
+  @@map("products")
+}
+
+model Vendor {
+  id             String    @id @default(uuid())
+  name           String
+  code           String    @unique
+  email          String?
+  phone          String?
+  address        String?
+  minimumOrder   Float?    @map("minimum_order")
+  leadTimeDays   Int?      @map("lead_time_days")
+  paymentTerms   String?   @map("payment_terms")
+  discountRate   Float?    @map("discount_rate")
+  notes          String?
+  isActive       Boolean   @default(true) @map("is_active")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  products Product[]
+
+  @@map("vendors")
+}
+
+// ============================================
+// GLOBAL OPTIONS
+// ============================================
+
+model Coating {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  type        String? // UV, Matte, Gloss, etc.
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  products ProductCoating[]
+
+  @@map("coatings")
+}
+
+model PrintSize {
+  id          String   @id @default(uuid())
+  name        String
+  width       Float
+  height      Float
+  displayName String?  @map("display_name")
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  products ProductPrintSize[]
+
+  @@map("print_sizes")
+}
+
+model TurnaroundTime {
+  id               String   @id @default(uuid())
+  name             String
+  days             Int
+  businessDaysOnly Boolean  @default(true) @map("business_days_only")
+  priceMultiplier  Float    @default(1.0) @map("price_multiplier")
+  isDefault        Boolean  @default(false) @map("is_default")
+  isActive         Boolean  @default(true) @map("is_active")
+  sortOrder        Int      @default(0) @map("sort_order")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  products ProductTurnaroundTime[]
+
+  @@map("turnaround_times")
+}
+
+model AddOn {
+  id           String   @id @default(uuid())
+  name         String
+  description  String?
+  pricingModel String   @map("pricing_model") // flat, per_piece, setup_plus_per_piece, custom
+  basePrice    Float?   @map("base_price")
+  setupFee     Float?   @map("setup_fee")
+  perPiecePrice Float?  @map("per_piece_price")
+  configuration Json?   // JSONB for complex pricing rules
+  hasSubOptions Boolean @default(false) @map("has_sub_options")
+  subOptions    Json?   @map("sub_options") // JSONB for sub-option configurations
+  tooltip       String?
+  dependencies  Json?   // JSONB for conditional logic
+  isActive     Boolean  @default(true) @map("is_active")
+  sortOrder    Int      @default(0) @map("sort_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  products ProductAddOn[]
+
+  @@map("add_ons")
+}
+
+model QuantityGroup {
+  id          String     @id @default(uuid())
+  name        String
+  description String?
+  isDefault   Boolean    @default(false) @map("is_default")
+  isActive    Boolean    @default(true) @map("is_active")
+  sortOrder   Int        @default(0) @map("sort_order")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  quantities Quantity[]
+
+  @@map("quantity_groups")
+}
+
+model Quantity {
+  id               String   @id @default(uuid())
+  quantityGroupId  String   @map("quantity_group_id")
+  value            Int
+  displayName      String?  @map("display_name")
+  multiplier       Float    @default(1.0)
+  discountPercent  Float?   @map("discount_percent")
+  isActive         Boolean  @default(true) @map("is_active")
+  sortOrder        Int      @default(0) @map("sort_order")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  quantityGroup QuantityGroup    @relation(fields: [quantityGroupId], references: [id])
+  products      ProductQuantity[]
+
+  @@unique([quantityGroupId, value])
+  @@map("quantities")
+}
+
+model PaperStock {
+  id                       String   @id @default(uuid())
+  name                     String
+  category                 String // Glossy, Matte, Uncoated, Specialty
+  weight                   String?
+  pricePerSqInch           Float    @map("price_per_sq_inch")
+  secondSideMarkupPercent  Float?   @map("second_side_markup_percent")
+  description              String?
+  isActive                 Boolean  @default(true) @map("is_active")
+  sortOrder                Int      @default(0) @map("sort_order")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  products  ProductPaperStock[]
+  orderJobs OrderJob[]
+
+  @@map("paper_stocks")
+}
+
+model Side {
+  id          String   @id @default(uuid())
+  name        String   // single, double
+  displayName String   @map("display_name") // 4/0, 4/4
+  multiplier  Float    @default(1.0)
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  products ProductSide[]
+
+  @@map("sides")
+}
+
+// ============================================
+// JUNCTION TABLES
+// ============================================
+
+model ProductQuantity {
+  productId  String   @map("product_id")
+  quantityId String   @map("quantity_id")
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity Quantity @relation(fields: [quantityId], references: [id], onDelete: Cascade)
+
+  @@id([productId, quantityId])
+  @@map("product_quantities")
+}
+
+model ProductCoating {
+  productId String   @map("product_id")
+  coatingId String   @map("coating_id")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  coating Coating @relation(fields: [coatingId], references: [id], onDelete: Cascade)
+
+  @@id([productId, coatingId])
+  @@map("product_coatings")
+}
+
+model ProductPrintSize {
+  productId   String   @map("product_id")
+  printSizeId String   @map("print_size_id")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  printSize PrintSize @relation(fields: [printSizeId], references: [id], onDelete: Cascade)
+
+  @@id([productId, printSizeId])
+  @@map("product_print_sizes")
+}
+
+model ProductTurnaroundTime {
+  productId        String   @map("product_id")
+  turnaroundTimeId String   @map("turnaround_time_id")
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  product        Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  turnaroundTime TurnaroundTime @relation(fields: [turnaroundTimeId], references: [id], onDelete: Cascade)
+
+  @@id([productId, turnaroundTimeId])
+  @@map("product_turnaround_times")
+}
+
+model ProductAddOn {
+  productId String   @map("product_id")
+  addOnId   String   @map("add_on_id")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  addOn   AddOn   @relation(fields: [addOnId], references: [id], onDelete: Cascade)
+
+  @@id([productId, addOnId])
+  @@map("product_add_ons")
+}
+
+model ProductPaperStock {
+  productId    String   @map("product_id")
+  paperStockId String   @map("paper_stock_id")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  product    Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  paperStock PaperStock @relation(fields: [paperStockId], references: [id], onDelete: Cascade)
+
+  @@id([productId, paperStockId])
+  @@map("product_paper_stocks")
+}
+
+model ProductSide {
+  productId String   @map("product_id")
+  sideId    String   @map("side_id")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  side    Side    @relation(fields: [sideId], references: [id], onDelete: Cascade)
+
+  @@id([productId, sideId])
+  @@map("product_sides")
+}
+
+// ============================================
+// ORDERS & JOBS
+// ============================================
+
+model Order {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  referenceNumber String   @unique @map("reference_number")
+  status          String   @default("pending") // pending, processing, production, shipped, delivered, cancelled
+  subtotal        Float
+  discountAmount  Float    @default(0) @map("discount_amount")
+  taxAmount       Float    @default(0) @map("tax_amount")
+  shippingAmount  Float    @default(0) @map("shipping_amount")
+  totalAmount     Float    @map("total_amount")
+  paymentStatus   String?  @map("payment_status") // pending, paid, failed, refunded
+  paymentMethod   String?  @map("payment_method")
+  paymentIntentId String?  @map("payment_intent_id")
+  shippingAddress Json?    @map("shipping_address") // JSONB
+  billingAddress  Json?    @map("billing_address") // JSONB
+  notes           String?
+  metadata        Json?    // JSONB for additional order data
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user         User          @relation(fields: [userId], references: [id])
+  jobs         OrderJob[]
+  statusHistory OrderStatus[]
+  invoices     Invoice[]
+
+  @@map("orders")
+}
+
+model OrderJob {
+  id               String   @id @default(uuid())
+  orderId          String   @map("order_id")
+  productId        String   @map("product_id")
+  productName      String   @map("product_name")
+  quantity         Int
+  width            Float
+  height           Float
+  paperStockId     String?  @map("paper_stock_id")
+  coatingId        String?  @map("coating_id")
+  turnaroundTimeId String?  @map("turnaround_time_id")
+  sides            String   @default("single") // single, double
+  addOns           Json?    @map("add_ons") // JSONB for selected add-ons
+  unitPrice        Float    @map("unit_price")
+  totalPrice       Float    @map("total_price")
+  jobNotes         String?  @map("job_notes")
+  artworkFileId    String?  @map("artwork_file_id")
+  status           String   @default("pending") // pending, in_production, completed, cancelled
+  metadata         Json?    // JSONB for additional job data
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  order      Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product    Product     @relation(fields: [productId], references: [id])
+  paperStock PaperStock? @relation(fields: [paperStockId], references: [id])
+  artwork    ArtworkFile? @relation(fields: [artworkFileId], references: [id])
+
+  @@map("order_jobs")
+}
+
+model OrderStatus {
+  id        String   @id @default(uuid())
+  orderId   String   @map("order_id")
+  status    String
+  notes     String?
+  createdBy String?  @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("order_status_history")
+}
+
+model ArtworkFile {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  filename     String
+  filePath     String   @map("file_path")
+  fileSize     Int      @map("file_size")
+  mimeType     String   @map("mime_type")
+  thumbnailUrl String?  @map("thumbnail_url")
+  status       String   @default("pending") // pending, approved, rejected
+  notes        String?
+  metadata     Json?    // JSONB for file metadata
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  orderJobs OrderJob[]
+
+  @@map("artwork_files")
+}
+
+// ============================================
+// CRM SYSTEM
+// ============================================
+
+model CrmCustomer {
+  id               String   @id @default(uuid())
+  userId           String   @unique @map("user_id")
+  customerType     String   @default("regular") @map("customer_type") // regular, broker, vip
+  lifecycleStage   String   @default("lead") @map("lifecycle_stage") // lead, prospect, customer, loyal
+  totalOrders      Int      @default(0) @map("total_orders")
+  totalSpent       Float    @default(0) @map("total_spent")
+  averageOrderValue Float   @default(0) @map("average_order_value")
+  lastOrderDate    DateTime? @map("last_order_date")
+  tags             String[]
+  source           String?  // website, referral, direct, etc.
+  referredBy       String?  @map("referred_by")
+  marketingConsent Boolean  @default(false) @map("marketing_consent")
+  notes            String?
+  metadata         Json?    // JSONB for custom fields
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  communications Communication[]
+  activities     Activity[]
+  campaigns      CampaignCustomer[]
+
+  @@map("crm_customers")
+}
+
+model Communication {
+  id         String   @id @default(uuid())
+  customerId String   @map("customer_id")
+  type       String   // email, phone, chat, note
+  direction  String   // inbound, outbound
+  subject    String?
+  content    String
+  status     String   @default("pending") // pending, sent, delivered, failed
+  sentBy     String?  @map("sent_by")
+  metadata   Json?    // JSONB for email tracking, etc.
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  customer CrmCustomer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("crm_communications")
+}
+
+model Activity {
+  id         String   @id @default(uuid())
+  customerId String   @map("customer_id")
+  type       String   // page_view, product_view, cart_add, checkout, etc.
+  action     String
+  details    Json?    // JSONB for activity details
+  sessionId  String?  @map("session_id")
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  customer CrmCustomer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("crm_activities")
+}
+
+model Campaign {
+  id          String   @id @default(uuid())
+  name        String
+  type        String   // email, sms, push
+  status      String   @default("draft") // draft, scheduled, active, completed, cancelled
+  subject     String?
+  content     String
+  scheduledAt DateTime? @map("scheduled_at")
+  sentAt      DateTime? @map("sent_at")
+  metadata    Json?    // JSONB for campaign settings
+  createdBy   String?  @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  customers CampaignCustomer[]
+
+  @@map("crm_campaigns")
+}
+
+model CampaignCustomer {
+  campaignId String   @map("campaign_id")
+  customerId String   @map("customer_id")
+  status     String   @default("pending") // pending, sent, delivered, opened, clicked, unsubscribed
+  sentAt     DateTime? @map("sent_at")
+  openedAt   DateTime? @map("opened_at")
+  clickedAt  DateTime? @map("clicked_at")
+  metadata   Json?    // JSONB for tracking data
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  campaign Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  customer CrmCustomer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@id([campaignId, customerId])
+  @@map("crm_campaign_customers")
+}
+
+// ============================================
+// BROKER SYSTEM
+// ============================================
+
+model BrokerProfile {
+  id                     String   @id @default(uuid())
+  userId                 String   @unique @map("user_id")
+  tier                   String   // bronze, silver, gold, platinum
+  annualVolumeCommitted  Float    @map("annual_volume_committed")
+  currentYearVolume      Float    @default(0) @map("current_year_volume")
+  discountPercentage     Float    @map("discount_percentage")
+  categoryDiscounts      Json?    @map("category_discounts") // JSONB
+  paymentTermsDays       Int      @default(30) @map("payment_terms_days")
+  creditLimit            Float?   @map("credit_limit")
+  isActive               Boolean  @default(true) @map("is_active")
+  approvedAt             DateTime? @map("approved_at")
+  approvedBy             String?  @map("approved_by")
+  notes                  String?
+  metadata               Json?    // JSONB
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications BrokerApplication[]
+
+  @@map("broker_profiles")
+}
+
+model BrokerApplication {
+  id               String   @id @default(uuid())
+  brokerProfileId  String?  @map("broker_profile_id")
+  email            String
+  firstName        String   @map("first_name")
+  lastName         String   @map("last_name")
+  companyName      String   @map("company_name")
+  phone            String
+  expectedVolume   Float    @map("expected_volume")
+  businessType     String   @map("business_type")
+  yearsInBusiness  Int?     @map("years_in_business")
+  taxId            String?  @map("tax_id")
+  website          String?
+  references       Json?    // JSONB for business references
+  status           String   @default("pending") // pending, approved, rejected
+  reviewedBy       String?  @map("reviewed_by")
+  reviewedAt       DateTime? @map("reviewed_at")
+  rejectionReason  String?  @map("rejection_reason")
+  notes            String?
+  metadata         Json?    // JSONB
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  brokerProfile BrokerProfile? @relation(fields: [brokerProfileId], references: [id])
+
+  @@map("broker_applications")
+}
+
+// ============================================
+// SUPPORT & TICKETS
+// ============================================
+
+model SupportTicket {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  referenceNumber String @unique @map("reference_number")
+  category     String   // order_issue, technical, billing, general
+  priority     String   @default("normal") // low, normal, high, urgent
+  status       String   @default("open") // open, in_progress, resolved, closed
+  subject      String
+  description  String
+  assignedTo   String?  @map("assigned_to")
+  resolvedAt   DateTime? @map("resolved_at")
+  satisfaction Int?     // 1-5 rating
+  metadata     Json?    // JSONB
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  messages TicketMessage[]
+
+  @@map("support_tickets")
+}
+
+model TicketMessage {
+  id        String   @id @default(uuid())
+  ticketId  String   @map("ticket_id")
+  userId    String   @map("user_id")
+  message   String
+  isInternal Boolean @default(false) @map("is_internal")
+  attachments Json?  // JSONB for file attachments
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@map("ticket_messages")
+}
+
+model CustomerNote {
+  id        String   @id @default(uuid())
+  profileId String   @map("profile_id")
+  note      String
+  createdBy String   @map("created_by")
+  isInternal Boolean @default(true) @map("is_internal")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  profile UserProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("customer_notes")
+}
+
+// ============================================
+// INVOICES & BILLING
+// ============================================
+
+model Invoice {
+  id              String   @id @default(uuid())
+  orderId         String   @map("order_id")
+  invoiceNumber   String   @unique @map("invoice_number")
+  status          String   @default("draft") // draft, sent, paid, overdue, cancelled
+  dueDate         DateTime @map("due_date")
+  paidAt          DateTime? @map("paid_at")
+  subtotal        Float
+  taxAmount       Float    @map("tax_amount")
+  totalAmount     Float    @map("total_amount")
+  notes           String?
+  metadata        Json?    // JSONB
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@map("invoices")
+}
+
+// ============================================
+// EMAIL TEMPLATES
+// ============================================
+
+model EmailTemplate {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  subject     String
+  htmlContent String   @map("html_content")
+  textContent String?  @map("text_content")
+  variables   Json?    // JSONB for template variables
+  category    String   // order_confirmation, shipping, marketing, etc.
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("email_templates")
+}
+
+model VendorEmail {
+  id        String   @id @default(uuid())
+  vendorId  String   @map("vendor_id")
+  orderId   String   @map("order_id")
+  subject   String
+  body      String
+  status    String   @default("pending") // pending, sent, failed
+  sentAt    DateTime? @map("sent_at")
+  error     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("vendor_emails")
+}
