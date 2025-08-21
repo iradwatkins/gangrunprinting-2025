@@ -153,3 +153,29 @@ const mutation = useMutation({
 6. **FOLLOW BMad workflow sequence** - no exceptions
 
 **🚨 CRITICAL: I am currently operating as DEV AGENT (James) and must implement Story 1.10 completely**
+
+## IMPORTANT RESTRICTIONS
+
+### Deployment - MANDATORY COOLIFY PROCESS
+- **USE COOLIFY ONLY** - All deployments MUST go through Coolify
+- **DO NOT USE PM2** - PM2 is RESTRICTED and must NOT be used
+- Each website runs in its own container via Coolify
+- No direct process management outside of Coolify
+
+### Coolify Project Details:
+- **Project ID**: 5
+- **Project UUID**: grp-fb0ede54-f646-450a-9d46-63966e5d1495
+- **Environment ID**: 4
+- **Container**: gangrunprinting-dev
+- **SSH Port**: 2204 (SSH access allowed for debugging)
+- **App Port**: 3005
+- **Status**: In Coolify, needs GitHub connection
+
+### Security
+- **ALL PASSWORDS GO IN VAULT** - Never store passwords in .env files
+- If vault integration has issues, report the exact problem for resolution
+
+### Git Requirements
+- Repository: https://github.com/irawatkins/gangrunprinting-2025
+- Main branch: main
+- Push all changes before deployment
